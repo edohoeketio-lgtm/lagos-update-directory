@@ -240,7 +240,8 @@
     .edit-modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(4px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -255,6 +256,150 @@
       padding: 30px;
       max-height: 90vh;
       overflow-y: auto;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+    }
+
+    /* Mobile Responsive Optimizations (iOS / Android) */
+    @media (max-width: 768px) {
+      .vendor-nav {
+        padding: 12px 16px;
+      }
+      .vendor-brand img {
+        height: 28px !important;
+      }
+      .vendor-brand span {
+        font-size: 0.95rem !important;
+      }
+      .vendor-user-meta {
+        gap: 8px;
+      }
+      .vendor-container {
+        margin: 20px auto;
+        padding: 0 14px;
+      }
+      .auth-card {
+        padding: 24px 18px;
+        margin: 20px auto;
+        border-radius: 14px;
+      }
+      .auth-tab {
+        padding: 12px 8px;
+        font-size: 0.95rem;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .form-group input, .form-group textarea, .form-group select {
+        font-size: 16px !important; /* Prevents iOS auto-zoom on input focus */
+        padding: 12px 14px;
+      }
+      .btn-vendor-primary {
+        min-height: 48px;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .listing-box {
+        padding: 18px 16px;
+        border-radius: 14px;
+      }
+      .listing-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .listing-title {
+        font-size: 1.25rem;
+      }
+      .listing-meta-row {
+        flex-wrap: wrap;
+        font-size: 0.85rem;
+        gap: 6px;
+      }
+      .renewal-card {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 14px 16px;
+        gap: 12px;
+      }
+      .renewal-info strong {
+        font-size: 0.92rem;
+      }
+      .btn-renew {
+        width: 100%;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-size: 0.9rem;
+      }
+      .action-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 18px;
+        padding-top: 16px;
+      }
+      .btn-action {
+        width: 100%;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 10px 8px;
+        font-size: 0.88rem;
+        box-sizing: border-box;
+      }
+      .btn-action.btn-delete {
+        grid-column: span 2;
+        margin-left: 0 !important;
+      }
+      .edit-modal-backdrop {
+        padding: 12px;
+        align-items: flex-end;
+      }
+      .edit-modal {
+        padding: 22px 18px;
+        border-radius: 20px 20px 14px 14px;
+        max-height: 88vh;
+      }
+      .edit-modal .modal-actions {
+        flex-direction: column !important;
+        gap: 8px !important;
+      }
+      .edit-modal .modal-actions button {
+        width: 100% !important;
+        min-height: 44px;
+      }
+      .boost-option-card {
+        padding: 12px 14px !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .vendor-nav {
+        padding: 10px 12px;
+      }
+      .vendor-nav .nav-link-browse {
+        display: none;
+      }
+      .vendor-user-meta {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      #nav-user-email {
+        display: none !important;
+      }
+      .action-row {
+        grid-template-columns: 1fr;
+      }
+      .btn-action.btn-delete {
+        grid-column: span 1;
+      }
     }
   </style>
 </head>
@@ -262,16 +407,16 @@
 
   <!-- Top Navigation -->
   <nav class="vendor-nav">
-    <a href="/" class="vendor-brand" style="display:flex; align-items:center; gap:10px;">
-      <img src="/img/logo.png" alt="Lagos Updates" style="height:36px; width:auto; object-fit:contain;">
+    <a href="/" class="vendor-brand">
+      <img src="/img/logo.png" alt="Lagos Updates" style="height:34px; width:auto; object-fit:contain;">
       <span style="font-weight:800; color:#000; font-size:1.05rem;">Vendor Desk</span>
     </a>
-    <div style="display:flex; align-items:center; gap:12px;">
-      <a href="/directory.html" style="font-size:0.88rem; font-weight:700; color:#4B5563; text-decoration:none;">← Browse Directory</a>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <a href="/directory.html" class="nav-link-browse" style="font-size:0.85rem; font-weight:700; color:#4B5563; text-decoration:none; padding:6px 10px; border-radius:6px; background:#F3F4F6;">← Directory</a>
       <div id="nav-user-bar" class="vendor-user-meta" style="display:none;">
-        <a href="/index.html?action=list_business" style="padding:8px 16px;border:1px solid #000;border-radius:8px;background:#000;color:#FFF;text-decoration:none;font-size:0.85rem;font-weight:700;">+ List New Business</a>
-        <span id="nav-user-email" style="font-size:0.9rem;font-weight:600;color:#222;"></span>
-        <button onclick="vendorLogout()" style="padding:6px 14px;border:1px solid #CCC;border-radius:8px;background:#FFF;cursor:pointer;font-weight:600;">Log Out</button>
+        <a href="/index.html?action=list_business" style="padding:8px 12px; border:1px solid #000; border-radius:8px; background:#000; color:#FFF; text-decoration:none; font-size:0.82rem; font-weight:700; white-space:nowrap;">+ List</a>
+        <span id="nav-user-email" style="font-size:0.85rem; font-weight:600; color:#222; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+        <button onclick="vendorLogout()" style="padding:7px 12px; border:1px solid #CCC; border-radius:8px; background:#FFF; cursor:pointer; font-weight:700; font-size:0.82rem; white-space:nowrap;">Log Out</button>
       </div>
     </div>
   </nav>
@@ -299,18 +444,18 @@
         <p id="login-error" style="color:#DC2626;font-size:0.85rem;margin-top:12px;display:none;"></p>
 
         <!-- One-Click Demo Vendor Login Helper -->
-        <div style="margin-top:20px; padding:14px; background:#F9FAFB; border:1px solid #E5E7EB; border-radius:10px; font-size:0.83rem;">
-          <div style="font-weight:700; color:#374151; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+        <div style="margin-top:20px; padding:14px; background:#F9FAFB; border:1px solid #E5E7EB; border-radius:12px; font-size:0.83rem;">
+          <div style="font-weight:700; color:#374151; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
             <span>⚡</span> One-Click Demo Vendor Login:
           </div>
-          <div style="display:flex; flex-direction:column; gap:6px;">
-            <button type="button" onclick="fillDemo('demo@circa.ng', 'password123')" style="padding:8px 12px; background:#FFF; border:1px solid #D1D5DB; border-radius:6px; cursor:pointer; text-align:left; font-size:0.82rem; font-weight:600; color:#111; display:flex; justify-content:space-between; align-items:center;">
-              <span>🍷 <b>Circa Lagos</b> (demo@circa.ng)</span>
-              <span style="font-size:0.75rem; color:#6B7280;">Auto-sign in →</span>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <button type="button" onclick="fillDemo('demo@circa.ng', 'password123')" style="padding:10px 14px; background:#FFF; border:1px solid #D1D5DB; border-radius:8px; cursor:pointer; text-align:left; font-size:0.84rem; font-weight:600; color:#111; display:flex; justify-content:space-between; align-items:center; min-height:48px; transition:all 0.15s ease;">
+              <span>🍷 <b>Circa Lagos</b> <small style="display:block; color:#6B7280; font-size:0.75rem;">demo@circa.ng</small></span>
+              <span style="font-size:0.78rem; font-weight:700; color:#111; background:#F3F4F6; padding:6px 10px; border-radius:6px; white-space:nowrap;">Auto-sign in →</span>
             </button>
-            <button type="button" onclick="fillDemo('vendor@lagosupdates.com', 'password123')" style="padding:8px 12px; background:#FFF; border:1px solid #D1D5DB; border-radius:6px; cursor:pointer; text-align:left; font-size:0.82rem; font-weight:600; color:#111; display:flex; justify-content:space-between; align-items:center;">
-              <span>🏨 <b>The Wheatbaker</b> (vendor@lagosupdates.com)</span>
-              <span style="font-size:0.75rem; color:#6B7280;">Auto-sign in →</span>
+            <button type="button" onclick="fillDemo('vendor@lagosupdates.com', 'password123')" style="padding:10px 14px; background:#FFF; border:1px solid #D1D5DB; border-radius:8px; cursor:pointer; text-align:left; font-size:0.84rem; font-weight:600; color:#111; display:flex; justify-content:space-between; align-items:center; min-height:48px; transition:all 0.15s ease;">
+              <span>🏨 <b>The Wheatbaker</b> <small style="display:block; color:#6B7280; font-size:0.75rem;">vendor@lagosupdates.com</small></span>
+              <span style="font-size:0.78rem; font-weight:700; color:#111; background:#F3F4F6; padding:6px 10px; border-radius:6px; white-space:nowrap;">Auto-sign in →</span>
             </button>
           </div>
         </div>
@@ -396,9 +541,9 @@
           <label>Description</label>
           <textarea id="edit-description" rows="3"></textarea>
         </div>
-        <div style="display:flex; gap:10px; margin-top:20px;">
-          <button type="button" onclick="closeEditModal()" style="flex:1;padding:12px;border:1px solid #CCC;background:#FFF;border-radius:8px;font-weight:700;cursor:pointer;">Cancel</button>
-          <button type="submit" class="btn-vendor-primary" style="flex:2;">Submit for Admin Verification</button>
+        <div class="modal-actions" style="display:flex; gap:10px; margin-top:20px;">
+          <button type="button" onclick="closeEditModal()" style="flex:1;padding:12px;border:1px solid #CCC;background:#FFF;border-radius:10px;font-weight:700;cursor:pointer;min-height:46px;">Cancel</button>
+          <button type="submit" class="btn-vendor-primary" style="flex:2;min-height:46px;border-radius:10px;">Submit for Admin Verification</button>
         </div>
       </form>
     </div>
@@ -409,7 +554,7 @@
     <div class="edit-modal">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
         <h2 style="font-size:1.3rem;font-weight:800;margin:0;">⚡ Boost Listing Visibility</h2>
-        <button onclick="closeBoostModal()" style="border:none;background:none;font-size:1.5rem;cursor:pointer;">&times;</button>
+        <button onclick="closeBoostModal()" style="border:none;background:none;font-size:1.6rem;cursor:pointer;padding:4px 8px;min-height:44px;min-width:44px;display:flex;align-items:center;justify-content:center;">&times;</button>
       </div>
       <p style="font-size:0.85rem;color:#717171;margin-bottom:20px;">
         Pin your business to the top of the Lagos Updates Directory 6-column feed to drive immediate WhatsApp leads.
@@ -420,37 +565,37 @@
         <div class="form-group">
           <label>Select Boost Duration</label>
           <div style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
-            <label style="border:1px solid #CCC; border-radius:10px; padding:14px; display:flex; align-items:center; gap:12px; cursor:pointer;">
-              <input type="radio" name="boost_duration" value="1_week" style="width:auto;">
+            <label class="boost-option-card" style="border:1px solid #D1D5DB; border-radius:12px; padding:14px; display:flex; align-items:flex-start; gap:12px; cursor:pointer; background:#FFF;">
+              <input type="radio" name="boost_duration" value="1_week" style="width:20px; height:20px; margin-top:2px; flex-shrink:0;">
               <div>
-                <strong style="display:block;font-size:0.95rem;">🚀 1-Week Boost (7 Days) &middot; ₦35,000</strong>
-                <span style="font-size:0.8rem;color:#717171;">Fast crowd surge for weekend events and promotions (~₦5,000/day)</span>
+                <strong style="display:block;font-size:0.95rem;color:#111;">🚀 1-Week Boost (7 Days) &middot; ₦35,000</strong>
+                <span style="font-size:0.8rem;color:#717171;line-height:1.4;display:block;margin-top:2px;">Fast crowd surge for weekend events and promotions (~₦5,000/day)</span>
               </div>
             </label>
-            <label style="border:1px solid #CCC; border-radius:10px; padding:14px; display:flex; align-items:center; gap:12px; cursor:pointer;">
-              <input type="radio" name="boost_duration" value="2_weeks" style="width:auto;">
+            <label class="boost-option-card" style="border:1px solid #D1D5DB; border-radius:12px; padding:14px; display:flex; align-items:flex-start; gap:12px; cursor:pointer; background:#FFF;">
+              <input type="radio" name="boost_duration" value="2_weeks" style="width:20px; height:20px; margin-top:2px; flex-shrink:0;">
               <div>
-                <strong style="display:block;font-size:0.95rem;">🔥 2-Week Boost (14 Days) &middot; ₦60,000</strong>
-                <span style="font-size:0.8rem;color:#717171;">Save ₦10,000 &middot; Perfect for mid-month campaigns</span>
+                <strong style="display:block;font-size:0.95rem;color:#111;">🔥 2-Week Boost (14 Days) &middot; ₦60,000</strong>
+                <span style="font-size:0.8rem;color:#717171;line-height:1.4;display:block;margin-top:2px;">Save ₦10,000 &middot; Perfect for mid-month campaigns</span>
               </div>
             </label>
-            <label style="border:2px solid #FFD400; background:#FFFDF0; border-radius:10px; padding:14px; display:flex; align-items:center; gap:12px; cursor:pointer;">
-              <input type="radio" name="boost_duration" value="1_month" checked style="width:auto;">
+            <label class="boost-option-card" style="border:2px solid #FFD400; background:#FFFDF0; border-radius:12px; padding:14px; display:flex; align-items:flex-start; gap:12px; cursor:pointer;">
+              <input type="radio" name="boost_duration" value="1_month" checked style="width:20px; height:20px; margin-top:2px; flex-shrink:0;">
               <div>
                 <strong style="display:block;font-size:0.95rem;color:#92400E;">👑 1-Month Featured (30 Days) &middot; ₦100,000</strong>
-                <span style="font-size:0.8rem;color:#78350F;">Top-row priority placement &middot; Best ROI (~₦3,333/day)</span>
+                <span style="font-size:0.8rem;color:#78350F;line-height:1.4;display:block;margin-top:2px;">Top-row priority placement &middot; Best ROI (~₦3,333/day)</span>
               </div>
             </label>
           </div>
         </div>
 
-        <div style="background:#F9FAFB; border-radius:10px; padding:14px; margin:16px 0; font-size:0.85rem; color:#4B5563;">
+        <div style="background:#F9FAFB; border:1px solid #E5E7EB; border-radius:10px; padding:14px; margin:16px 0; font-size:0.85rem; color:#4B5563;">
           💳 <b>Payment Process:</b> Once submitted, Lagos Updates Editorial Desk verifies your payment and activates your boost within 1 hour.
         </div>
 
-        <div style="display:flex; gap:10px; margin-top:20px;">
-          <button type="button" onclick="closeBoostModal()" style="flex:1;padding:12px;border:1px solid #CCC;background:#FFF;border-radius:8px;font-weight:700;cursor:pointer;">Cancel</button>
-          <button type="submit" class="btn-vendor-primary" style="flex:2;background:#FFD400;color:#000;">Confirm & Activate Boost</button>
+        <div class="modal-actions" style="display:flex; gap:10px; margin-top:20px;">
+          <button type="button" onclick="closeBoostModal()" style="flex:1;padding:12px;border:1px solid #CCC;background:#FFF;border-radius:10px;font-weight:700;cursor:pointer;min-height:46px;">Cancel</button>
+          <button type="submit" class="btn-vendor-primary" style="flex:2;background:#FFD400;color:#000;min-height:46px;border-radius:10px;">Confirm & Activate Boost</button>
         </div>
       </form>
     </div>

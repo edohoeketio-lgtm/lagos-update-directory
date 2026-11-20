@@ -11,6 +11,65 @@
   <meta property="og:description" content="Verified hotels, apartments, chefs, security and services in Lagos State.">
   <meta property="og:type" content="website">
   <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* Mobile-first enhancements to guarantee iOS zoom prevention and touch targets */
+    input, select, textarea {
+      font-size: 16px !important; /* Prevents iOS Safari auto-zoom on focus */
+    }
+    @media (max-width: 768px) {
+      .nav-inner {
+        padding: 10px 14px;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .nav-search-capsule {
+        order: 3;
+        width: 100%;
+        margin: 6px 0 0;
+      }
+      .nav-right {
+        gap: 8px;
+        align-items: center;
+      }
+      .nav-action-link {
+        font-size: 13px;
+        padding: 6px 10px;
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+      }
+      .nav-cta-btn {
+        padding: 8px 14px;
+        font-size: 13px;
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+      }
+      .cta-full { display: none; }
+      .cta-compact { display: inline; }
+      .feed-filters-quick {
+        gap: 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+      }
+      .feed-filters-quick::-webkit-scrollbar {
+        display: none;
+      }
+      .filter-chip {
+        white-space: nowrap;
+        min-height: 40px;
+        padding: 8px 14px;
+        font-size: 14px;
+      }
+    }
+    @media (min-width: 769px) {
+      .cta-compact { display: none; }
+    }
+  </style>
 </head>
 <body data-page="home">
 
@@ -33,11 +92,12 @@
             class="capsule-input" 
             placeholder="Search hotels, chefs, neighborhoods (e.g. Festac, Ikoyi)…" 
             autocomplete="off"
-            aria-label="Search listings"
+            aria-label="Search listings by keyword or name"
+            style="font-size: 16px;"
           >
         </div>
         <div class="capsule-divider"></div>
-        <select id="home-area-select" class="capsule-select" aria-label="Filter by neighborhood">
+        <select id="home-area-select" class="capsule-select" aria-label="Filter listings by neighborhood" style="font-size: 16px;">
           <option value="all">Any neighborhood</option>
           <option value="Ikoyi">Ikoyi</option>
           <option value="Victoria Island">Victoria Island</option>
@@ -57,10 +117,11 @@
 
       <!-- RIGHT ACTIONS -->
       <div class="nav-right">
-        <a href="vendor.html" class="nav-action-link nav-vendor-link">Vendor Login</a>
-        <a href="directory.html" class="nav-action-link">Browse All</a>
-        <button type="button" class="nav-cta-btn" id="btn-open-list-modal">
-          List Business
+        <a href="vendor.html" class="nav-action-link nav-vendor-link" aria-label="Vendor Login">Vendor Login</a>
+        <a href="directory.html" class="nav-action-link" aria-label="Browse All Listings">Browse All</a>
+        <button type="button" class="nav-cta-btn" id="btn-open-list-modal" aria-label="List your business">
+          <span class="cta-full">List Business</span>
+          <span class="cta-compact">+ List</span>
         </button>
       </div>
 
@@ -72,48 +133,48 @@
     <div class="container">
       <div class="category-scroll-wrap" role="tablist" aria-label="Categories">
         
-        <div class="cat-item active" data-category="all" role="tab" tabindex="0">
-          <span class="cat-icon">✨</span>
+        <div class="cat-item active" data-category="all" role="tab" tabindex="0" aria-selected="true" aria-label="Category: All Spots">
+          <span class="cat-icon" aria-hidden="true">✨</span>
           <span class="cat-label">All Spots</span>
         </div>
 
-        <div class="cat-item" data-category="hotel" role="tab" tabindex="0">
-          <span class="cat-icon">🏨</span>
+        <div class="cat-item" data-category="hotel" role="tab" tabindex="0" aria-selected="false" aria-label="Category: Hotels">
+          <span class="cat-icon" aria-hidden="true">🏨</span>
           <span class="cat-label">Hotels</span>
         </div>
 
-        <div class="cat-item" data-category="apartment" role="tab" tabindex="0">
-          <span class="cat-icon">🏢</span>
+        <div class="cat-item" data-category="apartment" role="tab" tabindex="0" aria-selected="false" aria-label="Category: Serviced Apartments">
+          <span class="cat-icon" aria-hidden="true">🏢</span>
           <span class="cat-label">Apartments</span>
         </div>
 
-        <div class="cat-item" data-category="restaurant" role="tab" tabindex="0">
-          <span class="cat-icon">🍽️</span>
+        <div class="cat-item" data-category="restaurant" role="tab" tabindex="0" aria-selected="false" aria-label="Category: Restaurants">
+          <span class="cat-icon" aria-hidden="true">🍽️</span>
           <span class="cat-label">Restaurants</span>
         </div>
 
-        <div class="cat-item" data-category="lounge" role="tab" tabindex="0">
-          <span class="cat-icon">🥂</span>
+        <div class="cat-item" data-category="lounge" role="tab" tabindex="0" aria-selected="false" aria-label="Category: Lounges">
+          <span class="cat-icon" aria-hidden="true">🥂</span>
           <span class="cat-label">Lounges</span>
         </div>
 
-        <div class="cat-item" data-category="private-chef" role="tab" tabindex="0">
-          <span class="cat-icon">🧑‍🍳</span>
+        <div class="cat-item" data-category="private-chef" role="tab" tabindex="0" aria-selected="false" aria-label="Category: Private Chefs">
+          <span class="cat-icon" aria-hidden="true">🧑‍🍳</span>
           <span class="cat-label">Private Chefs</span>
         </div>
 
-        <div class="cat-item" data-category="personal-security" role="tab" tabindex="0">
-          <span class="cat-icon">🛡️</span>
+        <div class="cat-item" data-category="personal-security" role="tab" tabindex="0" aria-selected="false" aria-label="Category: Personal Security">
+          <span class="cat-icon" aria-hidden="true">🛡️</span>
           <span class="cat-label">Security</span>
         </div>
 
-        <div class="cat-item" data-category="airport-pickup" role="tab" tabindex="0">
-          <span class="cat-icon">✈️</span>
+        <div class="cat-item" data-category="airport-pickup" role="tab" tabindex="0" aria-selected="false" aria-label="Category: Airport Pickups">
+          <span class="cat-icon" aria-hidden="true">✈️</span>
           <span class="cat-label">Airport Rides</span>
         </div>
 
-        <div class="cat-item" data-category="service" role="tab" tabindex="0">
-          <span class="cat-icon">🔧</span>
+        <div class="cat-item" data-category="service" role="tab" tabindex="0" aria-selected="false" aria-label="Category: Professional Services">
+          <span class="cat-icon" aria-hidden="true">🔧</span>
           <span class="cat-label">Services</span>
         </div>
 
@@ -130,22 +191,22 @@
         <div class="feed-count" id="home-results-meta">
           Showing verified spots in Lagos…
         </div>
-        <div class="feed-filters-quick">
-          <select id="filter-price-select" class="filter-chip" style="cursor: pointer; outline: none;" aria-label="Filter by price">
+        <div class="feed-filters-quick" role="region" aria-label="Quick filters">
+          <select id="filter-price-select" class="filter-chip" style="cursor: pointer; outline: none; font-size: 16px;" aria-label="Filter listings by price">
             <option value="all">Any Price</option>
             <option value="under-50k">Under ₦50,000</option>
             <option value="50k-150k">₦50k – ₦150k</option>
             <option value="150k-300k">₦150k – ₦300k</option>
             <option value="300k-plus">₦300k+ (Luxury)</option>
           </select>
-          <button type="button" class="filter-chip" id="chip-verified">
-            <span>✓</span> Verified only
+          <button type="button" class="filter-chip" id="chip-verified" role="checkbox" aria-checked="false" aria-label="Filter verified only">
+            <span aria-hidden="true">✓</span> Verified only
           </button>
-          <button type="button" class="filter-chip" id="chip-featured">
-            <span>★</span> Featured only
+          <button type="button" class="filter-chip" id="chip-featured" role="checkbox" aria-checked="false" aria-label="Filter featured only">
+            <span aria-hidden="true">★</span> Featured only
           </button>
-          <button type="button" class="filter-chip" id="btn-reset-filters" style="display: none; color: #DC2626; border-color: #FCA5A5;">
-            ✕ Reset
+          <button type="button" class="filter-chip" id="btn-reset-filters" aria-label="Reset all filters" style="display: none; color: #DC2626; border-color: #FCA5A5;">
+            <span aria-hidden="true">✕</span> Reset
           </button>
         </div>
       </div>

@@ -8,18 +8,152 @@
   <meta name="theme-color" content="#FFD400">
   <link rel="stylesheet" href="css/styles.css">
   <style>
-    /* Listing-specific extras */
+    /* Universal Mobile iOS Zoom Prevention */
+    input, select, textarea {
+      font-size: 16px !important; /* Prevents iOS Safari auto-zoom on focus */
+    }
+
+    /* Listing Page Responsive Layout */
     .listing-wrap {
       max-width: 760px;
       margin: 0 auto;
-      padding: 36px 20px 80px;
+      padding: 24px 16px 80px;
     }
+
+    /* Top Bar with Back & Viral Share */
+    .listing-top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .listing-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      padding: 8px 14px;
+      background: var(--black-2);
+      border: 1px solid var(--black-4);
+      border-radius: 9999px;
+      min-height: 40px;
+      transition: var(--transition);
+      cursor: pointer;
+    }
+    .listing-back:hover {
+      color: var(--text-primary);
+      border-color: var(--text-muted);
+      transform: translateY(-1px);
+    }
+    .listing-share-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .listing-share-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      border: 1px solid var(--black-4);
+      background: var(--black-2);
+      color: var(--text-primary);
+      min-height: 40px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .listing-share-btn.share-wa {
+      background: #E8F5E9;
+      border-color: #C8E6C9;
+      color: #008A05;
+      font-weight: 700;
+    }
+    .listing-share-btn.share-wa:hover {
+      background: #D4EDDA;
+    }
+    .listing-share-btn.copy-link:hover {
+      border-color: var(--text-muted);
+    }
+
+    /* Responsive Gallery Hero */
+    .listing-hero-container {
+      position: relative;
+      width: 100%;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 22px;
+      background: linear-gradient(135deg, #181F2C 0%, #111827 50%, #0B0F17 100%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+    }
+    .listing-hero-img {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      min-height: 220px;
+      max-height: 380px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 80px;
+      user-select: none;
+      background: radial-gradient(circle at 50% 40%, rgba(255, 212, 0, 0.15) 0%, transparent 70%);
+      transition: transform 0.3s ease;
+    }
+    .listing-hero-badge {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 6px 12px;
+      border-radius: 9999px;
+      color: #FFFFFF;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      z-index: 2;
+    }
+    .listing-hero-curation {
+      position: absolute;
+      bottom: 14px;
+      right: 14px;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 5px 10px;
+      border-radius: 8px;
+      color: #FFD400;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Tags & Title */
     .listing-tags {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
     .listing-cat-pill {
       background: var(--black-3);
@@ -44,19 +178,127 @@
     .listing-divider {
       border: none;
       border-top: 1px solid var(--black-3);
-      margin: 32px 0;
+      margin: 28px 0;
     }
+
+    /* Verified Concierge Contact Card */
+    .contact-card-wrap {
+      background: #F8F9FA;
+      border: 1px solid #E5E7EB;
+      border-radius: 18px;
+      padding: 22px;
+      margin: 28px 0;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+    }
+    .contact-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .contact-title {
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #111827;
+      margin: 0;
+    }
+    .contact-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .contact-badge-verified {
+      font-size: 11px;
+      font-weight: 700;
+      color: #059669;
+      background: #ECFDF5;
+      border: 1px solid #A7F3D0;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .contact-buttons-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .contact-secondary-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .contact-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 48px;
+      padding: 12px 20px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      box-sizing: border-box;
+      cursor: pointer;
+    }
+    .contact-pill-wa {
+      background: #25D366;
+      color: #FFFFFF;
+      border: 1px solid #20BD5A;
+      box-shadow: 0 4px 14px rgba(37, 211, 102, 0.28);
+      width: 100%;
+    }
+    .contact-pill-wa:hover, .contact-pill-wa:active {
+      background: #20BD5A;
+      transform: translateY(-1px);
+    }
+    .contact-pill-call {
+      background: #FFFFFF;
+      border: 1px solid #D1D5DB;
+      color: #111827;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+    .contact-pill-call:hover, .contact-pill-call:active {
+      background: #F3F4F6;
+      border-color: #9CA3AF;
+      transform: translateY(-1px);
+    }
+    .contact-pill-ig {
+      background: #FDF2F8;
+      border: 1px solid #FBCFE8;
+      color: #BE185D;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+    .contact-pill-ig:hover, .contact-pill-ig:active {
+      background: #FCE7F3;
+      border-color: #F472B6;
+      transform: translateY(-1px);
+    }
+    @media (max-width: 480px) {
+      .contact-secondary-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Info Grid Single Column Stacking */
     .info-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 32px;
+      gap: 14px;
+      margin-bottom: 28px;
     }
     .info-item {
       background: var(--black-2);
       border: 1px solid var(--black-4);
       border-radius: var(--radius-md);
-      padding: 18px 20px;
+      padding: 16px 18px;
     }
     .info-label {
       font-size: 11px;
@@ -71,19 +313,25 @@
       font-weight: 600;
       color: var(--text-primary);
     }
-    @media (max-width: 540px) {
-      .info-grid { grid-template-columns: 1fr; }
+    @media (max-width: 640px) {
+      .info-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .info-item {
+        padding: 14px 16px;
+      }
     }
 
-    /* --- REVIEWS SECTION --- */
+    /* Reviews Section & Action Button */
     .reviews-section {
-      margin-top: 40px;
+      margin-top: 36px;
     }
     .reviews-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       flex-wrap: wrap;
       gap: 12px;
     }
@@ -111,6 +359,7 @@
       transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       font-family: inherit;
       box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+      min-height: 44px;
     }
     .btn-review:hover {
       background: #000000;
@@ -118,156 +367,7 @@
       box-shadow: 0 8px 20px rgba(0,0,0,0.18);
     }
 
-    /* Contact Buttons Modern Luxury Styling */
-    .contact-card-wrap {
-      background: #F8F9FA;
-      border: 1px solid #E5E7EB;
-      border-radius: 16px;
-      padding: 24px;
-      margin: 32px 0;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.03);
-    }
-    .contact-header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .contact-title {
-      font-size: 13px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      color: #111827;
-      margin: 0;
-    }
-    .contact-badge-verified {
-      font-size: 11px;
-      font-weight: 700;
-      color: #059669;
-      background: #ECFDF5;
-      border: 1px solid #A7F3D0;
-      padding: 4px 10px;
-      border-radius: 9999px;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .contact-buttons {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .contact-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 24px;
-      border-radius: 9999px;
-      font-size: 14px;
-      font-weight: 700;
-      text-decoration: none;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      background: #FFFFFF;
-      border: 1px solid #D1D5DB;
-      color: #111827;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-    }
-    .contact-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-      border-color: #9CA3AF;
-    }
-    .contact-btn.whatsapp {
-      background: #25D366;
-      border-color: #25D366;
-      color: #FFFFFF;
-      box-shadow: 0 4px 14px rgba(37, 211, 102, 0.28);
-    }
-    .contact-btn.whatsapp:hover {
-      background: #20BD5A;
-      border-color: #20BD5A;
-      box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
-    }
-    .contact-btn.instagram {
-      color: #BE185D;
-      border-color: #FBCFE8;
-      background: #FDF2F8;
-    }
-    .contact-btn.instagram:hover {
-      background: #FCE7F3;
-      border-color: #F472B6;
-    }
-
-    /* Coming-soon panel */
-    .review-coming-soon {
-      background: var(--black-2);
-      border: 1px solid var(--black-4);
-      padding: 40px 32px;
-      text-align: center;
-    }
-    .review-coming-soon-icon {
-      font-size: 36px;
-      margin-bottom: 16px;
-    }
-    .review-coming-soon h3 {
-      font-size: 16px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-    .review-coming-soon p {
-      font-size: 14px;
-      color: var(--text-muted);
-      max-width: 380px;
-      margin: 0 auto 20px;
-      line-height: 1.6;
-    }
-    .review-notify-row {
-      display: flex;
-      gap: 8px;
-      max-width: 360px;
-      margin: 0 auto;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    .review-notify-input {
-      flex: 1;
-      min-width: 180px;
-      background: var(--black-3);
-      border: 1px solid var(--black-4);
-      color: var(--text-primary);
-      font-size: 14px;
-      padding: 10px 14px;
-      outline: none;
-      font-family: inherit;
-      transition: var(--transition);
-    }
-    .review-notify-input::placeholder { color: var(--text-muted); }
-    .review-notify-input:focus { border-color: var(--yellow); }
-    .review-notify-btn {
-      background: var(--black-3);
-      border: 1px solid var(--black-4);
-      color: var(--text-primary);
-      font-size: 13px;
-      font-weight: 600;
-      padding: 10px 18px;
-      cursor: pointer;
-      font-family: inherit;
-      transition: var(--transition);
-      white-space: nowrap;
-    }
-    .review-notify-btn:hover { border-color: var(--yellow); color: var(--yellow); }
-    .review-notify-sent {
-      font-size: 13px;
-      color: var(--verified-green);
-      font-weight: 600;
-      margin-top: 12px;
-      display: none;
-    }
-
-    /* Star display (read-only for now) */
+    /* Star Display */
     .star-row {
       display: flex;
       gap: 4px;
@@ -283,7 +383,99 @@
       color: var(--text-muted);
     }
 
-    /* Moderation note */
+    /* Mobile Leave-A-Review Drawer / Modal */
+    .review-drawer-backdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 9998;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .review-drawer-backdrop.active {
+      display: block;
+      opacity: 1;
+    }
+
+    .review-coming-soon {
+      background: var(--black-2);
+      border: 1px solid var(--black-4);
+      padding: 36px 28px;
+      text-align: center;
+      border-radius: 16px;
+    }
+    .review-coming-soon-icon {
+      font-size: 36px;
+      margin-bottom: 14px;
+    }
+    .review-coming-soon h3 {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .review-coming-soon p {
+      font-size: 14px;
+      color: var(--text-muted);
+      max-width: 440px;
+      margin: 0 auto 20px;
+      line-height: 1.6;
+    }
+    .review-notify-row {
+      display: flex;
+      gap: 10px;
+      max-width: 420px;
+      margin: 0 auto;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .review-notify-input {
+      flex: 1;
+      min-width: 200px;
+      background: var(--black-3);
+      border: 1px solid var(--black-4);
+      color: var(--text-primary);
+      font-size: 16px !important;
+      padding: 12px 16px;
+      outline: none;
+      font-family: inherit;
+      border-radius: 12px;
+      min-height: 48px;
+      box-sizing: border-box;
+      transition: var(--transition);
+    }
+    .review-notify-input::placeholder { color: var(--text-muted); }
+    .review-notify-input:focus { border-color: var(--yellow); }
+    .review-notify-btn {
+      background: #FFD400;
+      border: none;
+      color: #111827;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 12px 22px;
+      cursor: pointer;
+      font-family: inherit;
+      border-radius: 12px;
+      min-height: 48px;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+    .review-notify-btn:hover {
+      background: #F5CC00;
+      transform: translateY(-1px);
+    }
+    .review-notify-sent {
+      font-size: 13px;
+      color: var(--verified-green);
+      font-weight: 600;
+      margin-top: 14px;
+      display: none;
+    }
     .review-moderation-note {
       display: flex;
       align-items: flex-start;
@@ -295,8 +487,143 @@
       font-size: 12px;
       color: var(--text-muted);
       line-height: 1.6;
+      border-radius: 0 8px 8px 0;
+      text-align: left;
     }
     .review-moderation-note strong { color: var(--text-secondary); }
+
+    /* Mobile Drawer specifics for screens <= 768px */
+    @media (max-width: 768px) {
+      .review-coming-soon.review-drawer {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: 85dvh !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        z-index: 9999 !important;
+        border-radius: 24px 24px 0 0 !important;
+        margin: 0 !important;
+        padding: 16px 20px 36px !important;
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.45) !important;
+        background: #111827 !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-bottom: none !important;
+        animation: drawerSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+      @keyframes drawerSlideUp {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+      }
+      .drawer-handle-bar {
+        display: flex;
+        justify-content: center;
+        padding: 4px 0 12px;
+      }
+      .drawer-handle {
+        width: 44px;
+        height: 5px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.25);
+      }
+      .drawer-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .drawer-title-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .drawer-title-wrap h3 {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 700;
+        color: #FFFFFF;
+      }
+      .drawer-close-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: #FFFFFF;
+        font-size: 16px;
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        touch-action: manipulation;
+      }
+      .drawer-intro {
+        font-size: 14px;
+        color: #9CA3AF;
+        line-height: 1.5;
+        margin-bottom: 18px;
+        text-align: left;
+      }
+      .review-notify-row {
+        flex-direction: column;
+        width: 100%;
+        max-width: 100%;
+        gap: 10px;
+      }
+      .review-notify-input {
+        width: 100%;
+        min-height: 48px;
+      }
+      .review-notify-btn {
+        width: 100%;
+        min-height: 48px;
+      }
+    }
+    @media (min-width: 769px) {
+      .drawer-handle-bar { display: none; }
+      .drawer-header { display: none; }
+    }
+
+    /* Mobile Navbar Styling on Listing */
+    @media (max-width: 768px) {
+      .nav-inner {
+        padding: 10px 14px;
+        gap: 8px;
+        align-items: center;
+      }
+      .nav-right {
+        gap: 6px;
+        align-items: center;
+      }
+      .nav-action-link {
+        font-size: 13px;
+        padding: 6px 10px;
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+      }
+      .nav-cta-btn {
+        padding: 8px 12px;
+        font-size: 13px;
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+      }
+      .cta-full { display: none; }
+      .cta-compact { display: inline; }
+    }
+    @media (min-width: 769px) {
+      .cta-compact { display: none; }
+    }
   </style>
 </head>
 <body data-page="listing">
@@ -309,11 +636,12 @@
         <span class="nav-brand-badge">Directory</span>
       </a>
       <div class="nav-right">
-        <a href="index.html" class="nav-action-link">Home</a>
-        <a href="directory.html" class="nav-action-link">Browse All</a>
-        <a href="vendor.html" class="nav-action-link nav-vendor-link">Vendor Login</a>
-        <a href="index.html#list-business" class="nav-cta-btn">
-          List Business
+        <a href="index.html" class="nav-action-link" aria-label="Home">Home</a>
+        <a href="directory.html" class="nav-action-link" aria-label="Browse all listings">Browse All</a>
+        <a href="vendor.html" class="nav-action-link nav-vendor-link" aria-label="Vendor Login">Vendor Login</a>
+        <a href="index.html#list-business" class="nav-cta-btn" aria-label="List your business">
+          <span class="cta-full">List Business</span>
+          <span class="cta-compact">+ List</span>
         </a>
       </div>
     </div>
@@ -323,20 +651,30 @@
     <div class="listing-wrap">
 
       <!-- TOP BAR WITH BACK & VIRAL SHARE -->
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
-        <a href="directory.html" class="listing-back" style="margin-bottom: 0;">← Back to Directory</a>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <a id="btn-share-wa" href="#" target="_blank" rel="noopener" class="listing-back" style="margin-bottom: 0; background: #E8F5E9; border-color: #C8E6C9; color: #008A05; font-weight: 700;">
-            Share to WhatsApp ↗
+      <div class="listing-top-bar">
+        <a href="directory.html" class="listing-back" aria-label="Back to Directory">
+          <span aria-hidden="true">←</span> Back to Directory
+        </a>
+        <div class="listing-share-group">
+          <a id="btn-share-wa" href="#" target="_blank" rel="noopener" class="listing-share-btn share-wa" aria-label="Share listing on WhatsApp">
+            <span aria-hidden="true">↗</span> Share WhatsApp
           </a>
-          <button type="button" id="btn-copy-link" class="listing-back" style="margin-bottom: 0; cursor: pointer;">
-            Copy Link 🔗
+          <button type="button" id="btn-copy-link" class="listing-share-btn copy-link" aria-label="Copy listing link">
+            <span aria-hidden="true">🔗</span> Copy Link
           </button>
         </div>
       </div>
 
-      <!-- HERO IMAGE PLACEHOLDER -->
-      <div class="listing-hero-img" id="listing-hero-img" aria-hidden="true"></div>
+      <!-- RESPONSIVE GALLERY HERO -->
+      <div class="listing-hero-container">
+        <div class="listing-hero-badge">
+          <span aria-hidden="true">✨</span> Lagos Spot
+        </div>
+        <div class="listing-hero-img" id="listing-hero-img" aria-hidden="true"></div>
+        <div class="listing-hero-curation">
+          <span aria-hidden="true">✓</span> Vetted by Lagos Updates
+        </div>
+      </div>
 
       <!-- TAGS ROW -->
       <div class="listing-tags">
@@ -349,7 +687,7 @@
       <h1 class="listing-title" id="listing-name">Loading…</h1>
 
       <!-- META CHIPS -->
-      <div class="listing-meta" style="margin-bottom: 24px;">
+      <div class="listing-meta" style="margin-bottom: 20px;">
         <span class="listing-area-badge" id="listing-area"></span>
         <span class="listing-price-pill" id="listing-price"></span>
       </div>
@@ -359,31 +697,38 @@
 
       <hr class="listing-divider">
 
-      <!-- CONTACT -->
+      <!-- VERIFIED CONCIERGE CONTACT CARD -->
       <div class="contact-card-wrap">
         <div class="contact-header-row">
-          <div class="contact-title">Direct Verified Contacts</div>
-          <span class="contact-badge-verified">✓ Verified Operator</span>
+          <div>
+            <div class="contact-title">Direct Concierge & Booking</div>
+            <div class="contact-subtitle">Fast direct contact with vetted Lagos operator</div>
+          </div>
+          <span class="contact-badge-verified">
+            <span aria-hidden="true">✓</span> Verified Operator
+          </span>
         </div>
-        <div class="contact-buttons">
-          <a id="btn-whatsapp" href="#" target="_blank" rel="noopener" class="contact-btn whatsapp">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-            WhatsApp
+        <div class="contact-buttons-grid">
+          <a id="btn-whatsapp" href="#" target="_blank" rel="noopener" class="contact-pill contact-pill-wa" aria-label="Chat on WhatsApp with this business">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+            <span>WhatsApp Concierge (Fast)</span>
           </a>
-          <a id="btn-phone" href="#" class="contact-btn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.09-1.09a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
-            Direct Call
-          </a>
-          <a id="btn-instagram" href="#" target="_blank" rel="noopener" class="contact-btn instagram">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-            Instagram
-          </a>
+          <div class="contact-secondary-row">
+            <a id="btn-phone" href="#" class="contact-pill contact-pill-call" aria-label="Direct Phone Call to business">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.09-1.09a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+              <span>Direct Call</span>
+            </a>
+            <a id="btn-instagram" href="#" target="_blank" rel="noopener" class="contact-pill contact-pill-ig" aria-label="View Instagram Profile">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+              <span>Instagram</span>
+            </a>
+          </div>
         </div>
       </div>
 
       <hr class="listing-divider">
 
-      <!-- INFO GRID -->
+      <!-- INFO GRID (SINGLE COLUMN STACKING ON MOBILE) -->
       <div class="info-grid">
         <div class="info-item">
           <div class="info-label">Location</div>
@@ -398,7 +743,7 @@
           <div class="info-value" id="listing-category-info">—</div>
         </div>
         <div class="info-item">
-          <div class="info-label">Status</div>
+          <div class="info-label">Verification Status</div>
           <div class="info-value" id="listing-status-info">—</div>
         </div>
       </div>
@@ -413,45 +758,60 @@
             <div class="reviews-title">Reviews</div>
             <div class="reviews-count" id="reviews-count">No reviews yet. Be the first.</div>
           </div>
-          <button class="btn-review" id="btn-leave-review" onclick="openReviewPanel()">★ Leave a Review</button>
+          <button class="btn-review" id="btn-leave-review" onclick="openReviewPanel()" aria-expanded="false" aria-controls="review-panel" aria-haspopup="dialog">★ Leave a Review</button>
         </div>
 
-        <!-- Star summary (placeholder, will be driven by backend) -->
+        <!-- Star summary -->
         <div class="star-row" id="star-summary" aria-label="Average rating">
-          <span class="star">★</span>
-          <span class="star">★</span>
-          <span class="star">★</span>
-          <span class="star">★</span>
-          <span class="star">★</span>
+          <span class="star filled">★</span>
+          <span class="star filled">★</span>
+          <span class="star filled">★</span>
+          <span class="star filled">★</span>
+          <span class="star filled">★</span>
         </div>
-        <div class="review-avg">Rating not yet available</div>
+        <div class="review-avg">Vetted Operator • Lagos Updates Directory</div>
 
-        <!-- Coming soon panel (hidden until button is clicked) -->
-        <div class="review-coming-soon" id="review-panel" style="display:none; margin-top:24px;">
-          <div class="review-coming-soon-icon">📝</div>
-          <h3>Reviews are coming soon</h3>
-          <p>We're building a verified review system. Every review will be checked by the Lagos Updates team before it goes live. No spam, no fake ratings.</p>
-          <div class="review-notify-row">
-            <input
-              type="tel"
-              id="review-notify-input"
-              class="review-notify-input"
-              placeholder="Your WhatsApp number"
-              aria-label="WhatsApp number for review notifications"
-            >
-            <button class="review-notify-btn" onclick="submitNotify()">Notify me</button>
+        <!-- MOBILE LEAVE-A-REVIEW DRAWER BACKDROP & CONTAINER -->
+        <div class="review-drawer-backdrop" id="review-drawer-backdrop" onclick="openReviewPanel()" aria-hidden="true"></div>
+
+        <div class="review-coming-soon review-drawer" id="review-panel" role="dialog" aria-modal="true" aria-labelledby="review-drawer-heading" style="display:none; margin-top:24px;">
+          <div class="drawer-handle-bar" aria-hidden="true">
+            <div class="drawer-handle"></div>
           </div>
-          <div class="review-notify-sent" id="review-notify-sent">Got it. We'll let you know when reviews go live. ✓</div>
-          <div class="review-moderation-note">
-            <span>🔒</span>
-            <span><strong>How it works:</strong> When reviews launch, you'll submit your experience and our team verifies it before it's published. Your phone number is only used to confirm you've actually visited.</span>
+          <div class="drawer-header">
+            <div class="drawer-title-wrap">
+              <span class="drawer-emoji" aria-hidden="true">📝</span>
+              <h3 id="review-drawer-heading">Reviews Coming Soon</h3>
+            </div>
+            <button type="button" class="drawer-close-btn" onclick="openReviewPanel()" aria-label="Close review drawer">✕</button>
+          </div>
+          <div class="drawer-body">
+            <div class="review-coming-soon-icon" aria-hidden="true">📝</div>
+            <h3 class="desktop-only-title">Reviews are coming soon</h3>
+            <p>We're building an authentic, verified review system. Every review will be checked by the Lagos Updates team before it goes live. No spam, no fake ratings.</p>
+            <div class="review-notify-row">
+              <input
+                type="tel"
+                id="review-notify-input"
+                class="review-notify-input"
+                placeholder="Your WhatsApp number (e.g. 0803…)"
+                aria-label="WhatsApp number for review notifications"
+                style="font-size: 16px;"
+              >
+              <button class="review-notify-btn" onclick="submitNotify()" aria-label="Notify me when reviews open">Notify me</button>
+            </div>
+            <div class="review-notify-sent" id="review-notify-sent" role="status">Got it. We'll let you know when reviews go live. ✓</div>
+            <div class="review-moderation-note">
+              <span aria-hidden="true">🔒</span>
+              <span><strong>How it works:</strong> When reviews launch, you'll submit your experience and our team verifies it before publishing. Your phone number is only used to confirm authentic visits.</span>
+            </div>
           </div>
         </div>
 
       </section>
 
       <!-- BACK LINK -->
-      <a href="directory.html" class="btn-secondary" style="display:inline-flex; margin-top:32px;">← Back to all listings</a>
+      <a href="directory.html" class="btn-secondary" style="display:inline-flex; margin-top:32px;" aria-label="Back to all directory listings">← Back to all listings</a>
 
     </div>
   </main>
@@ -491,8 +851,8 @@
           const verifiedEl = document.getElementById('listing-verified');
           if (statusEl) {
             statusEl.textContent = verifiedEl && !verifiedEl.classList.contains('hidden')
-              ? '✓ Verified'
-              : 'Not yet verified';
+              ? '✓ Verified by Lagos Updates'
+              : 'Active Listing';
             statusEl.style.color = verifiedEl && !verifiedEl.classList.contains('hidden')
               ? 'var(--verified-green)'
               : 'var(--text-muted)';
@@ -506,14 +866,34 @@
     function openReviewPanel() {
       const panel = document.getElementById('review-panel');
       const btn   = document.getElementById('btn-leave-review');
+      const backdrop = document.getElementById('review-drawer-backdrop');
       const isOpen = panel.style.display !== 'none';
-      panel.style.display = isOpen ? 'none' : 'block';
-      btn.textContent = isOpen ? '★ Leave a Review' : '✕ Close';
-      if (!isOpen && typeof window.trackEvent === 'function') {
-        const params = new URLSearchParams(window.location.search);
-        window.trackEvent('review_panel_opened', { listing_id: params.get('id') || 'unknown' });
+      
+      if (isOpen) {
+        panel.style.display = 'none';
+        if (backdrop) backdrop.classList.remove('active');
+        btn.textContent = '★ Leave a Review';
+        btn.setAttribute('aria-expanded', 'false');
+      } else {
+        panel.style.display = 'block';
+        if (backdrop) backdrop.classList.add('active');
+        btn.textContent = '✕ Close';
+        btn.setAttribute('aria-expanded', 'true');
+        if (typeof window.trackEvent === 'function') {
+          const params = new URLSearchParams(window.location.search);
+          window.trackEvent('review_panel_opened', { listing_id: params.get('id') || 'unknown' });
+        }
       }
     }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const panel = document.getElementById('review-panel');
+        if (panel && panel.style.display !== 'none') {
+          openReviewPanel();
+        }
+      }
+    });
 
     async function submitNotify() {
       const input = document.getElementById('review-notify-input');
@@ -537,7 +917,8 @@
       } catch (_) {}
 
       input.style.display   = 'none';
-      document.querySelector('.review-notify-btn').style.display = 'none';
+      const notifyBtn = document.querySelector('.review-notify-btn');
+      if (notifyBtn) notifyBtn.style.display = 'none';
       sent.style.display    = 'block';
     }
   </script>

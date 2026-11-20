@@ -7,6 +7,64 @@
   <meta name="description" content="Browse all verified hotels, apartments, restaurants, lounges, services, and airport pickups in Lagos State.">
   <meta name="theme-color" content="#FFD400">
   <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* Mobile-first enhancements to guarantee iOS zoom prevention and touch targets */
+    input, select, textarea {
+      font-size: 16px !important; /* Prevents iOS Safari auto-zoom on focus */
+    }
+    @media (max-width: 768px) {
+      .nav-inner {
+        padding: 10px 14px;
+        gap: 8px;
+        align-items: center;
+      }
+      .nav-right {
+        gap: 6px;
+        align-items: center;
+      }
+      .nav-action-link {
+        font-size: 13px;
+        padding: 6px 10px;
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+      }
+      .nav-cta-btn {
+        padding: 8px 12px;
+        font-size: 13px;
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+      }
+      .cta-full { display: none; }
+      .cta-compact { display: inline; }
+      .search-bar-wrap {
+        margin: 16px 0 20px;
+        padding: 6px 14px;
+      }
+      .filter-tabs {
+        gap: 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 6px;
+        scrollbar-width: none;
+      }
+      .filter-tabs::-webkit-scrollbar {
+        display: none;
+      }
+      .filter-tab {
+        white-space: nowrap;
+        min-height: 40px;
+        padding: 8px 16px;
+        font-size: 13px;
+      }
+    }
+    @media (min-width: 769px) {
+      .cta-compact { display: none; }
+    }
+  </style>
 </head>
 <body data-page="directory">
 
@@ -18,11 +76,12 @@
         <span class="nav-brand-badge">Directory</span>
       </a>
       <div class="nav-right">
-        <a href="index.html" class="nav-action-link">Home</a>
-        <a href="directory.html" class="nav-action-link" style="font-weight:700;">Browse All</a>
-        <a href="vendor.html" class="nav-action-link nav-vendor-link">Vendor Login</a>
-        <a href="index.html#list-business" class="nav-cta-btn">
-          List Business
+        <a href="index.html" class="nav-action-link" aria-label="Home">Home</a>
+        <a href="directory.html" class="nav-action-link" style="font-weight:700;" aria-label="Browse all listings" aria-current="page">Browse All</a>
+        <a href="vendor.html" class="nav-action-link nav-vendor-link" aria-label="Vendor Login">Vendor Login</a>
+        <a href="index.html#list-business" class="nav-cta-btn" aria-label="List your business">
+          <span class="cta-full">List Business</span>
+          <span class="cta-compact">+ List</span>
         </a>
       </div>
     </div>
@@ -39,27 +98,28 @@
 
       <!-- SEARCH -->
       <div class="search-bar-wrap">
-        <span class="search-icon">🔍</span>
+        <span class="search-icon" aria-hidden="true">🔍</span>
         <input
           type="search"
           id="search-input"
           placeholder="Search by name, area or keyword…"
           autocomplete="off"
-          aria-label="Search listings"
+          aria-label="Search listings by name, area or keyword"
+          style="font-size: 16px;"
         >
       </div>
 
       <!-- CATEGORY FILTER TABS -->
       <div class="filter-tabs" role="tablist" aria-label="Filter by category">
-        <button class="filter-tab active" data-category="all" role="tab">All</button>
-        <button class="filter-tab" data-category="hotel" role="tab">🏨 Hotels</button>
-        <button class="filter-tab" data-category="apartment" role="tab">🏢 Apartments</button>
-        <button class="filter-tab" data-category="restaurant" role="tab">🍽️ Restaurants</button>
-        <button class="filter-tab" data-category="lounge" role="tab">🥂 Lounges</button>
-        <button class="filter-tab" data-category="private-chef" role="tab">🧑‍🍳 Private Chefs</button>
-        <button class="filter-tab" data-category="personal-security" role="tab">🛡️ Personal Security</button>
-        <button class="filter-tab" data-category="service" role="tab">🔧 Services</button>
-        <button class="filter-tab" data-category="airport-pickup" role="tab">✈️ Airport Pickups</button>
+        <button class="filter-tab active" data-category="all" role="tab" aria-selected="true" aria-label="Category: All">All</button>
+        <button class="filter-tab" data-category="hotel" role="tab" aria-selected="false" aria-label="Category: Hotels">🏨 Hotels</button>
+        <button class="filter-tab" data-category="apartment" role="tab" aria-selected="false" aria-label="Category: Apartments">🏢 Apartments</button>
+        <button class="filter-tab" data-category="restaurant" role="tab" aria-selected="false" aria-label="Category: Restaurants">🍽️ Restaurants</button>
+        <button class="filter-tab" data-category="lounge" role="tab" aria-selected="false" aria-label="Category: Lounges">🥂 Lounges</button>
+        <button class="filter-tab" data-category="private-chef" role="tab" aria-selected="false" aria-label="Category: Private Chefs">🧑‍🍳 Private Chefs</button>
+        <button class="filter-tab" data-category="personal-security" role="tab" aria-selected="false" aria-label="Category: Personal Security">🛡️ Personal Security</button>
+        <button class="filter-tab" data-category="service" role="tab" aria-selected="false" aria-label="Category: Professional Services">🔧 Services</button>
+        <button class="filter-tab" data-category="airport-pickup" role="tab" aria-selected="false" aria-label="Category: Airport Pickups">✈️ Airport Pickups</button>
       </div>
 
       <!-- RESULTS META -->

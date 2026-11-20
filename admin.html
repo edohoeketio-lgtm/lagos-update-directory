@@ -179,6 +179,141 @@
       padding: 60px 20px;
       color: var(--text-muted);
     }
+
+    /* Mobile Responsive Optimizations (iOS / Android) */
+    @media (max-width: 768px) {
+      .admin-wrap {
+        padding: 16px 14px 60px;
+      }
+      .nav-inner {
+        padding: 10px 14px;
+      }
+      .nav-logo img {
+        height: 30px !important;
+      }
+      .nav-action-link {
+        display: none !important; /* Hide long link on small header */
+      }
+      .admin-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+        padding-bottom: 16px;
+        margin-bottom: 20px;
+      }
+      .admin-header h1 {
+        font-size: 22px !important;
+      }
+      .admin-stats {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+        width: 100% !important;
+      }
+      .stat-pill {
+        padding: 10px 12px;
+        font-size: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        text-align: center;
+        box-sizing: border-box;
+      }
+      .stat-pill strong {
+        font-size: 18px;
+      }
+      .filter-tabs-bar {
+        display: flex !important;
+        gap: 8px !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 10px !important;
+        margin-bottom: 18px !important;
+        scrollbar-width: none;
+      }
+      .filter-tabs-bar::-webkit-scrollbar {
+        display: none;
+      }
+      .filter-tab {
+        white-space: nowrap !important;
+        padding: 10px 14px !important;
+        font-size: 13px !important;
+        min-height: 44px;
+        flex-shrink: 0;
+      }
+      .sub-card {
+        padding: 16px 14px;
+        border-radius: 12px;
+        gap: 14px;
+      }
+      .sub-top {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+      }
+      .sub-title {
+        font-size: 18px;
+      }
+      .sub-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+        padding: 12px !important;
+      }
+      .sub-photos {
+        gap: 8px;
+      }
+      .sub-photo-thumb {
+        width: 80px;
+        height: 80px;
+      }
+      /* Review buttons stacked for easy finger tapping */
+      .sub-actions {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+        width: 100% !important;
+      }
+      .sub-actions button, .sub-actions a {
+        width: 100% !important;
+        min-height: 46px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        box-sizing: border-box !important;
+        font-size: 14px !important;
+        border-radius: 10px !important;
+        margin: 0 !important;
+      }
+      .quick-boost-row {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 6px !important;
+        width: 100% !important;
+      }
+      .quick-boost-row button {
+        width: 100% !important;
+        min-height: 42px !important;
+        padding: 8px 4px !important;
+        font-size: 12px !important;
+      }
+      /* Passkey Gate Modal */
+      #admin-gate-modal > div {
+        padding: 24px 18px !important;
+        border-radius: 16px !important;
+        width: calc(100% - 32px) !important;
+        max-width: 380px !important;
+      }
+      #admin-gate-modal input {
+        font-size: 16px !important; /* Prevents iOS auto-zoom */
+        min-height: 48px !important;
+        padding: 12px 14px !important;
+      }
+      #admin-gate-modal button {
+        min-height: 48px !important;
+        font-size: 15px !important;
+      }
+    }
   </style>
 </head>
 <body data-page="admin">
@@ -213,7 +348,7 @@
     </div>
 
     <!-- TABS -->
-    <div style="display:flex; gap:10px; margin-bottom:24px; border-bottom:1px solid var(--border-hairline); padding-bottom:14px; flex-wrap:wrap;">
+    <div class="filter-tabs-bar" style="display:flex; gap:10px; margin-bottom:24px; border-bottom:1px solid var(--border-hairline); padding-bottom:14px; flex-wrap:wrap;">
       <button type="button" id="tab-btn-pending" class="filter-tab active" onclick="switchAdminTab('pending')">
         📥 Pending Applications (<span id="tab-count-pending">0</span>)
       </button>
@@ -249,7 +384,7 @@
   </main>
 
   <!-- EDITORIAL PASSKEY GATE MODAL -->
-  <div id="admin-gate-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:99999;">
+  <div id="admin-gate-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:99999;padding:16px;">
     <div style="background:#FFF;padding:40px;border-radius:18px;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);text-align:center;">
       <img src="/img/logo.png" alt="Lagos Updates" style="height:44px;margin-bottom:16px;">
       <h2 style="font-size:1.3rem;font-weight:900;margin-bottom:6px;">Editorial Desk Access</h2>
@@ -262,8 +397,31 @@
     </div>
   </div>
 
+  <!-- PHOTO VIEWER LIGHTBOX MODAL -->
+  <div id="photo-viewer-modal" onclick="closePhotoViewer()" style="position:fixed;inset:0;background:rgba(0,0,0,0.92);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:100000;padding:16px;">
+    <div style="position:relative;max-width:92vw;max-height:90vh;display:flex;flex-direction:column;align-items:center;" onclick="event.stopPropagation()">
+      <button type="button" onclick="closePhotoViewer()" style="position:absolute;top:-48px;right:0;background:rgba(255,255,255,0.25);color:#FFF;border:none;border-radius:50%;width:42px;height:42px;font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;min-height:42px;min-width:42px;">&times;</button>
+      <img id="photo-viewer-img" src="" alt="Full view" style="max-width:100%;max-height:80vh;border-radius:12px;object-fit:contain;box-shadow:0 10px 40px rgba(0,0,0,0.5);">
+      <div style="color:#FFF;margin-top:12px;font-size:13px;font-weight:600;opacity:0.8;">Tap outside or &times; to dismiss</div>
+    </div>
+  </div>
+
   <script>
     let adminKey = sessionStorage.getItem('lagos_admin_key') || '';
+
+    function openPhotoViewer(url) {
+      const modal = document.getElementById('photo-viewer-modal');
+      const img = document.getElementById('photo-viewer-img');
+      if (modal && img) {
+        img.src = url;
+        modal.style.display = 'flex';
+      }
+    }
+
+    function closePhotoViewer() {
+      const modal = document.getElementById('photo-viewer-modal');
+      if (modal) modal.style.display = 'none';
+    }
 
     function checkAdminAuth() {
       const gate = document.getElementById('admin-gate-modal');
@@ -367,7 +525,7 @@
               <div>
                 <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display:block; margin-bottom: 6px;">Uploaded Photos (${photos.length}):</span>
                 <div class="sub-photos">
-                  ${photos.map(p => `<a href="${p}" target="_blank"><img src="${p}" class="sub-photo-thumb" alt="Photo"></a>`).join('')}
+                  ${photos.map(p => `<img src="${p}" class="sub-photo-thumb" alt="Photo" onclick="openPhotoViewer('${p}')" style="cursor:pointer;" title="Tap to expand">`).join('')}
                 </div>
               </div>
             `;
@@ -615,11 +773,13 @@
               <a href="/listing?id=${l.id}" target="_blank" style="color:#0066cc; font-weight:600;">View public page &rarr;</a>
             </div>
 
-            <div style="margin-top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <div style="margin-top:10px; display:flex; flex-direction:column; gap:6px;">
               <span style="font-size:12px; font-weight:700; color:var(--text-muted);">Quick Boost:</span>
-              <button type="button" class="btn-approve-featured" style="padding:6px 12px; font-size:12px;" onclick="handleAdminBoost('${l.id}', 7)">+7d (₦35k)</button>
-              <button type="button" class="btn-approve-featured" style="padding:6px 12px; font-size:12px;" onclick="handleAdminBoost('${l.id}', 14)">+14d (₦60k)</button>
-              <button type="button" class="btn-approve-featured" style="padding:6px 12px; font-size:12px;" onclick="handleAdminBoost('${l.id}', 30)">+30d (₦100k)</button>
+              <div class="quick-boost-row" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <button type="button" class="btn-approve-featured" style="padding:6px 12px; font-size:12px;" onclick="handleAdminBoost('${l.id}', 7)">+7d (₦35k)</button>
+                <button type="button" class="btn-approve-featured" style="padding:6px 12px; font-size:12px;" onclick="handleAdminBoost('${l.id}', 14)">+14d (₦60k)</button>
+                <button type="button" class="btn-approve-featured" style="padding:6px 12px; font-size:12px;" onclick="handleAdminBoost('${l.id}', 30)">+30d (₦100k)</button>
+              </div>
               ${l.featured_until ? `<span style="font-size:11px; color:#B45309; font-weight:600;">(Active until ${l.featured_until.split('T')[0]})</span>` : ''}
             </div>
 
