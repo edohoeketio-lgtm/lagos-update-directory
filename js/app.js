@@ -65,9 +65,11 @@ function buildCard(listing) {
   card.className = 'card';
   card.setAttribute('data-id', listing.id);
 
+  const hasPhoto = Boolean(listing.image);
   card.innerHTML = `
     <div class="card-img">
-      <span class="card-img-placeholder">${meta.emoji}</span>
+      ${hasPhoto ? `<img src="${listing.image}" alt="${listing.name}" class="card-img-photo" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">` : ''}
+      <span class="card-img-placeholder" style="${hasPhoto ? 'display:none;' : ''}">${meta.emoji}</span>
       <span class="card-category-badge">${meta.label}</span>
       ${listing.promoted ? '<span class="card-promoted-tag"><span>★</span> Featured</span>' : ''}
       ${listing.verified ? '<span class="card-verified-badge">Verified</span>' : ''}
@@ -1022,7 +1024,13 @@ async function initListing() {
   document.title = `${listing.name} — Lagos Updates Directory`;
 
   const heroImg = document.getElementById('listing-hero-img');
-  if (heroImg) heroImg.textContent = meta.emoji;
+  if (heroImg) {
+    if (listing.image) {
+      heroImg.innerHTML = `<img src="${listing.image}" alt="${listing.name}" class="listing-hero-photo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><span class="listing-hero-emoji" style="display:none;">${meta.emoji}</span>`;
+    } else {
+      heroImg.innerHTML = `<span class="listing-hero-emoji">${meta.emoji}</span>`;
+    }
+  }
 
   const nameEl = document.getElementById('listing-name');
   if (nameEl) nameEl.textContent = listing.name;

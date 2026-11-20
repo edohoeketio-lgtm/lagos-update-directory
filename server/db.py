@@ -165,6 +165,11 @@ def init_db():
         pass
 
     try:
+        cursor.execute("ALTER TABLE listings ADD COLUMN image TEXT DEFAULT '';")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
         cursor.execute("ALTER TABLE submissions ADD COLUMN photos TEXT DEFAULT '[]';")
     except sqlite3.OperationalError:
         pass
@@ -212,8 +217,8 @@ def init_db():
                     INSERT OR IGNORE INTO listings (
                         id, name, category, area, description,
                         price_range, rating, verified, promoted,
-                        phone, whatsapp, instagram
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        phone, whatsapp, instagram, image
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, (
                         item.get('id'),
                         item.get('name'),
@@ -226,7 +231,8 @@ def init_db():
                         1 if item.get('promoted') else 0,
                         item.get('phone', ''),
                         item.get('whatsapp', ''),
-                        item.get('instagram', '')
+                        item.get('instagram', ''),
+                        item.get('image', '')
                     ))
             conn.commit()
             print(f"Auto-seeded {len(data)} listings from listings.json into SQLite.")
@@ -283,7 +289,8 @@ def query_listings(category=None, area=None, query=None, verified_only=False, fe
             "promoted": bool(r["promoted"]),
             "phone": r["phone"],
             "whatsapp": r["whatsapp"],
-            "instagram": r["instagram"]
+            "instagram": r["instagram"],
+            "image": r["image"] if "image" in r.keys() else ""
         })
     return result
 
@@ -309,7 +316,8 @@ def get_listing_by_id(listing_id: str):
         "featuredUntil": row["featured_until"] if "featured_until" in row.keys() else "",
         "phone": row["phone"],
         "whatsapp": row["whatsapp"],
-        "instagram": row["instagram"]
+        "instagram": row["instagram"],
+        "image": row["image"] if "image" in row.keys() else ""
     }
 
 def insert_submission(cleaned_data: dict, saved_photos: list = None) -> str:

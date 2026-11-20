@@ -11,7 +11,8 @@
     "verified": true,
     "promoted": true,
     "rating": "Top Rated",
-    "priceRange": "₦₦₦₦"
+    "priceRange": "₦₦₦₦",
+    "image": "/img/listings/the-wheatbaker-hotel.jpg"
   },
   {
     "id": "2",
@@ -25,7 +26,8 @@
     "verified": true,
     "promoted": true,
     "rating": "Iconic",
-    "priceRange": "₦₦₦₦"
+    "priceRange": "₦₦₦₦",
+    "image": "/img/listings/eko-hotel-and-suites.jpg"
   },
   {
     "id": "3",
@@ -39,7 +41,8 @@
     "verified": true,
     "promoted": true,
     "rating": "Fine Dining",
-    "priceRange": "₦₦₦₦"
+    "priceRange": "₦₦₦₦",
+    "image": "/img/listings/nok-by-alara.jpg"
   },
   {
     "id": "4",
@@ -53,7 +56,8 @@
     "verified": true,
     "promoted": true,
     "rating": "Award Winning",
-    "priceRange": "₦₦₦"
+    "priceRange": "₦₦₦",
+    "image": "/img/listings/chef-tunde-private-kitchen.jpg"
   },
   {
     "id": "5",
@@ -67,7 +71,8 @@
     "verified": true,
     "promoted": true,
     "rating": "Top View",
-    "priceRange": "₦₦₦"
+    "priceRange": "₦₦₦",
+    "image": "/img/listings/sky-bar-lagos.jpg"
   },
   {
     "id": "6",
@@ -81,7 +86,8 @@
     "verified": true,
     "promoted": true,
     "rating": "Licensed",
-    "priceRange": "₦₦₦₦"
+    "priceRange": "₦₦₦₦",
+    "image": "/img/listings/vanguard-protection-services.jpg"
   },
   {
     "id": "7",
@@ -95,7 +101,8 @@
     "verified": true,
     "promoted": false,
     "rating": "Business Pick",
-    "priceRange": "₦₦₦"
+    "priceRange": "₦₦₦",
+    "image": "/img/listings/radisson-blu-hotel.jpg"
   },
   {
     "id": "8",
@@ -109,7 +116,8 @@
     "verified": true,
     "promoted": false,
     "rating": "5 Star",
-    "priceRange": "₦₦₦₦"
+    "priceRange": "₦₦₦₦",
+    "image": "/img/listings/lagos-continental-hotel.jpg"
   },
   {
     "id": "9",
@@ -123,7 +131,8 @@
     "verified": true,
     "promoted": false,
     "rating": "Boutique Pick",
-    "priceRange": "₦₦₦"
+    "priceRange": "₦₦₦",
+    "image": "/img/listings/circa-lagos.jpg"
   },
   {
     "id": "10",
@@ -137,7 +146,8 @@
     "verified": true,
     "promoted": false,
     "rating": "Best Value",
-    "priceRange": "₦₦₦"
+    "priceRange": "₦₦₦",
+    "image": "/img/listings/eden-heights-apartments.jpg"
   },
   {
     "id": "11",
@@ -151,7 +161,8 @@
     "verified": true,
     "promoted": false,
     "rating": "Airport Close",
-    "priceRange": "₦₦"
+    "priceRange": "₦₦",
+    "image": "/img/listings/magnolia-suites.jpg"
   },
   {
     "id": "12",
@@ -165,7 +176,8 @@
     "verified": false,
     "promoted": false,
     "rating": "Waterfront",
-    "priceRange": "₦₦₦₦"
+    "priceRange": "₦₦₦₦",
+    "image": "/img/listings/harbour-point-residences.jpg"
   },
   {
     "id": "13",
@@ -179,7 +191,8 @@
     "verified": true,
     "promoted": false,
     "rating": "Digital Nomad",
-    "priceRange": "₦₦"
+    "priceRange": "₦₦",
+    "image": "/img/listings/nomad-lagos.jpg"
   },
   {
     "id": "14",
@@ -193,7 +206,8 @@
     "verified": true,
     "promoted": false,
     "rating": "Must Try",
-    "priceRange": "₦₦₦"
+    "priceRange": "₦₦₦",
+    "image": "/img/listings/craft-grill.jpg"
   },
   {
     "id": "15",
@@ -207,7 +221,8 @@
     "verified": true,
     "promoted": false,
     "rating": "Nigerian Classic",
-    "priceRange": "₦₦₦"
+    "priceRange": "₦₦₦",
+    "image": "/img/listings/yellow-chilli.jpg"
   },
   {
     "id": "16",
@@ -221,7 +236,8 @@
     "verified": true,
     "promoted": false,
     "rating": "Weekend Favourite",
-    "priceRange": "₦₦₦"
+    "priceRange": "₦₦₦",
+    "image": "/img/listings/escape-lounge-and-bar.jpg"
   },
   {
     "id": "17",
@@ -235,7 +251,8 @@
     "verified": true,
     "promoted": false,
     "rating": "Global Brand",
-    "priceRange": "₦₦₦"
+    "priceRange": "₦₦₦",
+    "image": "/img/listings/hard-rock-cafe-lagos.jpg"
   },
   {
     "id": "18",
@@ -249,7 +266,8 @@
     "verified": true,
     "promoted": false,
     "rating": "Most Reliable",
-    "priceRange": "₦₦"
+    "priceRange": "₦₦",
+    "image": "/img/listings/lagos-clean-ride.jpg"
   },
   {
     "id": "19",
@@ -263,7 +281,8 @@
     "verified": true,
     "promoted": false,
     "rating": "Executive",
-    "priceRange": "₦₦₦"
+    "priceRange": "₦₦₦",
+    "image": "/img/listings/firstclass-transfers-ng.jpg"
   },
   {
     "id": "20",
@@ -277,7 +296,8 @@
     "verified": false,
     "promoted": false,
     "rating": "Budget Pick",
-    "priceRange": "₦"
+    "priceRange": "₦",
+    "image": "/img/listings/airport-mover-lagos.jpg"
   },
   {
     "id": "21",
@@ -291,7 +311,8 @@
     "verified": true,
     "promoted": false,
     "rating": "24/7",
-    "priceRange": "₦₦"
+    "priceRange": "₦₦",
+    "image": "/img/listings/lagos-plumbing-pros.jpg"
   },
   {
     "id": "22",
@@ -305,7 +326,8 @@
     "verified": true,
     "promoted": false,
     "rating": "Transparent Pricing",
-    "priceRange": "₦₦"
+    "priceRange": "₦₦",
+    "image": "/img/listings/coolbreeze-ac-services.jpg"
   },
   {
     "id": "23",
@@ -319,7 +341,8 @@
     "verified": true,
     "promoted": false,
     "rating": "Beauty Pick",
-    "priceRange": "₦₦"
+    "priceRange": "₦₦",
+    "image": "/img/listings/glowup-studio.jpg"
   },
   {
     "id": "24",
@@ -333,7 +356,8 @@
     "verified": true,
     "promoted": false,
     "rating": "Fast Delivery",
-    "priceRange": "₦"
+    "priceRange": "₦",
+    "image": "/img/listings/lagos-dispatch-riders.jpg"
   },
   {
     "id": "25",
@@ -347,7 +371,8 @@
     "verified": true,
     "promoted": false,
     "rating": "Airport Hotel",
-    "priceRange": "₦₦₦"
+    "priceRange": "₦₦₦",
+    "image": "/img/listings/sheraton-lagos-hotel.jpg"
   },
   {
     "id": "26",
@@ -361,7 +386,8 @@
     "verified": true,
     "promoted": false,
     "rating": "Authentic",
-    "priceRange": "₦₦"
+    "priceRange": "₦₦",
+    "image": "/img/listings/madam-kofo-private-chef.jpg"
   },
   {
     "id": "27",
@@ -375,7 +401,8 @@
     "verified": false,
     "promoted": false,
     "rating": "Luxury Experience",
-    "priceRange": "₦₦₦₦"
+    "priceRange": "₦₦₦₦",
+    "image": "/img/listings/the-lagos-table.jpg"
   },
   {
     "id": "28",
@@ -389,7 +416,8 @@
     "verified": true,
     "promoted": false,
     "rating": "Ex-Military",
-    "priceRange": "₦₦₦"
+    "priceRange": "₦₦₦",
+    "image": "/img/listings/eagle-eye-security.jpg"
   },
   {
     "id": "29",
@@ -403,6 +431,7 @@
     "verified": false,
     "promoted": false,
     "rating": "Certified",
-    "priceRange": "₦₦"
+    "priceRange": "₦₦",
+    "image": "/img/listings/volt-electrical-ng.jpg"
   }
 ]

@@ -464,6 +464,16 @@ input, select, textarea {
   box-shadow: var(--shadow-hover);
   transform: translateY(-2px);
 }
+.card-img-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: block;
+}
+.card:hover .card-img-photo {
+  transform: scale(1.05);
+}
 .card-img-placeholder {
   font-size: 42px;
   line-height: 1;
