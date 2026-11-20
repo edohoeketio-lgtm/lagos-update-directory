@@ -212,5 +212,24 @@ class TestMobileLayoutAndUX(unittest.TestCase):
             self.assertIn(exp_type, content_type, f"Content-Type mismatch on {path}: got {content_type}, expected {exp_type}")
             self.assertGreater(len(body), 0, f"Empty body returned on {path}")
 
+    def test_mobile_review_drawer_contrast_and_hygiene(self):
+        """Verify that the mobile review drawer in listing.html has clean contrast and no duplicate headers."""
+        listing_path = os.path.join(BASE_DIR, "listing.html")
+        with open(listing_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        # 1. Drawer background on mobile must be clean white (#FFFFFF), not dark navy
+        self.assertIn("background: #FFFFFF !important", content)
+        self.assertNotIn("background: #111827 !important", content, "Mobile review drawer must not have dark navy background")
+
+        # 2. Duplicate desktop heading & icon must be hidden in drawer on mobile
+        self.assertIn(".drawer-body .review-coming-soon-icon", content)
+        self.assertIn(".drawer-body .desktop-only-title", content)
+        self.assertIn("display: none !important", content)
+
+        # 3. Input element must have >= 16px font-size to prevent iOS Safari auto-zoom
+        self.assertIn("font-size: 16px !important", content)
+
+
 if __name__ == '__main__':
     unittest.main()
