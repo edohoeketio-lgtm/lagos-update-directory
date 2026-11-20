@@ -554,7 +554,7 @@
             <div class="sub-grid">
               <div class="sub-grid-item"><span>Category</span><strong>${s.category.toUpperCase()}</strong></div>
               <div class="sub-grid-item"><span>Neighborhood</span><strong>${s.area}, Lagos</strong></div>
-              <div class="sub-grid-item"><span>Rates</span><strong>${s.price_range || 'On Request'}</strong></div>
+              <div class="sub-grid-item"><span>CAC Reg No</span><strong style="color:#0066cc;">${s.rc_number || 'UNVERIFIED'}</strong><a href="https://search.cac.gov.ng" target="_blank" rel="noopener" style="font-size:11px; text-decoration:underline; color:#0066cc; display:block; margin-top:2px;">Verify on CAC Portal &rarr;</a></div>
               <div class="sub-grid-item"><span>Contact Person</span><strong>${s.contact_name} (${s.contact_email})</strong></div>
             </div>
 
@@ -844,12 +844,17 @@
     }
 
     async function handleReject(subId) {
-      if (!confirm('Reject this application?')) return;
+      const reason = prompt('Please enter a rejection reason for the vendor:', 'Business credentials or CAC registration could not be verified according to Lagos Updates directory standards.');
+      if (reason === null) return; // User pressed Cancel
       if (typeof window.trackEvent === 'function') {
         window.trackEvent('admin_submission_rejected', { sub_id: subId });
       }
       try {
-        await adminFetch(`/api/admin/submissions/${subId}/reject`, { method: 'POST' });
+        await adminFetch(`/api/admin/submissions/${subId}/reject`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason: reason.trim() })
+        });
         loadSubmissions();
       } catch (err) {
         alert('Connection error');

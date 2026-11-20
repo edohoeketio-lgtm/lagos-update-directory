@@ -136,6 +136,7 @@ def validate_submission_payload(data: dict) -> tuple[bool, dict, str]:
         return False, {}, "Invalid JSON payload"
 
     business_name = sanitize_text(data.get("business_name", ""), max_len=100)
+    rc_number = sanitize_text(data.get("rc_number", ""), max_len=50).upper().strip()
     category = str(data.get("category", "")).strip().lower()
     area = sanitize_text(data.get("area", ""), max_len=80)
     description = sanitize_text(data.get("description", ""), max_len=800)
@@ -155,6 +156,9 @@ def validate_submission_payload(data: dict) -> tuple[bool, dict, str]:
 
     if not business_name or len(business_name) < 2:
         return False, {}, "Business name must be at least 2 characters."
+
+    if not rc_number or len(rc_number) < 3:
+        return False, {}, "CAC Registration Number (RC or BN Number) is required. Lagos Updates only lists legally registered companies."
 
     if category not in VALID_CATEGORIES and not category.startswith("other"):
         return False, {}, f"Invalid category. Must be one of: {', '.join(sorted(VALID_CATEGORIES))}"
@@ -180,6 +184,7 @@ def validate_submission_payload(data: dict) -> tuple[bool, dict, str]:
 
     cleaned = {
         "business_name": business_name,
+        "rc_number": rc_number,
         "category": category,
         "area": area,
         "description": description,

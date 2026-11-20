@@ -56,6 +56,7 @@ class TestValidators(unittest.TestCase):
     def test_valid_submission_payload(self):
         payload = {
             "business_name": "The Lekki Penthouse",
+            "rc_number": "RC 1849201",
             "category": "hotel",
             "area": "Lekki Phase 1",
             "description": "Exclusive oceanfront luxury serviced penthouse.",
@@ -69,13 +70,29 @@ class TestValidators(unittest.TestCase):
         is_valid, cleaned, err = validate_submission_payload(payload)
         self.assertTrue(is_valid)
         self.assertEqual(err, "")
+        self.assertEqual(cleaned["rc_number"], "RC 1849201")
         self.assertEqual(cleaned["whatsapp"], "+2348031234567")
         self.assertEqual(cleaned["instagram"], "lekkipenthouse")
         self.assertEqual(cleaned["plan_tier"], "featured")
 
+    def test_rc_number_mandatory(self):
+        payload = {
+            "business_name": "Unregistered Venture",
+            "category": "hotel",
+            "area": "Lekki Phase 1",
+            "description": "Exclusive oceanfront luxury serviced penthouse.",
+            "whatsapp": "08031234567",
+            "contact_name": "Tunde",
+            "contact_email": "tunde@example.com"
+        }
+        is_valid, _, err = validate_submission_payload(payload)
+        self.assertFalse(is_valid)
+        self.assertIn("CAC Registration Number", err)
+
     def test_honeypot_spam_rejection(self):
         payload = {
             "business_name": "Spam Bot Co",
+            "rc_number": "RC 999999",
             "category": "hotel",
             "area": "Ikoyi",
             "description": "Legit text description here.",
@@ -91,6 +108,7 @@ class TestValidators(unittest.TestCase):
     def test_invalid_category_rejection(self):
         payload = {
             "business_name": "Valid Name",
+            "rc_number": "RC 1849201",
             "category": "crypto-trading",  # Invalid
             "area": "Victoria Island",
             "description": "Valid description length.",

@@ -491,7 +491,13 @@ function initBusinessModal() {
   const step1        = document.getElementById('modal-step-1');
   const step2        = document.getElementById('modal-step-2');
   const step3        = document.getElementById('modal-step-3');
+  const stepAuth     = document.getElementById('modal-step-auth');
   const stepSuccess  = document.getElementById('modal-step-success');
+  const stepBar      = document.getElementById('modal-step-bar');
+
+  const chipVendor   = document.getElementById('modal-vendor-session-chip');
+  const badgeEmail   = document.getElementById('modal-vendor-email-badge');
+  const linkSwitch   = document.getElementById('link-modal-switch-account');
 
   const seg1         = document.getElementById('step-seg-1');
   const seg2         = document.getElementById('step-seg-2');
@@ -509,6 +515,36 @@ function initBusinessModal() {
   let currentStep = 1;
   let selectedPlan = 'verified';
   let uploadedPhotos = []; // stores base64 strings
+
+  function getVendorAuth() {
+    const token = localStorage.getItem('lagos_vendor_token') || '';
+    let user = null;
+    try {
+      user = JSON.parse(localStorage.getItem('lagos_vendor_user') || '{}');
+    } catch (_) {}
+    return { token, user };
+  }
+
+  function applyVendorToForm(user) {
+    if (!user) return;
+    if (chipVendor) {
+      chipVendor.style.display = 'flex';
+      if (badgeEmail) {
+        badgeEmail.textContent = user.business_name ? `${user.business_name} (${user.email})` : user.email;
+      }
+    }
+    const nameEl = document.getElementById('form-name');
+    if (nameEl && !nameEl.value && user.business_name) nameEl.value = user.business_name;
+
+    const rcEl = document.getElementById('form-rc-number');
+    if (rcEl && !rcEl.value && user.rc_number) rcEl.value = user.rc_number;
+
+    const waEl = document.getElementById('form-whatsapp');
+    if (waEl && !waEl.value && user.whatsapp) waEl.value = user.whatsapp;
+
+    const emailEl = document.getElementById('form-contact-email');
+    if (emailEl && !emailEl.value && user.email) emailEl.value = user.email;
+  }
 
   const dropZone     = document.getElementById('photo-drop-zone');
   const photosInput  = document.getElementById('form-photos-input');
@@ -602,7 +638,15 @@ function initBusinessModal() {
     backdrop.classList.add('open');
     document.body.style.overflow = 'hidden';
     hideError();
-    loadDraft();
+    const { token, user } = getVendorAuth();
+    if (!token) {
+      currentStep = 0;
+    } else {
+      currentStep = 1;
+      applyVendorToForm(user);
+      loadDraft();
+    }
+    updateStepUI();
     if (typeof window.trackEvent === 'function') {
       window.trackEvent('onboarding_modal_opened', { step: currentStep });
     }
@@ -620,6 +664,123 @@ function initBusinessModal() {
   if (btnOpen) btnOpen.addEventListener('click', openModal);
   if (btnClose) btnClose.addEventListener('click', closeModal);
   if (btnDone) btnDone.addEventListener('click', closeModal);
+
+  // Wire Auth Gate inside Listing Modal
+  const btnAuthReg = document.getElementById('btn-auth-register');
+  const btnAuthLog = document.getElementById('btn-auth-login');
+  const linkShowLog = document.getElementById('link-show-login');
+  const linkShowReg = document.getElementById('link-show-register');
+  const authGateReg = document.getElementById('auth-gate-register');
+  const authGateLog = document.getElementById('auth-gate-login');
+
+  if (linkShowLog && authGateReg && authGateLog) {
+    linkShowLog.addEventListener('click', e => {
+      e.preventDefault();
+      authGateReg.style.display = 'none';
+      authGateLog.style.display = 'block';
+      hideError();
+    });
+  }
+  if (linkShowReg && authGateReg && authGateLog) {
+    linkShowReg.addEventListener('click', e => {
+      e.preventDefault();
+      authGateLog.style.display = 'none';
+      authGateReg.style.display = 'block';
+      hideError();
+    });
+  }
+  if (linkSwitch) {
+    linkSwitch.addEventListener('click', e => {
+      e.preventDefault();
+      localStorage.removeItem('lagos_vendor_token');
+      localStorage.removeItem('lagos_vendor_user');
+      if (chipVendor) chipVendor.style.display = 'none';
+      currentStep = 0;
+      updateStepUI();
+    });
+  }
+
+  if (btnAuthReg) {
+    btnAuthReg.addEventListener('click', async () => {
+      hideError();
+      const bName = (document.getElementById('auth-business-name')?.value || '').trim();
+      const rcNum = (document.getElementById('auth-rc-number')?.value || '').trim().toUpperCase();
+      const email = (document.getElementById('auth-email')?.value || '').trim().toLowerCase();
+      const phone = (document.getElementById('auth-whatsapp')?.value || '').trim();
+      const pass  = (document.getElementById('auth-password')?.value || '').trim();
+
+      if (!bName) return showError('Please enter your business name.');
+      if (!rcNum || rcNum.length < 3) return showError('CAC Registration Number (RC/BN) is required.');
+      if (!email || !email.includes('@')) return showError('Please enter a valid business email.');
+      if (!phone) return showError('Please enter your WhatsApp number.');
+      if (!pass || pass.length < 6) return showError('Password must be at least 6 characters.');
+
+      btnAuthReg.disabled = true;
+      btnAuthReg.textContent = 'Creating Account…';
+
+      try {
+        const res = await fetch('/api/vendor/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ business_name: bName, rc_number: rcNum, email, whatsapp: phone, password: pass })
+        });
+        const data = await res.json();
+        btnAuthReg.disabled = false;
+        btnAuthReg.textContent = 'Create Account & Continue →';
+        if (!res.ok) {
+          return showError(data.error || 'Registration failed.');
+        }
+
+        localStorage.setItem('lagos_vendor_token', data.token);
+        localStorage.setItem('lagos_vendor_user', JSON.stringify(data.vendor || {}));
+        applyVendorToForm(data.vendor);
+        currentStep = 1;
+        updateStepUI();
+      } catch (err) {
+        btnAuthReg.disabled = false;
+        btnAuthReg.textContent = 'Create Account & Continue →';
+        showError('Network error. Please try again.');
+      }
+    });
+  }
+
+  if (btnAuthLog) {
+    btnAuthLog.addEventListener('click', async () => {
+      hideError();
+      const email = (document.getElementById('auth-login-email')?.value || '').trim().toLowerCase();
+      const pass  = (document.getElementById('auth-login-password')?.value || '').trim();
+
+      if (!email || !email.includes('@')) return showError('Please enter your vendor email.');
+      if (!pass) return showError('Please enter your password.');
+
+      btnAuthLog.disabled = true;
+      btnAuthLog.textContent = 'Signing in…';
+
+      try {
+        const res = await fetch('/api/vendor/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password: pass })
+        });
+        const data = await res.json();
+        btnAuthLog.disabled = false;
+        btnAuthLog.textContent = 'Sign In & Continue →';
+        if (!res.ok) {
+          return showError(data.error || 'Incorrect email or password.');
+        }
+
+        localStorage.setItem('lagos_vendor_token', data.token);
+        localStorage.setItem('lagos_vendor_user', JSON.stringify(data.vendor || {}));
+        applyVendorToForm(data.vendor);
+        currentStep = 1;
+        updateStepUI();
+      } catch (err) {
+        btnAuthLog.disabled = false;
+        btnAuthLog.textContent = 'Sign In & Continue →';
+        showError('Network error. Please try again.');
+      }
+    });
+  }
 
   // Prevent accidental backdrop dismissals while filling the application:
   // The modal stays open until the user explicitly clicks the ✕ close button or completes registration.
@@ -662,6 +823,10 @@ function initBusinessModal() {
 
   function updateStepUI() {
     hideError();
+    if (stepAuth) stepAuth.style.display = currentStep === 0 ? 'block' : 'none';
+    if (stepBar) stepBar.style.display = currentStep === 0 ? 'none' : 'flex';
+    if (footerCtrl) footerCtrl.style.display = currentStep === 0 ? 'none' : 'flex';
+
     step1.style.display = currentStep === 1 ? 'block' : 'none';
     step2.style.display = currentStep === 2 ? 'block' : 'none';
     step3.style.display = currentStep === 3 ? 'block' : 'none';
@@ -698,6 +863,7 @@ function initBusinessModal() {
     hideError();
     if (step === 1) {
       const name = document.getElementById('form-name').value.trim();
+      const rc   = (document.getElementById('form-rc-number')?.value || '').trim();
       let cat  = document.getElementById('form-category').value;
       if (cat === 'other') {
         const customCat = (document.getElementById('form-custom-category')?.value || '').trim();
@@ -715,6 +881,7 @@ function initBusinessModal() {
       const desc = document.getElementById('form-desc').value.trim();
 
       if (!name) { showError('Please enter your business or brand name.'); return false; }
+      if (!rc || rc.length < 3) { showError('CAC Registration Number (RC/BN) is required. Lagos Updates only lists registered businesses.'); return false; }
       if (!cat)  { showError('Please choose or enter a category.'); return false; }
       if (!area) { showError('Please select or enter a neighborhood in Lagos.'); return false; }
       if (!desc || desc.length < 10) { showError('Please provide a short description (at least 10 characters).'); return false; }
@@ -811,8 +978,25 @@ function initBusinessModal() {
     e.preventDefault();
     if (!validateStep(3)) return;
 
+    const { token } = getVendorAuth();
+    if (!token) {
+      currentStep = 0;
+      updateStepUI();
+      showError('Please sign in or create a vendor account to submit your business.');
+      return;
+    }
+
+    const rcInput = document.getElementById('form-rc-number');
+    const rcNumber = rcInput ? rcInput.value.trim().toUpperCase() : '';
+    if (!rcNumber || rcNumber.length < 3) {
+      currentStep = 1;
+      updateStepUI();
+      showError('CAC Registration Number (RC/BN) is required. Lagos Updates only lists registered businesses.');
+      return;
+    }
+
     btnSubmit.disabled = true;
-    btnSubmit.textContent = 'Submitting…';
+    btnSubmit.textContent = 'Preparing checkout…';
     hideError();
 
     const driveLinkEl = document.getElementById('form-drive-link');
@@ -830,6 +1014,7 @@ function initBusinessModal() {
 
     const payload = {
       business_name: document.getElementById('form-name').value.trim(),
+      rc_number: rcNumber,
       category: finalCat,
       area: finalArea,
       description: document.getElementById('form-desc').value.trim(),
@@ -847,7 +1032,10 @@ function initBusinessModal() {
     try {
       const res = await fetch('/api/submissions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(payload)
       });
 
@@ -856,7 +1044,10 @@ function initBusinessModal() {
       if (!res.ok) {
         showError(data.error || 'Submission failed. Please check your information and try again.');
         btnSubmit.disabled = false;
-        btnSubmit.textContent = 'Submit Application ✓';
+        let planPrice = '₦30,000';
+        if (selectedPlan === 'featured_1w') planPrice = '₦35,000';
+        if (selectedPlan === 'featured') planPrice = '₦100,000';
+        btnSubmit.textContent = `💳 Pay ${planPrice} with Flutterwave ✓`;
         return;
       }
 
@@ -872,15 +1063,16 @@ function initBusinessModal() {
         });
       }
 
-      localStorage.removeItem('lagos_listing_draft');
-      form.reset();
-      uploadedPhotos = [];
-      if (previewGrid) previewGrid.innerHTML = '';
-
       function transitionToSuccess(isPaid, flwTxRef) {
+        localStorage.removeItem('lagos_listing_draft');
+        form.reset();
+        uploadedPhotos = [];
+        if (previewGrid) previewGrid.innerHTML = '';
+
         step1.style.display = 'none';
         step2.style.display = 'none';
         step3.style.display = 'none';
+        if (stepBar) stepBar.style.display = 'none';
         footerCtrl.style.display = 'none';
         stepSuccess.style.display = 'block';
 
@@ -889,12 +1081,17 @@ function initBusinessModal() {
 
         const payStatusEl = document.getElementById('success-payment-status');
         if (payStatusEl) {
-          if (isPaid) {
-            payStatusEl.innerHTML = `<span style="color:#008A05;">✓ Flutterwave Payment Confirmed (${flwTxRef || 'Verified'})</span>`;
-          } else {
-            payStatusEl.innerHTML = `<span style="color:#B45309;">⏳ Payment Pending (Review & Invoice will be sent via WhatsApp)</span>`;
-          }
+          payStatusEl.innerHTML = `<span style="color:#008A05; font-weight:700;">✓ Flutterwave Payment Confirmed (${flwTxRef || 'Verified'}) &mdash; Sent to Admin Editorial Review Queue</span>`;
         }
+      }
+
+      function handlePaymentIncomplete(msg) {
+        btnSubmit.disabled = false;
+        let planPrice = '₦30,000';
+        if (selectedPlan === 'featured_1w') planPrice = '₦35,000';
+        if (selectedPlan === 'featured') planPrice = '₦100,000';
+        btnSubmit.textContent = `💳 Pay ${planPrice} with Flutterwave ✓`;
+        showError(msg || 'Payment was not completed. Your application will only be forwarded to the admin review queue after payment is confirmed.');
       }
 
       // Calculate amount for Flutterwave checkout
@@ -924,27 +1121,31 @@ function initBusinessModal() {
           metadata: {
             business_name: payload.business_name,
             category: payload.category,
-            plan_tier: payload.plan_tier
+            plan_tier: payload.plan_tier,
+            rc_number: payload.rc_number
           },
           onSuccess: function (verifyData) {
             transitionToSuccess(true, verifyData.tx_ref);
           },
           onClose: function () {
-            transitionToSuccess(false);
+            handlePaymentIncomplete('Payment cancelled. Applications are only submitted to admin review after successful payment.');
           },
           onError: function () {
-            transitionToSuccess(false);
+            handlePaymentIncomplete('Payment could not be processed. Please try again or use another payment method.');
           }
         });
       } else {
-        transitionToSuccess(false);
+        handlePaymentIncomplete('Payment gateway could not be loaded. Please ensure you have internet access.');
       }
 
     } catch (err) {
       console.error(err);
       showError('Connection error. Please check your internet connection and try again.');
       btnSubmit.disabled = false;
-      btnSubmit.textContent = 'Submit Application ✓';
+      let planPrice = '₦30,000';
+      if (selectedPlan === 'featured_1w') planPrice = '₦35,000';
+      if (selectedPlan === 'featured') planPrice = '₦100,000';
+      btnSubmit.textContent = `💳 Pay ${planPrice} with Flutterwave ✓`;
     }
   });
 

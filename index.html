@@ -312,14 +312,76 @@
       <!-- FORM -->
       <form id="business-listing-form" novalidate>
 
+        <!-- STEP 0: VENDOR ACCOUNT GATE -->
+        <div class="modal-body modal-step" id="modal-step-auth" style="display: none;">
+          <div class="modal-step-title">Vendor Account Required</div>
+          <div class="modal-step-sub">You must create a vendor account to list and manage your business on Lagos Updates.</div>
+
+          <div id="auth-gate-register">
+            <div class="form-group">
+              <label class="form-label" for="auth-business-name">Registered Business Name <span class="req">*</span></label>
+              <input type="text" id="auth-business-name" class="form-input" placeholder="e.g. The Wheatbaker Hotel Ltd" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="auth-rc-number">CAC Registration Number (RC / BN Number) <span class="req">*</span></label>
+              <input type="text" id="auth-rc-number" class="form-input" placeholder="e.g. RC 1849201 or BN 3829104" required>
+              <div class="form-help">Mandatory. Lagos Updates only lists legally registered Nigerian businesses.</div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="auth-email">Business Account Email <span class="req">*</span></label>
+                <input type="email" id="auth-email" class="form-input" placeholder="vendor@mybusiness.ng" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="auth-whatsapp">WhatsApp Number <span class="req">*</span></label>
+                <input type="tel" id="auth-whatsapp" class="form-input" placeholder="0803 000 0000" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="auth-password">Create Account Password <span class="req">*</span></label>
+              <input type="password" id="auth-password" class="form-input" placeholder="At least 6 characters" minlength="6" required>
+            </div>
+            <button type="button" class="btn-modal-next" id="btn-auth-register" style="width:100%; min-height:48px; margin-top:14px; font-weight:800;">Create Account &amp; Continue &rarr;</button>
+            <div style="text-align:center; margin-top:14px; font-size:13px; color:#6B7280;">
+              Already registered? <a href="#" id="link-show-login" style="color:#000000; font-weight:700; text-decoration:underline;">Sign In to your account</a>
+            </div>
+          </div>
+
+          <div id="auth-gate-login" style="display:none;">
+            <div class="form-group">
+              <label class="form-label" for="auth-login-email">Vendor Email Address <span class="req">*</span></label>
+              <input type="email" id="auth-login-email" class="form-input" placeholder="vendor@mybusiness.ng">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="auth-login-password">Password / Passcode <span class="req">*</span></label>
+              <input type="password" id="auth-login-password" class="form-input" placeholder="Your password">
+            </div>
+            <button type="button" class="btn-modal-next" id="btn-auth-login" style="width:100%; min-height:48px; margin-top:14px; font-weight:800;">Sign In &amp; Continue &rarr;</button>
+            <div style="text-align:center; margin-top:14px; font-size:13px; color:#6B7280;">
+              Need an account? <a href="#" id="link-show-register" style="color:#000000; font-weight:700; text-decoration:underline;">Create Vendor Account</a>
+            </div>
+          </div>
+        </div>
+
         <!-- STEP 1: BUSINESS BASICS -->
         <div class="modal-body modal-step" id="modal-step-1">
+          <div id="modal-vendor-session-chip" style="display:none; background:#F3F4F6; border:1px solid #E5E7EB; border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:13px; color:#374151; justify-content:space-between; align-items:center;">
+            <span>👤 Logged in as: <strong id="modal-vendor-email-badge">vendor@example.com</strong></span>
+            <a href="#" id="link-modal-switch-account" style="color:#000; font-weight:700; font-size:12px; text-decoration:underline;">Switch Account</a>
+          </div>
+
           <div class="modal-step-title" id="modal-step-title">Tell us about your business</div>
           <div class="modal-step-sub">Step 1 of 3 &middot; Business Identity</div>
 
           <div class="form-group">
             <label class="form-label" for="form-name">Business / Brand Name <span class="req">*</span></label>
             <input type="text" id="form-name" class="form-input" placeholder="e.g. The Wheatbaker, Chef Michael's Table" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="form-rc-number">CAC Registration Number (RC / BN Number) <span class="req">*</span></label>
+            <input type="text" id="form-rc-number" class="form-input" placeholder="e.g. RC 1849201 or BN 3829104" required>
+            <div class="form-help">Mandatory. Lagos Updates only lists legally registered Nigerian businesses. Verified against CAC portal.</div>
           </div>
 
           <div class="form-row">

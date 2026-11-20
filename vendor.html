@@ -464,11 +464,16 @@
       <!-- Register Form -->
       <form id="form-register" style="display:none;" onsubmit="handleRegister(event)">
         <div class="form-group">
-          <label>Business Name</label>
-          <input type="text" id="reg-name" required placeholder="e.g. Circa Lagos">
+          <label>Registered Business Name <span style="color:#DC2626;">*</span></label>
+          <input type="text" id="reg-name" required placeholder="e.g. Circa Lagos Ltd">
         </div>
         <div class="form-group">
-          <label>Business Email</label>
+          <label>CAC Registration Number (RC / BN Number) <span style="color:#DC2626;">*</span></label>
+          <input type="text" id="reg-rc" required placeholder="e.g. RC 1849201 or BN 3829104">
+          <div style="font-size:0.8rem; color:#6B7280; margin-top:4px;">Mandatory. Lagos Updates only lists registered Nigerian companies.</div>
+        </div>
+        <div class="form-group">
+          <label>Business Email <span style="color:#DC2626;">*</span></label>
           <input type="email" id="reg-email" required placeholder="contact@circalagos.ng">
         </div>
         <div class="form-group">
@@ -670,6 +675,7 @@
     async function handleRegister(e) {
       e.preventDefault();
       const name = document.getElementById('reg-name').value;
+      const rc = document.getElementById('reg-rc') ? document.getElementById('reg-rc').value.trim() : '';
       const email = document.getElementById('reg-email').value;
       const whatsapp = document.getElementById('reg-whatsapp').value;
       const password = document.getElementById('reg-password').value;
@@ -679,7 +685,7 @@
         const res = await fetch('/api/vendor/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ business_name: name, email, whatsapp, password })
+          body: JSON.stringify({ business_name: name, rc_number: rc, email, whatsapp, password })
         });
         const data = await res.json();
         if (!res.ok) {
@@ -780,6 +786,39 @@
 
       const listEl = document.getElementById('listings-list');
       listEl.innerHTML = '';
+
+      // Check for rejected submissions
+      const rejectedSubmissions = currentSubmissions.filter(s => s.status === 'rejected');
+      if (rejectedSubmissions.length > 0) {
+        rejectedSubmissions.forEach(sub => {
+          const banner = document.createElement('div');
+          banner.style.cssText = 'background:#FEF2F2; border:1px solid #FCA5A5; border-radius:14px; padding:18px 22px; margin-bottom:20px; box-shadow:0 2px 8px rgba(220,38,38,0.06); display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:14px;';
+          banner.innerHTML = `
+            <div style="flex:1; min-width:260px;">
+              <div style="font-weight:800; font-size:1.05rem; color:#991B1B; display:flex; align-items:center; gap:8px;">
+                <span>❌</span> Application Not Approved: <strong>${sub.business_name}</strong>
+              </div>
+              <div style="font-size:0.85rem; color:#B91C1C; margin-top:5px; line-height:1.5;">
+                Ref: <code style="background:#FEE2E2; padding:2px 6px; border-radius:4px; font-weight:700;">${(sub.ref_id || sub.id).slice(0, 8).toUpperCase()}</code> &middot; 
+                CAC Reg: <b>${sub.rc_number || 'Unverified'}</b> &middot; 
+                Category: <b>${sub.category}</b>
+              </div>
+              <div style="background:#FFFFFF; border:1px solid #FECACA; border-radius:8px; padding:10px 14px; margin-top:10px; font-size:0.85rem; color:#7F1D1D; line-height:1.5;">
+                <strong>Reason for Rejection:</strong> ${sub.notes || 'Business credentials or CAC registration could not be verified according to Lagos Updates standards.'}
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
+              <span style="font-size:0.8rem; font-weight:800; background:#FEE2E2; color:#991B1B; padding:6px 14px; border-radius:9999px; border:1px solid #FCA5A5;">
+                Rejected
+              </span>
+              <a href="/index.html?action=list_business" style="font-size:0.82rem; font-weight:700; color:#991B1B; text-decoration:underline; margin-top:4px;">
+                Re-apply with updated CAC &rarr;
+              </a>
+            </div>
+          `;
+          listEl.appendChild(banner);
+        });
+      }
 
       // Check for pending submissions
       const pendingSubmissions = currentSubmissions.filter(s => s.status === 'pending');

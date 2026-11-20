@@ -42,7 +42,8 @@ def init_db():
         whatsapp TEXT,
         instagram TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        rc_number TEXT DEFAULT ''
     );
     """)
 
@@ -64,6 +65,8 @@ def init_db():
         status TEXT DEFAULT 'pending',
         notes TEXT,
         email_sent INTEGER DEFAULT 0,
+        rc_number TEXT DEFAULT '',
+        vendor_id TEXT DEFAULT '',
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
     """)
@@ -91,6 +94,7 @@ def init_db():
         salt TEXT NOT NULL,
         business_name TEXT,
         whatsapp TEXT,
+        rc_number TEXT DEFAULT '',
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
     """)
@@ -201,6 +205,26 @@ def init_db():
 
     try:
         cursor.execute("ALTER TABLE listing_requests ADD COLUMN payment_tx_ref TEXT DEFAULT '';")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        cursor.execute("ALTER TABLE vendors ADD COLUMN rc_number TEXT DEFAULT '';")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        cursor.execute("ALTER TABLE submissions ADD COLUMN rc_number TEXT DEFAULT '';")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        cursor.execute("ALTER TABLE submissions ADD COLUMN vendor_id TEXT DEFAULT '';")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        cursor.execute("ALTER TABLE listings ADD COLUMN rc_number TEXT DEFAULT '';")
     except sqlite3.OperationalError:
         pass
 
@@ -320,19 +344,20 @@ def get_listing_by_id(listing_id: str):
         "image": row["image"] if "image" in row.keys() else ""
     }
 
-def insert_submission(cleaned_data: dict, saved_photos: list = None) -> str:
-    """Inserts a new business application into SQLite with photos & drive link."""
+def insert_submission(cleaned_data: dict, saved_photos: list = None, vendor_id: str = "") -> str:
+    """Inserts a new business application into SQLite with photos, CAC RC number, and vendor ID."""
     conn = get_connection()
     cursor = conn.cursor()
     submission_id = str(uuid.uuid4())
     photos_json = json.dumps(saved_photos or [])
+    rc_number = str(cleaned_data.get("rc_number", "")).strip().upper()
 
     cursor.execute("""
     INSERT INTO submissions (
         id, business_name, category, area, description,
         price_range, whatsapp, instagram, drive_link, photos,
-        plan_tier, contact_name, contact_email, status, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', CURRENT_TIMESTAMP)
+        plan_tier, contact_name, contact_email, status, rc_number, vendor_id, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, CURRENT_TIMESTAMP)
     """, (
         submission_id,
         cleaned_data["business_name"],
@@ -346,7 +371,9 @@ def insert_submission(cleaned_data: dict, saved_photos: list = None) -> str:
         photos_json,
         cleaned_data["plan_tier"],
         cleaned_data["contact_name"],
-        cleaned_data["contact_email"]
+        cleaned_data["contact_email"],
+        rc_number,
+        vendor_id
     ))
 
     conn.commit()
@@ -394,14 +421,15 @@ def approve_submission(submission_id: str, make_featured: bool = False):
     featured_until = (datetime.now() + timedelta(days=days)).isoformat() if is_promoted else ""
     expires_at = (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d')
     owner_email = (sub["contact_email"] or "").lower().strip()
+    rc_number = sub["rc_number"] if "rc_number" in sub.keys() else ""
 
     cursor.execute("""
     INSERT INTO listings (
         id, name, category, area, description,
         price_range, rating, verified, promoted,
         phone, whatsapp, instagram, owner_email,
-        plan_tier, expires_at, featured_until, is_active
-    ) VALUES (?, ?, ?, ?, ?, ?, '4.9', 1, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+        plan_tier, expires_at, featured_until, rc_number, is_active
+    ) VALUES (?, ?, ?, ?, ?, ?, '4.9', 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
     """, (
         listing_id,
         sub["business_name"],
@@ -416,7 +444,8 @@ def approve_submission(submission_id: str, make_featured: bool = False):
         owner_email,
         sub["plan_tier"],
         expires_at,
-        featured_until
+        featured_until,
+        rc_number
     ))
 
     cursor.execute("UPDATE submissions SET status = 'approved' WHERE id = ?", (submission_id,))
@@ -429,11 +458,11 @@ def approve_submission(submission_id: str, make_featured: bool = False):
         "promoted": bool(is_promoted)
     }
 
-def reject_submission(submission_id: str):
-    """Marks a submission as rejected."""
+def reject_submission(submission_id: str, reason: str = ""):
+    """Marks a submission as rejected with editorial explanation."""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("UPDATE submissions SET status = 'rejected' WHERE id = ?", (submission_id,))
+    cursor.execute("UPDATE submissions SET status = 'rejected', notes = ? WHERE id = ?", (reason, submission_id))
     conn.commit()
     conn.close()
     return True
@@ -524,18 +553,19 @@ def hash_password(password: str, salt: str = None):
     hashed = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt.encode('utf-8'), 100000).hex()
     return hashed, salt
 
-def register_vendor(email: str, password: str, business_name: str, whatsapp: str = ''):
-    """Registers a vendor with a hashed password/passcode."""
+def register_vendor(email: str, password: str, business_name: str, whatsapp: str = '', rc_number: str = ''):
+    """Registers a vendor with a hashed password/passcode and CAC registration number."""
     conn = get_connection()
     cursor = conn.cursor()
     vendor_id = str(uuid.uuid4())
     pw_hash, salt = hash_password(password)
+    clean_rc = str(rc_number).strip().upper()
 
     try:
         cursor.execute("""
-        INSERT INTO vendors (id, email, password_hash, salt, business_name, whatsapp)
-        VALUES (?, ?, ?, ?, ?, ?)
-        """, (vendor_id, email.lower().strip(), pw_hash, salt, business_name.strip(), whatsapp.strip()))
+        INSERT INTO vendors (id, email, password_hash, salt, business_name, whatsapp, rc_number)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (vendor_id, email.lower().strip(), pw_hash, salt, business_name.strip(), whatsapp.strip(), clean_rc))
         conn.commit()
     except sqlite3.IntegrityError:
         conn.close()
@@ -543,9 +573,9 @@ def register_vendor(email: str, password: str, business_name: str, whatsapp: str
 
     # Associate any existing listings with same business email or name
     cursor.execute("""
-    UPDATE listings SET owner_email = ? 
+    UPDATE listings SET owner_email = ?, rc_number = CASE WHEN rc_number = '' THEN ? ELSE rc_number END
     WHERE LOWER(owner_email) = ? OR LOWER(name) = ?
-    """, (email.lower().strip(), email.lower().strip(), business_name.lower().strip()))
+    """, (email.lower().strip(), clean_rc, email.lower().strip(), business_name.lower().strip()))
     conn.commit()
 
     conn.close()
@@ -583,7 +613,8 @@ def authenticate_vendor(email: str, password: str):
             "id": vendor["id"],
             "email": vendor["email"],
             "business_name": vendor["business_name"],
-            "whatsapp": vendor["whatsapp"]
+            "whatsapp": vendor["whatsapp"],
+            "rc_number": vendor["rc_number"] if "rc_number" in vendor.keys() else ""
         }
     }, None
 
@@ -614,7 +645,8 @@ def get_vendor_by_session(token: str):
         "id": row["id"],
         "email": row["email"],
         "business_name": row["business_name"],
-        "whatsapp": row["whatsapp"]
+        "whatsapp": row["whatsapp"],
+        "rc_number": row["rc_number"] if "rc_number" in row.keys() else ""
     }
 
 def get_vendor_listings(email: str, business_name: str = ""):
@@ -691,7 +723,7 @@ def get_vendor_submissions(email: str):
     cursor = conn.cursor()
     cursor.execute("""
     SELECT id, business_name, category, area, description, price_range,
-           whatsapp, plan_tier, status, payment_status, payment_amount, created_at
+           whatsapp, plan_tier, status, notes, rc_number, payment_status, payment_amount, created_at
     FROM submissions 
     WHERE LOWER(contact_email) = ?
     ORDER BY created_at DESC

@@ -87,9 +87,45 @@ class TestAPIInMemory(unittest.TestCase):
         for item in data["listings"]:
             self.assertEqual(item["category"], "hotel")
 
+    def create_test_vendor(self, email=None, rc="RC 1849201"):
+        if not email:
+            email = f"vendor_{uuid.uuid4().hex[:6]}@lagos.ng"
+        reg_payload = {
+            "business_name": "Test Verified Vendor Ltd",
+            "rc_number": rc,
+            "email": email,
+            "whatsapp": "08031234567",
+            "password": "testpassword123"
+        }
+        h = InMemHandler("POST", "/api/vendor/register", body=json.dumps(reg_payload).encode('utf-8'))
+        h.handle_request()
+        _, data = h.get_response()
+        return data.get("token"), email, rc
+
+    def test_submission_requires_vendor_auth(self):
+        payload = {
+            "business_name": "Unauthenticated Bistro",
+            "rc_number": "RC 123456",
+            "category": "restaurant",
+            "area": "Ikoyi",
+            "description": "Valid description length.",
+            "price_range": "₦25,000",
+            "whatsapp": "08012345678",
+            "contact_name": "Tester",
+            "contact_email": "tester@example.com"
+        }
+        # Post with no auth
+        h = InMemHandler("POST", "/api/submissions", body=json.dumps(payload).encode('utf-8'), headers={"Authorization": ""})
+        h.handle_request()
+        status, data = h.get_response()
+        self.assertEqual(status, 401)
+        self.assertIn("Vendor account required", data.get("error", ""))
+
     def test_submit_valid_listing_application(self):
+        token, email, rc = self.create_test_vendor()
         payload = {
             "business_name": "In-Memory Test Villa",
+            "rc_number": rc,
             "category": "apartment",
             "area": "Ikoyi",
             "description": "Stunning private villa in the heart of Ikoyi.",
@@ -98,10 +134,10 @@ class TestAPIInMemory(unittest.TestCase):
             "instagram": "@ikoyivilla",
             "plan_tier": "featured",
             "contact_name": "Madam Kemi",
-            "contact_email": "kemi@ikoyivilla.ng"
+            "contact_email": email
         }
         body = json.dumps(payload).encode('utf-8')
-        h = InMemHandler("POST", "/api/submissions", body=body)
+        h = InMemHandler("POST", "/api/submissions", body=body, headers={"Authorization": f"Bearer {token}"})
         h.handle_request()
         status, data = h.get_response()
         self.assertIn(status, [200, 201])
@@ -109,36 +145,50 @@ class TestAPIInMemory(unittest.TestCase):
         self.assertTrue(bool(data.get("submission_id")))
 
     def test_submit_invalid_payload_returns_422(self):
+        token, _, _ = self.create_test_vendor()
         payload = {
             "business_name": "", # empty
             "category": "invalid-cat",
             "area": "Ikoyi"
         }
         body = json.dumps(payload).encode('utf-8')
-        h = InMemHandler("POST", "/api/submissions", body=body)
+        h = InMemHandler("POST", "/api/submissions", body=body, headers={"Authorization": f"Bearer {token}"})
         h.handle_request()
         status, data = h.get_response()
         self.assertEqual(status, 422)
         self.assertIn("error", data)
 
     def test_admin_approve_and_reject_flow(self):
+        token, email, rc = self.create_test_vendor()
         # 1. Create a submission
         payload = {
             "business_name": "Admin Test Bistro",
+            "rc_number": rc,
             "category": "restaurant",
             "area": "Victoria Island",
             "description": "Exquisite dining experience for admin testing.",
             "price_range": "₦25,000 avg spend",
             "whatsapp": "08099887766",
             "contact_name": "Bistro Owner",
-            "contact_email": "owner@adminbistro.ng",
+            "contact_email": email,
             "plan_tier": "verified"
         }
         body = json.dumps(payload).encode('utf-8')
-        h = InMemHandler("POST", "/api/submissions", body=body)
+        h = InMemHandler("POST", "/api/submissions", body=body, headers={"Authorization": f"Bearer {token}"})
         h.handle_request()
         _, data = h.get_response()
         sub_id = data["submission_id"]
+
+        # Simulate payment so admin queue can process it
+        from server.db import record_payment
+        record_payment({
+            "tx_ref": f"ref_adm_{uuid.uuid4().hex[:6]}",
+            "transaction_id": f"tx_adm_{uuid.uuid4().hex[:6]}",
+            "payment_type": "submission",
+            "target_id": sub_id,
+            "amount": 30000.0,
+            "status": "successful"
+        })
 
         # 2. Approve submission as featured spot
         h_approve = InMemHandler("POST", f"/api/admin/submissions/{sub_id}/approve?featured=1")
@@ -149,7 +199,7 @@ class TestAPIInMemory(unittest.TestCase):
         self.assertTrue(approve_data["promoted"])
         self.assertTrue(bool(approve_data["listing_id"]))
 
-        # 3. Verify it is now live in GET /api/listings
+        # 3. Verify it is now live in GET /api/listings with CAC number
         h_list = InMemHandler("GET", "/api/listings?category=restaurant")
         h_list.handle_request()
         _, list_data = h_list.get_response()
@@ -200,6 +250,7 @@ class TestAPIInMemory(unittest.TestCase):
         # 3. Create a listing for this vendor via submission + approve
         sub_payload = {
             "business_name": "Lekki Luxury Suites",
+            "rc_number": "RC 888999",
             "category": "apartment",
             "area": "Lekki Phase 1",
             "description": "Original description before vendor edit.",
@@ -209,7 +260,7 @@ class TestAPIInMemory(unittest.TestCase):
             "contact_email": test_email
         }
         sub_body = json.dumps(sub_payload).encode('utf-8')
-        h_sub = InMemHandler("POST", "/api/submissions", body=sub_body)
+        h_sub = InMemHandler("POST", "/api/submissions", body=sub_body, headers={"Authorization": f"Bearer {token}"})
         h_sub.handle_request()
         _, sub_data = h_sub.get_response()
         sub_id = sub_data["submission_id"]
@@ -274,9 +325,11 @@ class TestAPIInMemory(unittest.TestCase):
         self.assertTrue(data["public_key"].startswith("FLWPUBK_TEST-"))
 
     def test_payment_verification_for_submission(self):
+        token, email, rc = self.create_test_vendor()
         # 1. Create a submission first
         payload = {
             "business_name": "Flutterwave Test Beach Club",
+            "rc_number": rc,
             "category": "lounge",
             "area": "Oniru",
             "description": "Premium oceanfront beach lounge with sunset views.",
@@ -284,10 +337,10 @@ class TestAPIInMemory(unittest.TestCase):
             "whatsapp": "08011223344",
             "plan_tier": "featured_1w",
             "contact_name": "Club Manager",
-            "contact_email": "manager@onirubeach.ng"
+            "contact_email": email
         }
         body = json.dumps(payload).encode('utf-8')
-        h_sub = InMemHandler("POST", "/api/submissions", body=body)
+        h_sub = InMemHandler("POST", "/api/submissions", body=body, headers={"Authorization": f"Bearer {token}"})
         h_sub.handle_request()
         _, sub_data = h_sub.get_response()
         sub_id = sub_data["submission_id"]
@@ -302,7 +355,7 @@ class TestAPIInMemory(unittest.TestCase):
             "target_id": sub_id,
             "expected_amount": 35000.0,
             "customer": {
-                "email": "manager@onirubeach.ng",
+                "email": email,
                 "name": "Club Manager",
                 "phone": "08011223344"
             }
@@ -322,18 +375,20 @@ class TestAPIInMemory(unittest.TestCase):
         self.assertTrue(ver_data2["already_processed"])
 
     def test_payment_verification_for_boost(self):
+        token, email, rc = self.create_test_vendor()
         # 1. Create and approve listing
         payload = {
             "business_name": "Lagos Marina Yacht Club",
+            "rc_number": rc,
             "category": "service",
             "area": "Victoria Island",
             "description": "Private yacht charters and boat cruises.",
             "price_range": "₦500,000 / day",
             "whatsapp": "08099001122",
             "contact_name": "Captain Dan",
-            "contact_email": "dan@lagosmarina.ng"
+            "contact_email": email
         }
-        h_sub = InMemHandler("POST", "/api/submissions", body=json.dumps(payload).encode('utf-8'))
+        h_sub = InMemHandler("POST", "/api/submissions", body=json.dumps(payload).encode('utf-8'), headers={"Authorization": f"Bearer {token}"})
         h_sub.handle_request()
         _, sub_data = h_sub.get_response()
         sub_id = sub_data["submission_id"]
@@ -357,7 +412,7 @@ class TestAPIInMemory(unittest.TestCase):
                 "days": 7
             },
             "customer": {
-                "email": "dan@lagosmarina.ng",
+                "email": email,
                 "name": "Captain Dan",
                 "phone": "08099001122"
             }
@@ -385,21 +440,12 @@ class TestAPIInMemory(unittest.TestCase):
         self.assertIn("error", data)
 
     def test_vendor_submissions_endpoint(self):
-        # 1. Register a vendor
-        test_email = f"pending_vendor_{uuid.uuid4().hex[:6]}@lekki.ng"
-        v_payload = {
-            "business_name": "Pending Verification Bistro",
-            "email": test_email,
-            "password": "passcode_secure"
-        }
-        h_reg = InMemHandler("POST", "/api/vendor/register", body=json.dumps(v_payload).encode('utf-8'))
-        h_reg.handle_request()
-        _, reg_data = h_reg.get_response()
-        token = reg_data["token"]
+        token, test_email, rc = self.create_test_vendor(rc="RC 333222")
 
-        # 2. Submit a business with that email
+        # 2. Submit a business with that vendor token
         sub_payload = {
             "business_name": "Pending Verification Bistro",
+            "rc_number": rc,
             "category": "restaurant",
             "area": "Ikeja",
             "description": "Fine dining awaiting approval.",
@@ -408,7 +454,7 @@ class TestAPIInMemory(unittest.TestCase):
             "contact_name": "Chef Ngozi",
             "contact_email": test_email
         }
-        h_sub = InMemHandler("POST", "/api/submissions", body=json.dumps(sub_payload).encode('utf-8'))
+        h_sub = InMemHandler("POST", "/api/submissions", body=json.dumps(sub_payload).encode('utf-8'), headers={"Authorization": f"Bearer {token}"})
         h_sub.handle_request()
 
         # 3. Vendor queries their submissions
@@ -421,9 +467,10 @@ class TestAPIInMemory(unittest.TestCase):
         self.assertEqual(data["submissions"][0]["business_name"], "Pending Verification Bistro")
 
     def test_approve_submission_sets_owner_and_plan(self):
-        test_email = f"owner_{uuid.uuid4().hex[:6]}@yaba.ng"
+        token, test_email, rc = self.create_test_vendor(rc="RC 111000")
         sub_payload = {
             "business_name": "Yaba Tech Hub Lounge",
+            "rc_number": rc,
             "category": "lounge",
             "area": "Yaba",
             "description": "Coworking lounge with artisanal coffee.",
@@ -433,7 +480,7 @@ class TestAPIInMemory(unittest.TestCase):
             "contact_name": "Founder Tunde",
             "contact_email": test_email
         }
-        h_sub = InMemHandler("POST", "/api/submissions", body=json.dumps(sub_payload).encode('utf-8'))
+        h_sub = InMemHandler("POST", "/api/submissions", body=json.dumps(sub_payload).encode('utf-8'), headers={"Authorization": f"Bearer {token}"})
         h_sub.handle_request()
         _, sub_data = h_sub.get_response()
         sub_id = sub_data["submission_id"]
@@ -443,23 +490,94 @@ class TestAPIInMemory(unittest.TestCase):
         _, app_data = h_app.get_response()
         listing_id = app_data["listing_id"]
 
-        # Register vendor with this email and verify they immediately see this listing
-        v_payload = {
-            "business_name": "Yaba Tech Hub Lounge",
-            "email": test_email,
-            "password": "mypassword123"
-        }
-        h_reg = InMemHandler("POST", "/api/vendor/register", body=json.dumps(v_payload).encode('utf-8'))
-        h_reg.handle_request()
-        _, reg_data = h_reg.get_response()
-        token = reg_data["token"]
-
         h_my = InMemHandler("GET", "/api/vendor/listings", headers={"Authorization": f"Bearer {token}"})
         h_my.handle_request()
         status, my_data = h_my.get_response()
         self.assertEqual(status, 200)
         my_ids = [item["id"] for item in my_data["listings"]]
         self.assertIn(listing_id, my_ids)
+
+    def test_unpaid_submission_hidden_from_admin(self):
+        token, email, rc = self.create_test_vendor(rc="RC 444555")
+        sub_payload = {
+            "business_name": "Unpaid Hidden Restaurant",
+            "rc_number": rc,
+            "category": "restaurant",
+            "area": "Victoria Island",
+            "description": "A quiet dining venue in VI.",
+            "price_range": "₦8,000",
+            "whatsapp": "08011223399",
+            "contact_name": "Manager",
+            "contact_email": email
+        }
+        h_sub = InMemHandler("POST", "/api/submissions", body=json.dumps(sub_payload).encode('utf-8'), headers={"Authorization": f"Bearer {token}"})
+        h_sub.handle_request()
+        _, sub_data = h_sub.get_response()
+        sub_id = sub_data["submission_id"]
+
+        # Admin queue should NOT list unpaid submission
+        h_admin = InMemHandler("GET", "/api/admin/submissions")
+        h_admin.handle_request()
+        _, admin_data = h_admin.get_response()
+        admin_sub_ids = [s["id"] for s in admin_data.get("submissions", [])]
+        self.assertNotIn(sub_id, admin_sub_ids)
+
+        # Record payment for this submission
+        from server.db import record_payment
+        record_payment({
+            "tx_ref": f"ref_{uuid.uuid4().hex[:6]}",
+            "transaction_id": f"tx_{uuid.uuid4().hex[:6]}",
+            "payment_type": "submission",
+            "target_id": sub_id,
+            "amount": 30000.0,
+            "status": "successful"
+        })
+
+        # Now it MUST appear in admin review queue
+        h_admin2 = InMemHandler("GET", "/api/admin/submissions")
+        h_admin2.handle_request()
+        _, admin_data2 = h_admin2.get_response()
+        admin_sub_ids2 = [s["id"] for s in admin_data2.get("submissions", [])]
+        self.assertIn(sub_id, admin_sub_ids2)
+
+    def test_rejection_surfaces_on_vendor_dashboard(self):
+        token, email, rc = self.create_test_vendor(rc="RC 777888")
+        sub_payload = {
+            "business_name": "Rejected Startup Hub",
+            "rc_number": rc,
+            "category": "service",
+            "area": "Yaba",
+            "description": "An incubator needing verification.",
+            "whatsapp": "08012345678",
+            "contact_name": "Founder",
+            "contact_email": email
+        }
+        h_sub = InMemHandler("POST", "/api/submissions", body=json.dumps(sub_payload).encode('utf-8'), headers={"Authorization": f"Bearer {token}"})
+        h_sub.handle_request()
+        _, sub_data = h_sub.get_response()
+        sub_id = sub_data["submission_id"]
+
+        # Admin rejects with specific reason
+        reject_reason = "CAC registration number does not match registered entity name."
+        h_rej = InMemHandler(
+            "POST",
+            f"/api/admin/submissions/{sub_id}/reject",
+            body=json.dumps({"reason": reject_reason}).encode('utf-8')
+        )
+        h_rej.handle_request()
+        status, rej_data = h_rej.get_response()
+        self.assertEqual(status, 200)
+        self.assertTrue(rej_data["success"])
+
+        # Vendor checks submissions dashboard
+        h_vsubs = InMemHandler("GET", "/api/vendor/submissions", headers={"Authorization": f"Bearer {token}"})
+        h_vsubs.handle_request()
+        status, vdata = h_vsubs.get_response()
+        self.assertEqual(status, 200)
+        target_sub = next((s for s in vdata["submissions"] if s["id"] == sub_id), None)
+        self.assertIsNotNone(target_sub)
+        self.assertEqual(target_sub["status"], "rejected")
+        self.assertEqual(target_sub["notes"], reject_reason)
 
 if __name__ == '__main__':
     unittest.main()

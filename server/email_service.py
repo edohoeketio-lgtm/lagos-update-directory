@@ -4,6 +4,7 @@ Sends formatted notifications with photos to vendors@lagosupdates.com.
 Non-blocking, fail-safe with file/console fallback.
 """
 import smtplib
+import re
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
@@ -22,6 +23,19 @@ def format_email_body(submission_id: str, data: dict, photo_paths: list = None) 
     if photos:
         photos_text = "\n".join([f"  - http://localhost:3000{p}" for p in photos])
 
+    raw_phone = data.get("whatsapp", "")
+    wa_digits = data.get("whatsapp_digits") or re.sub(r'\D', '', raw_phone)
+    rc_num = data.get("rc_number", "NOT PROVIDED")
+    b_name = data.get("business_name", "")
+    cat = (data.get("category") or "").upper()
+    area = data.get("area", "")
+    desc = data.get("description", "")
+    price = data.get("price_range", "On Request")
+    plan = (data.get("plan_tier") or "verified").upper()
+    insta = (data.get("instagram") or "").lstrip("@")
+    c_name = data.get("contact_name", "")
+    c_email = data.get("contact_email", "")
+
     text = f"""
 =============================================================
 NEW BUSINESS LISTING APPLICATION — LAGOS UPDATES DIRECTORY
@@ -31,11 +45,12 @@ Submitted At: {timestamp}
 
 BUSINESS DETAILS:
 -----------------
-Business Name:  {data['business_name']}
-Category:       {data['category'].upper()}
-Area in Lagos:  {data['area']}
-Description:    {data['description']}
-Price Range:    {data['price_range']}
+Business Name:  {b_name}
+CAC Reg Number: {rc_num} (Verify: https://search.cac.gov.ng)
+Category:       {cat}
+Area in Lagos:  {area}
+Description:    {desc}
+Price Range:    {price}
 
 PHOTOS & MEDIA:
 ---------------
@@ -45,19 +60,20 @@ Google Drive / Dropbox: {drive_link or 'None'}
 
 CONTACT & SOCIALS:
 ------------------
-WhatsApp/Phone: {data['whatsapp']} (https://wa.me/{data['whatsapp_digits']})
-Instagram:      @{data['instagram']} (https://instagram.com/{data['instagram']})
+WhatsApp/Phone: {raw_phone} (https://wa.me/{wa_digits})
+Instagram:      @{insta} (https://instagram.com/{insta})
 
 APPLICATION PLAN:
 -----------------
-Selected Plan:  {data['plan_tier'].upper()} LISTING
+Selected Plan:  {plan} LISTING
 
 CONTACT PERSON:
 ---------------
-Name:           {data['contact_name']}
-Email:          {data['contact_email']}
+Name:           {c_name}
+Email:          {c_email}
 
 Action Required:
+Verify CAC registration number on search.cac.gov.ng.
 Review photos, business credibility and Instagram profile.
 Contact vendor on WhatsApp to confirm details or arrange verification.
 =============================================================
@@ -95,22 +111,26 @@ Contact vendor on WhatsApp to confirm details or arrange verification.
 <body>
   <div class="container">
     <div class="header">
-      <div class="badge">{data['plan_tier'].upper()} APPLICATION</div>
-      <h2>{data['business_name']}</h2>
+      <div class="badge">{plan} APPLICATION</div>
+      <h2>{b_name}</h2>
       <p style="margin: 4px 0 0; color: #aaa; font-size: 13px;">Ref: {submission_id} &middot; {timestamp}</p>
     </div>
     <div class="content">
       <div class="field">
+        <div class="label">CAC Registration Number</div>
+        <div class="value" style="color: #0066cc; font-weight: 800;">{rc_num} &mdash; <a href="https://search.cac.gov.ng" target="_blank" style="text-decoration: underline; font-size: 13px; color: #0066cc;">Verify on CAC Portal &rarr;</a></div>
+      </div>
+      <div class="field">
         <div class="label">Category & Area</div>
-        <div class="value">{data['category'].capitalize()} &middot; {data['area']}, Lagos</div>
+        <div class="value">{cat} &middot; {area}, Lagos</div>
       </div>
       <div class="field">
         <div class="label">Description / Specialty</div>
-        <div class="desc-box">{data['description']}</div>
+        <div class="desc-box">{desc}</div>
       </div>
       <div class="field">
         <div class="label">Rates / Pricing</div>
-        <div class="value">{data['price_range']}</div>
+        <div class="value">{price}</div>
       </div>
       <div class="field">
         <div class="label">Uploaded Photos ({len(photos)})</div>
@@ -119,18 +139,18 @@ Contact vendor on WhatsApp to confirm details or arrange verification.
       {drive_html}
       <div class="field">
         <div class="label">WhatsApp / Phone</div>
-        <div class="value"><a href="https://wa.me/{data['whatsapp_digits']}" style="color: #0066cc;">{data['whatsapp']}</a></div>
+        <div class="value"><a href="https://wa.me/{wa_digits}" style="color: #0066cc;">{raw_phone}</a></div>
       </div>
       <div class="field">
         <div class="label">Instagram</div>
-        <div class="value">{f'<a href="https://instagram.com/{data["instagram"]}" style="color: #0066cc;">@{data["instagram"]}</a>' if data['instagram'] else 'Not provided'}</div>
+        <div class="value">{f'<a href="https://instagram.com/{insta}" style="color: #0066cc;">@{insta}</a>' if insta else 'Not provided'}</div>
       </div>
       <div class="field">
         <div class="label">Contact Person</div>
-        <div class="value">{data['contact_name']} &lt;<a href="mailto:{data['contact_email']}" style="color: #0066cc;">{data['contact_email']}</a>&gt;</div>
+        <div class="value">{c_name} &lt;<a href="mailto:{c_email}" style="color: #0066cc;">{c_email}</a>&gt;</div>
       </div>
       <div class="actions">
-        <a href="https://wa.me/{data['whatsapp_digits']}?text=Hello%20{data['contact_name']},%20this%20is%20Lagos%20Updates%20team%20regarding%20your%20listing%20for%20{data['business_name']}" class="btn">Chat Vendor on WhatsApp &rarr;</a>
+        <a href="https://wa.me/{wa_digits}?text=Hello%20{c_name},%20this%20is%20Lagos%20Updates%20team%20regarding%20your%20listing%20for%20{b_name}" class="btn">Chat Vendor on WhatsApp &rarr;</a>
       </div>
     </div>
     <div class="footer">

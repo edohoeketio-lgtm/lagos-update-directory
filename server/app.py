@@ -44,13 +44,17 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def get_authenticated_vendor(self):
-        """Extracts Bearer token or X-Vendor-Token header."""
+        """Extracts Bearer token, X-Vendor-Token header, or vendor_token query parameter."""
         auth = self.headers.get("Authorization", "")
         token = ""
         if auth.startswith("Bearer "):
             token = auth.replace("Bearer ", "").strip()
-        else:
+        elif self.headers.get("X-Vendor-Token"):
             token = self.headers.get("X-Vendor-Token", "").strip()
+        else:
+            parsed = self.get_request_path()
+            params = urllib.parse.parse_qs(parsed.query)
+            token = params.get("vendor_token", [""])[0].strip()
         if not token:
             return None
         return get_vendor_by_session(token)
@@ -159,10 +163,10 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
             cursor.execute("SELECT COUNT(*) AS featured FROM listings WHERE promoted = 1;")
             total_featured = cursor.fetchone()["featured"]
 
-            cursor.execute("SELECT COUNT(*) AS pending FROM submissions WHERE status = 'pending';")
+            cursor.execute("SELECT COUNT(*) AS pending FROM submissions WHERE status = 'pending' AND payment_status = 'paid';")
             total_pending = cursor.fetchone()["pending"]
 
-            cursor.execute("SELECT COUNT(*) AS apps_today FROM submissions WHERE date(created_at) = date('now', 'localtime') OR date(created_at) = ?;", (today_str,))
+            cursor.execute("SELECT COUNT(*) AS apps_today FROM submissions WHERE (date(created_at) = date('now', 'localtime') OR date(created_at) = ?) AND payment_status = 'paid';", (today_str,))
             submissions_today = cursor.fetchone()["apps_today"]
 
             conn.close()
@@ -179,7 +183,7 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
         if path == "/api/admin/submissions":
             conn = get_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM submissions ORDER BY created_at DESC LIMIT 50;")
+            cursor.execute("SELECT * FROM submissions WHERE payment_status = 'paid' ORDER BY created_at DESC LIMIT 50;")
             rows = cursor.fetchall()
             conn.close()
             submissions = []
@@ -290,6 +294,25 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
 
             pay_id = record_payment(payment_record)
 
+            # If this is a paid business listing application, dispatch admin email notification now
+            if payment_type == "submission" and target_id:
+                try:
+                    conn = get_connection()
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM submissions WHERE id = ?", (target_id,))
+                    sub_row = cursor.fetchone()
+                    conn.close()
+                    if sub_row and not sub_row["email_sent"]:
+                        photos_list = []
+                        try:
+                            photos_list = json.loads(sub_row["photos"] or "[]")
+                        except Exception:
+                            pass
+                        if dispatch_submission_email(target_id, dict(sub_row), photos_list):
+                            mark_submission_email_sent(target_id)
+                except Exception as ex:
+                    print("[Payment Notification Error]:", ex)
+
             return self.send_json(200, {
                 "success": True,
                 "message": "Payment verified and recorded successfully!",
@@ -331,7 +354,13 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
             body = self.parse_json_body()
             if not body or not body.get("email") or not body.get("password") or not body.get("business_name"):
                 return self.send_json(400, {"error": "Business name, email, and password are required."})
-            vendor_id, err = register_vendor(body["email"], body["password"], body["business_name"], body.get("whatsapp", ""))
+            vendor_id, err = register_vendor(
+                body["email"],
+                body["password"],
+                body["business_name"],
+                body.get("whatsapp", ""),
+                rc_number=body.get("rc_number", "")
+            )
             if err:
                 return self.send_json(400, {"error": err})
             auth_res, auth_err = authenticate_vendor(body["email"], body["password"])
@@ -489,7 +518,9 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
         if path.startswith("/api/admin/submissions/") and path.endswith("/reject"):
             parts = path.split("/")
             sub_id = parts[4]
-            reject_submission(sub_id)
+            body = self.parse_json_body() or {}
+            reason = body.get("reason", "Business does not meet Lagos Updates directory verification requirements or CAC registration could not be verified.")
+            reject_submission(sub_id, reason=reason)
             return self.send_json(200, {"success": True, "message": "Submission rejected."})
 
         # Admin Listing Controls: Pause / Hide, Feature, Delete
@@ -529,14 +560,21 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
             })
 
         if path == "/api/submissions":
-            # 1. Rate limiting by IP
+            # 1. Require Authenticated Vendor Account
+            vendor = self.get_authenticated_vendor()
+            if not vendor:
+                return self.send_json(401, {
+                    "error": "Vendor account required. Please create an account or sign in to list your business."
+                })
+
+            # 2. Rate limiting by IP
             client_ip = self.client_address[0]
             if not limiter.is_allowed(client_ip):
                 return self.send_json(429, {
                     "error": "Too many submissions. Please wait an hour before submitting another business."
                 })
 
-            # 2. Parse JSON body (allows up to 20MB for base64 photo payloads)
+            # 3. Parse JSON body (allows up to 20MB for base64 photo payloads)
             content_length = int(self.headers.get("Content-Length", 0))
             if content_length == 0 or content_length > 20 * 1024 * 1024:
                 return self.send_json(400, {"error": "Invalid payload size (max 20MB)."})
@@ -547,43 +585,39 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
             except Exception:
                 return self.send_json(400, {"error": "Malformed JSON payload."})
 
-            # 3. Validate and cleanse data
+            # 4. Validate and cleanse data (requires CAC RC/BN number)
             is_valid, cleaned, error_msg = validate_submission_payload(data)
             if not is_valid:
                 return self.send_json(422, {"error": error_msg})
 
-            # 4. Idempotency check: prevent duplicate submissions within 5 minutes
+            # 5. Idempotency check: prevent duplicate submissions within 5 minutes
             recent = get_recent_submission(cleaned["contact_email"], cleaned["business_name"], minutes=5)
             if recent:
                 return self.send_json(200, {
                     "success": True,
                     "submission_id": recent["id"],
-                    "message": "We already received your submission! Our team is reviewing it.",
+                    "message": "We already received your submission! Please complete payment to send it to review.",
                     "already_submitted": True
                 })
 
-            # 5. Process & save base64 uploaded photos to disk
+            # 6. Process & save base64 uploaded photos to disk
             temp_id = str(uuid.uuid4())
             saved_photos = process_uploaded_photos(cleaned.get("photos_raw", []), temp_id)
 
-            # 6. Save to SQLite database
+            # 7. Save to SQLite database (starts as 'unpaid'; only reaches admin dashboard when paid)
             try:
-                submission_id = insert_submission(cleaned, saved_photos)
+                submission_id = insert_submission(cleaned, saved_photos, vendor_id=vendor["id"])
             except Exception as e:
                 print("[DB Error] Could not save submission:", e)
                 return self.send_json(500, {"error": "Failed to save submission. Please try again."})
-
-            # 7. Dispatch Email Notification (fail-safe)
-            email_sent = dispatch_submission_email(submission_id, cleaned, saved_photos)
-            if email_sent:
-                mark_submission_email_sent(submission_id)
 
             return self.send_json(201, {
                 "success": True,
                 "submission_id": submission_id,
                 "photos_count": len(saved_photos),
-                "message": "Application submitted successfully! The Lagos Updates team will review and verify your business within 24 hours.",
-                "business_name": cleaned["business_name"]
+                "message": "Application draft created. Please complete payment to submit your business for verification.",
+                "business_name": cleaned["business_name"],
+                "rc_number": cleaned.get("rc_number", "")
             })
 
         return self.send_json(404, {"error": "Endpoint not found."})

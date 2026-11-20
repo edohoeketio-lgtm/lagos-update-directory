@@ -264,6 +264,33 @@ class TestMobileLayoutAndUX(unittest.TestCase):
             self.assertFalse(re.fullmatch(r"₦+", price), f"Listing {l['name']} has repeating naira symbol: {price}")
             self.assertTrue(bool(re.search(r"\d", price)), f"Listing {l['name']} missing numeric dummy price: {price}")
 
+    def test_vendor_onboarding_and_cac_enforcement(self):
+        """Verify that vendor account gate and CAC RC number fields are present in listing modal & vendor portal."""
+        index_path = os.path.join(BASE_DIR, "index.html")
+        with open(index_path, "r", encoding="utf-8") as f:
+            index_content = f.read()
+
+        self.assertIn("modal-step-auth", index_content, "Vendor authentication gate step missing from listing modal")
+        self.assertIn("form-rc-number", index_content, "CAC RC/BN number field missing from listing modal Step 1")
+        self.assertIn("auth-rc-number", index_content, "CAC RC/BN number field missing from modal auth gate")
+
+        vendor_path = os.path.join(BASE_DIR, "vendor.html")
+        with open(vendor_path, "r", encoding="utf-8") as f:
+            vendor_content = f.read()
+        self.assertIn("reg-rc", vendor_content, "CAC registration input missing from vendor registration form")
+
+    def test_admin_and_vendor_rejection_ui(self):
+        """Verify CAC portal verify link and vendor rejected submission banner."""
+        admin_path = os.path.join(BASE_DIR, "admin.html")
+        with open(admin_path, "r", encoding="utf-8") as f:
+            admin_content = f.read()
+        self.assertIn("search.cac.gov.ng", admin_content, "Admin dashboard missing CAC verification portal link")
+
+        vendor_path = os.path.join(BASE_DIR, "vendor.html")
+        with open(vendor_path, "r", encoding="utf-8") as f:
+            vendor_content = f.read()
+        self.assertIn("Application Not Approved", vendor_content, "Vendor portal missing immediate rejection status banner")
+
 
 if __name__ == '__main__':
     unittest.main()
