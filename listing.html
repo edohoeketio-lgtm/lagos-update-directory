@@ -163,24 +163,76 @@
       margin-bottom: 16px;
     }
     .listing-cat-pill {
-      background: var(--black-3);
-      border: 1px solid var(--black-4);
-      color: var(--text-secondary);
+      background: #F3F4F6;
+      border: 1px solid #E5E7EB;
+      color: #374151;
       font-size: 12px;
-      font-weight: 600;
-      padding: 5px 14px;
+      font-weight: 700;
+      padding: 5px 13px;
       border-radius: 100px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
     .listing-rating-pill {
-      background: rgba(255,212,0,0.1);
-      border: 1px solid rgba(255,212,0,0.2);
-      color: var(--yellow);
+      background: #FFD400;
+      border: 1px solid #E6BE00;
+      color: #111827;
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 800;
       padding: 5px 14px;
       border-radius: 100px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+    .listing-rating-pill::before {
+      content: '★';
+      font-size: 12px;
+      color: #111827;
+    }
+    .listing-verified-pill {
+      background: #ECFDF5;
+      border: 1px solid #A7F3D0;
+      color: #065F46;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 5px 13px;
+      border-radius: 100px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .listing-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .listing-area-badge {
+      font-size: 14px;
+      color: #4B5563;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .listing-area-badge::before {
+      content: '📍';
+      font-size: 13px;
+    }
+    .listing-price-pill {
+      background: #F3F4F6;
+      border: 1px solid #E5E7EB;
+      color: #111827;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
     .listing-divider {
       border: none;

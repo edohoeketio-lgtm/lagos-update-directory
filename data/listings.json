@@ -11,7 +11,7 @@
     "verified": true,
     "promoted": true,
     "rating": "Top Rated",
-    "priceRange": "₦₦₦₦",
+    "priceRange": "₦350,000 / night",
     "image": "/img/listings/the-wheatbaker-hotel.jpg"
   },
   {
@@ -26,7 +26,7 @@
     "verified": true,
     "promoted": true,
     "rating": "Iconic",
-    "priceRange": "₦₦₦₦",
+    "priceRange": "₦280,000 / night",
     "image": "/img/listings/eko-hotel-and-suites.jpg"
   },
   {
@@ -41,7 +41,7 @@
     "verified": true,
     "promoted": true,
     "rating": "Fine Dining",
-    "priceRange": "₦₦₦₦",
+    "priceRange": "₦45,000 - ₦75,000 avg",
     "image": "/img/listings/nok-by-alara.jpg"
   },
   {
@@ -56,7 +56,7 @@
     "verified": true,
     "promoted": true,
     "rating": "Award Winning",
-    "priceRange": "₦₦₦",
+    "priceRange": "₦150,000 / day",
     "image": "/img/listings/chef-tunde-private-kitchen.jpg"
   },
   {
@@ -71,7 +71,7 @@
     "verified": true,
     "promoted": true,
     "rating": "Top View",
-    "priceRange": "₦₦₦",
+    "priceRange": "₦30,000 - ₦60,000 avg",
     "image": "/img/listings/sky-bar-lagos.jpg"
   },
   {
@@ -86,7 +86,7 @@
     "verified": true,
     "promoted": true,
     "rating": "Licensed",
-    "priceRange": "₦₦₦₦",
+    "priceRange": "₦120,000 / day",
     "image": "/img/listings/vanguard-protection-services.jpg"
   },
   {
@@ -101,7 +101,7 @@
     "verified": true,
     "promoted": false,
     "rating": "Business Pick",
-    "priceRange": "₦₦₦",
+    "priceRange": "₦180,000 / night",
     "image": "/img/listings/radisson-blu-hotel.jpg"
   },
   {
@@ -116,7 +116,7 @@
     "verified": true,
     "promoted": false,
     "rating": "5 Star",
-    "priceRange": "₦₦₦₦",
+    "priceRange": "₦250,000 / night",
     "image": "/img/listings/lagos-continental-hotel.jpg"
   },
   {
@@ -131,7 +131,7 @@
     "verified": true,
     "promoted": false,
     "rating": "Boutique Pick",
-    "priceRange": "₦₦₦",
+    "priceRange": "₦140,000 / night",
     "image": "/img/listings/circa-lagos.jpg"
   },
   {
@@ -146,7 +146,7 @@
     "verified": true,
     "promoted": false,
     "rating": "Best Value",
-    "priceRange": "₦₦₦",
+    "priceRange": "₦120,000 / night",
     "image": "/img/listings/eden-heights-apartments.jpg"
   },
   {
@@ -161,7 +161,7 @@
     "verified": true,
     "promoted": false,
     "rating": "Airport Close",
-    "priceRange": "₦₦",
+    "priceRange": "₦75,000 / night",
     "image": "/img/listings/magnolia-suites.jpg"
   },
   {
@@ -176,7 +176,7 @@
     "verified": false,
     "promoted": false,
     "rating": "Waterfront",
-    "priceRange": "₦₦₦₦",
+    "priceRange": "₦320,000 / night",
     "image": "/img/listings/harbour-point-residences.jpg"
   },
   {
@@ -191,7 +191,7 @@
     "verified": true,
     "promoted": false,
     "rating": "Digital Nomad",
-    "priceRange": "₦₦",
+    "priceRange": "₦45,000 / night",
     "image": "/img/listings/nomad-lagos.jpg"
   },
   {
@@ -206,7 +206,7 @@
     "verified": true,
     "promoted": false,
     "rating": "Must Try",
-    "priceRange": "₦₦₦",
+    "priceRange": "₦25,000 - ₦45,000 avg",
     "image": "/img/listings/craft-grill.jpg"
   },
   {
@@ -221,7 +221,7 @@
     "verified": true,
     "promoted": false,
     "rating": "Nigerian Classic",
-    "priceRange": "₦₦₦",
+    "priceRange": "₦20,000 - ₦35,000 avg",
     "image": "/img/listings/yellow-chilli.jpg"
   },
   {
@@ -236,7 +236,7 @@
     "verified": true,
     "promoted": false,
     "rating": "Weekend Favourite",
-    "priceRange": "₦₦₦",
+    "priceRange": "₦25,000 - ₦50,000 avg",
     "image": "/img/listings/escape-lounge-and-bar.jpg"
   },
   {
@@ -251,7 +251,7 @@
     "verified": true,
     "promoted": false,
     "rating": "Global Brand",
-    "priceRange": "₦₦₦",
+    "priceRange": "₦25,000 - ₦45,000 avg",
     "image": "/img/listings/hard-rock-cafe-lagos.jpg"
   },
   {
@@ -266,7 +266,7 @@
     "verified": true,
     "promoted": false,
     "rating": "Most Reliable",
-    "priceRange": "₦₦",
+    "priceRange": "₦25,000 / trip",
     "image": "/img/listings/lagos-clean-ride.jpg"
   },
   {
@@ -281,7 +281,7 @@
     "verified": true,
     "promoted": false,
     "rating": "Executive",
-    "priceRange": "₦₦₦",
+    "priceRange": "₦45,000 / trip",
     "image": "/img/listings/firstclass-transfers-ng.jpg"
   },
   {
@@ -296,7 +296,7 @@
     "verified": false,
     "promoted": false,
     "rating": "Budget Pick",
-    "priceRange": "₦",
+    "priceRange": "₦12,000 / trip",
     "image": "/img/listings/airport-mover-lagos.jpg"
   },
   {
@@ -311,7 +311,7 @@
     "verified": true,
     "promoted": false,
     "rating": "24/7",
-    "priceRange": "₦₦",
+    "priceRange": "₦20,000 callout",
     "image": "/img/listings/lagos-plumbing-pros.jpg"
   },
   {
@@ -326,7 +326,7 @@
     "verified": true,
     "promoted": false,
     "rating": "Transparent Pricing",
-    "priceRange": "₦₦",
+    "priceRange": "₦25,000 service",
     "image": "/img/listings/coolbreeze-ac-services.jpg"
   },
   {
@@ -341,7 +341,7 @@
     "verified": true,
     "promoted": false,
     "rating": "Beauty Pick",
-    "priceRange": "₦₦",
+    "priceRange": "₦18,000 session",
     "image": "/img/listings/glowup-studio.jpg"
   },
   {
@@ -356,7 +356,7 @@
     "verified": true,
     "promoted": false,
     "rating": "Fast Delivery",
-    "priceRange": "₦",
+    "priceRange": "₦3,500 / delivery",
     "image": "/img/listings/lagos-dispatch-riders.jpg"
   },
   {
@@ -371,7 +371,7 @@
     "verified": true,
     "promoted": false,
     "rating": "Airport Hotel",
-    "priceRange": "₦₦₦",
+    "priceRange": "₦165,000 / night",
     "image": "/img/listings/sheraton-lagos-hotel.jpg"
   },
   {
@@ -386,7 +386,7 @@
     "verified": true,
     "promoted": false,
     "rating": "Authentic",
-    "priceRange": "₦₦",
+    "priceRange": "₦80,000 / day",
     "image": "/img/listings/madam-kofo-private-chef.jpg"
   },
   {
@@ -401,7 +401,7 @@
     "verified": false,
     "promoted": false,
     "rating": "Luxury Experience",
-    "priceRange": "₦₦₦₦",
+    "priceRange": "₦250,000 / day",
     "image": "/img/listings/the-lagos-table.jpg"
   },
   {
@@ -416,7 +416,7 @@
     "verified": true,
     "promoted": false,
     "rating": "Ex-Military",
-    "priceRange": "₦₦₦",
+    "priceRange": "₦75,000 / day",
     "image": "/img/listings/eagle-eye-security.jpg"
   },
   {
@@ -431,7 +431,7 @@
     "verified": false,
     "promoted": false,
     "rating": "Certified",
-    "priceRange": "₦₦",
+    "priceRange": "₦20,000 callout",
     "image": "/img/listings/volt-electrical-ng.jpg"
   }
 ]

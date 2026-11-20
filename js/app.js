@@ -45,6 +45,29 @@ function sortListings(listings) {
 /* ---- Format Price in Airbnb style ---- */
 function formatPriceAirbnb(priceRange, category) {
   if (!priceRange) return '<strong>Price on request</strong>';
+
+  if (priceRange.includes('/')) {
+    const parts = priceRange.split('/');
+    const main = parts[0].trim();
+    const period = parts.slice(1).join('/').trim();
+    return `<strong>${main}</strong> <span>/ ${period}</span>`;
+  }
+  if (priceRange.includes(' avg')) {
+    const base = priceRange.replace(' avg', '').trim();
+    return `<strong>${base}</strong> <span>/ avg</span>`;
+  }
+  if (priceRange.includes(' callout')) {
+    const base = priceRange.replace(' callout', '').trim();
+    return `<strong>${base}</strong> <span>/ callout</span>`;
+  }
+  if (priceRange.includes(' service')) {
+    const base = priceRange.replace(' service', '').trim();
+    return `<strong>${base}</strong> <span>/ service</span>`;
+  }
+  if (priceRange.includes(' session')) {
+    const base = priceRange.replace(' session', '').trim();
+    return `<strong>${base}</strong> <span>/ session</span>`;
+  }
   
   let unit = 'night';
   if (['private-chef', 'personal-security', 'service'].includes(category)) {
@@ -156,8 +179,10 @@ async function initHome() {
 
   function parseNumericPrice(priceStr) {
     if (!priceStr) return 0;
-    // Extract first numeric group, e.g. "₦150,000 / night" -> 150000
-    const clean = priceStr.replace(/[^0-9]/g, '');
+    // Extract first numeric match, e.g. "₦150,000 / night" or "₦45,000 - ₦75,000 avg" -> 45000
+    const match = priceStr.match(/(\d[\d,]*)/);
+    if (!match) return 0;
+    const clean = match[1].replace(/,/g, '');
     return parseInt(clean, 10) || 0;
   }
 

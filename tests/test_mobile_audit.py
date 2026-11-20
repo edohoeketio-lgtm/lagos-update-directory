@@ -230,6 +230,40 @@ class TestMobileLayoutAndUX(unittest.TestCase):
         # 3. Input element must have >= 16px font-size to prevent iOS Safari auto-zoom
         self.assertIn("font-size: 16px !important", content)
 
+    def test_listing_tag_contrast_and_hygiene(self):
+        """Verify that tags on listing.html have high contrast and no washed-out yellow-on-white text."""
+        listing_path = os.path.join(BASE_DIR, "listing.html")
+        with open(listing_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        # Find .listing-rating-pill rule
+        m = re.search(r"\.listing-rating-pill\s*\{([^}]+)\}", content)
+        self.assertIsNotNone(m, ".listing-rating-pill rule not found")
+        pill_css = m.group(1)
+
+        # Rating pill must NOT have unreadable yellow text on faint yellow/white
+        self.assertNotIn("color: var(--yellow)", pill_css, "Rating pill must not use yellow text")
+        self.assertIn("color: #111827", pill_css, "Rating pill must use high-contrast dark text")
+        self.assertIn("background: #FFD400", pill_css, "Rating pill must use solid brand yellow background")
+
+    def test_google_drive_input_removed(self):
+        """Verify Google Drive input is removed from business listing modal in index.html."""
+        index_path = os.path.join(BASE_DIR, "index.html")
+        with open(index_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        self.assertNotIn("form-drive-link", content, "Google Drive link input should be removed from business listing modal")
+
+    def test_dummy_prices_populated(self):
+        """Verify all listings have realistic dummy prices instead of repeating naira symbols."""
+        import json
+        json_path = os.path.join(BASE_DIR, "data", "listings.json")
+        with open(json_path, "r", encoding="utf-8") as f:
+            listings = json.load(f)
+        for l in listings:
+            price = l.get("priceRange", "")
+            self.assertFalse(re.fullmatch(r"₦+", price), f"Listing {l['name']} has repeating naira symbol: {price}")
+            self.assertTrue(bool(re.search(r"\d", price)), f"Listing {l['name']} missing numeric dummy price: {price}")
+
 
 if __name__ == '__main__':
     unittest.main()
