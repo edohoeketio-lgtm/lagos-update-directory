@@ -19,7 +19,7 @@ if os.path.isfile(env_path):
     except Exception:
         pass
 
-DB_PATH = os.path.join(BASE_DIR, "data", "directory.db")
+DB_PATH = os.environ.get("DB_PATH", os.path.join("/tmp", "directory.db") if os.environ.get("VERCEL") else os.path.join(BASE_DIR, "data", "directory.db"))
 DATA_JSON_PATH = os.path.join(BASE_DIR, "data", "listings.json")
 
 PORT = int(os.environ.get("PORT", 3000))

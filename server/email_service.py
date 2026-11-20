@@ -10,7 +10,7 @@ from datetime import datetime
 import os
 from .config import ADMIN_EMAIL, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, BASE_DIR
 
-LOG_PATH = os.path.join(BASE_DIR, "data", "email_log.txt")
+LOG_PATH = os.environ.get("LOG_PATH", os.path.join("/tmp", "email_log.txt") if os.environ.get("VERCEL") else os.path.join(BASE_DIR, "data", "email_log.txt"))
 
 def format_email_body(submission_id: str, data: dict, photo_paths: list = None) -> tuple[str, str]:
     """Generates plain text and HTML versions of the notification email."""

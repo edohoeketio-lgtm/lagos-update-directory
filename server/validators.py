@@ -8,7 +8,7 @@ import base64
 import os
 from .config import BASE_DIR
 
-UPLOAD_DIR = os.path.join(BASE_DIR, "data", "uploads")
+UPLOAD_DIR = os.environ.get("UPLOAD_DIR", os.path.join("/tmp", "uploads") if os.environ.get("VERCEL") else os.path.join(BASE_DIR, "data", "uploads"))
 
 VALID_CATEGORIES = {
     'hotel',

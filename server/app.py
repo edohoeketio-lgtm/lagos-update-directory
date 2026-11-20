@@ -26,7 +26,9 @@ from .rate_limiter import limiter
 
 class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=BASE_DIR, **kwargs)
+        if 'directory' not in kwargs and len(args) < 4:
+            kwargs['directory'] = BASE_DIR
+        super().__init__(*args, **kwargs)
 
     def send_json(self, status_code: int, data: dict):
         body = json.dumps(data, ensure_ascii=False).encode('utf-8')
