@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en-NG">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Listing — Lagos Updates Directory</title>
+  <meta name="description" content="Verified business listing on the Lagos Updates Directory.">
+  <meta name="theme-color" content="#FFD400">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* Listing-specific extras */
+    .listing-wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 36px 20px 80px;
+    }
+    .listing-tags {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .listing-cat-pill {
+      background: var(--black-3);
+      border: 1px solid var(--black-4);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 14px;
+      border-radius: 100px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .listing-rating-pill {
+      background: rgba(255,212,0,0.1);
+      border: 1px solid rgba(255,212,0,0.2);
+      color: var(--yellow);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 5px 14px;
+      border-radius: 100px;
+    }
+    .listing-divider {
+      border: none;
+      border-top: 1px solid var(--black-3);
+      margin: 32px 0;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .info-item {
+      background: var(--black-2);
+      border: 1px solid var(--black-4);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+    }
+    .info-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .info-value {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    @media (max-width: 540px) {
+      .info-grid { grid-template-columns: 1fr; }
+    }
+
+    /* --- REVIEWS SECTION --- */
+    .reviews-section {
+      margin-top: 40px;
+    }
+    .reviews-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .reviews-title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .reviews-count {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .btn-review {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #111827;
+      color: #FFFFFF;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 12px 24px;
+      border-radius: 9999px;
+      border: 1px solid #111827;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      font-family: inherit;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+    }
+    .btn-review:hover {
+      background: #000000;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+    }
+
+    /* Contact Buttons Modern Luxury Styling */
+    .contact-card-wrap {
+      background: #F8F9FA;
+      border: 1px solid #E5E7EB;
+      border-radius: 16px;
+      padding: 24px;
+      margin: 32px 0;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+    }
+    .contact-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .contact-title {
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #111827;
+      margin: 0;
+    }
+    .contact-badge-verified {
+      font-size: 11px;
+      font-weight: 700;
+      color: #059669;
+      background: #ECFDF5;
+      border: 1px solid #A7F3D0;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .contact-buttons {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .contact-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 24px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      background: #FFFFFF;
+      border: 1px solid #D1D5DB;
+      color: #111827;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+    .contact-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+      border-color: #9CA3AF;
+    }
+    .contact-btn.whatsapp {
+      background: #25D366;
+      border-color: #25D366;
+      color: #FFFFFF;
+      box-shadow: 0 4px 14px rgba(37, 211, 102, 0.28);
+    }
+    .contact-btn.whatsapp:hover {
+      background: #20BD5A;
+      border-color: #20BD5A;
+      box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+    }
+    .contact-btn.instagram {
+      color: #BE185D;
+      border-color: #FBCFE8;
+      background: #FDF2F8;
+    }
+    .contact-btn.instagram:hover {
+      background: #FCE7F3;
+      border-color: #F472B6;
+    }
+
+    /* Coming-soon panel */
+    .review-coming-soon {
+      background: var(--black-2);
+      border: 1px solid var(--black-4);
+      padding: 40px 32px;
+      text-align: center;
+    }
+    .review-coming-soon-icon {
+      font-size: 36px;
+      margin-bottom: 16px;
+    }
+    .review-coming-soon h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .review-coming-soon p {
+      font-size: 14px;
+      color: var(--text-muted);
+      max-width: 380px;
+      margin: 0 auto 20px;
+      line-height: 1.6;
+    }
+    .review-notify-row {
+      display: flex;
+      gap: 8px;
+      max-width: 360px;
+      margin: 0 auto;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .review-notify-input {
+      flex: 1;
+      min-width: 180px;
+      background: var(--black-3);
+      border: 1px solid var(--black-4);
+      color: var(--text-primary);
+      font-size: 14px;
+      padding: 10px 14px;
+      outline: none;
+      font-family: inherit;
+      transition: var(--transition);
+    }
+    .review-notify-input::placeholder { color: var(--text-muted); }
+    .review-notify-input:focus { border-color: var(--yellow); }
+    .review-notify-btn {
+      background: var(--black-3);
+      border: 1px solid var(--black-4);
+      color: var(--text-primary);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 18px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+    .review-notify-btn:hover { border-color: var(--yellow); color: var(--yellow); }
+    .review-notify-sent {
+      font-size: 13px;
+      color: var(--verified-green);
+      font-weight: 600;
+      margin-top: 12px;
+      display: none;
+    }
+
+    /* Star display (read-only for now) */
+    .star-row {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+    .star {
+      font-size: 20px;
+      color: var(--black-4);
+    }
+    .star.filled { color: var(--yellow); }
+    .review-avg {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Moderation note */
+    .review-moderation-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: var(--black-3);
+      border-left: 3px solid var(--yellow);
+      padding: 14px 16px;
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+    .review-moderation-note strong { color: var(--text-secondary); }
+  </style>
+</head>
+<body data-page="listing">
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="container nav-inner">
+      <a href="index.html" class="nav-logo" aria-label="Lagos Updates Directory Home">
+        <img src="/img/logo.png" alt="Lagos Updates" class="nav-logo-img">
+        <span class="nav-brand-badge">Directory</span>
+      </a>
+      <div class="nav-right">
+        <a href="index.html" class="nav-action-link">Home</a>
+        <a href="directory.html" class="nav-action-link">Browse All</a>
+        <a href="vendor.html" class="nav-action-link nav-vendor-link">Vendor Login</a>
+        <a href="index.html#list-business" class="nav-cta-btn">
+          List Business
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <div class="listing-wrap">
+
+      <!-- TOP BAR WITH BACK & VIRAL SHARE -->
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+        <a href="directory.html" class="listing-back" style="margin-bottom: 0;">← Back to Directory</a>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <a id="btn-share-wa" href="#" target="_blank" rel="noopener" class="listing-back" style="margin-bottom: 0; background: #E8F5E9; border-color: #C8E6C9; color: #008A05; font-weight: 700;">
+            Share to WhatsApp ↗
+          </a>
+          <button type="button" id="btn-copy-link" class="listing-back" style="margin-bottom: 0; cursor: pointer;">
+            Copy Link 🔗
+          </button>
+        </div>
+      </div>
+
+      <!-- HERO IMAGE PLACEHOLDER -->
+      <div class="listing-hero-img" id="listing-hero-img" aria-hidden="true"></div>
+
+      <!-- TAGS ROW -->
+      <div class="listing-tags">
+        <span class="listing-cat-pill" id="listing-category">Category</span>
+        <span class="listing-rating-pill" id="listing-rating">Rating</span>
+        <span class="listing-verified-pill hidden" id="listing-verified">✓ Verified by Lagos Updates</span>
+      </div>
+
+      <!-- TITLE -->
+      <h1 class="listing-title" id="listing-name">Loading…</h1>
+
+      <!-- META CHIPS -->
+      <div class="listing-meta" style="margin-bottom: 24px;">
+        <span class="listing-area-badge" id="listing-area"></span>
+        <span class="listing-price-pill" id="listing-price"></span>
+      </div>
+
+      <!-- DESCRIPTION -->
+      <p class="listing-desc" id="listing-desc"></p>
+
+      <hr class="listing-divider">
+
+      <!-- CONTACT -->
+      <div class="contact-card-wrap">
+        <div class="contact-header-row">
+          <div class="contact-title">Direct Verified Contacts</div>
+          <span class="contact-badge-verified">✓ Verified Operator</span>
+        </div>
+        <div class="contact-buttons">
+          <a id="btn-whatsapp" href="#" target="_blank" rel="noopener" class="contact-btn whatsapp">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+            WhatsApp
+          </a>
+          <a id="btn-phone" href="#" class="contact-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.09-1.09a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+            Direct Call
+          </a>
+          <a id="btn-instagram" href="#" target="_blank" rel="noopener" class="contact-btn instagram">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+            Instagram
+          </a>
+        </div>
+      </div>
+
+      <hr class="listing-divider">
+
+      <!-- INFO GRID -->
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">Location</div>
+          <div class="info-value" id="listing-area-info">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Price Range</div>
+          <div class="info-value" id="listing-price-info">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Category</div>
+          <div class="info-value" id="listing-category-info">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Status</div>
+          <div class="info-value" id="listing-status-info">—</div>
+        </div>
+      </div>
+
+      <hr class="listing-divider">
+
+      <!-- REVIEWS SECTION -->
+      <section class="reviews-section" id="reviews-section" aria-label="Reviews">
+
+        <div class="reviews-header">
+          <div>
+            <div class="reviews-title">Reviews</div>
+            <div class="reviews-count" id="reviews-count">No reviews yet. Be the first.</div>
+          </div>
+          <button class="btn-review" id="btn-leave-review" onclick="openReviewPanel()">★ Leave a Review</button>
+        </div>
+
+        <!-- Star summary (placeholder, will be driven by backend) -->
+        <div class="star-row" id="star-summary" aria-label="Average rating">
+          <span class="star">★</span>
+          <span class="star">★</span>
+          <span class="star">★</span>
+          <span class="star">★</span>
+          <span class="star">★</span>
+        </div>
+        <div class="review-avg">Rating not yet available</div>
+
+        <!-- Coming soon panel (hidden until button is clicked) -->
+        <div class="review-coming-soon" id="review-panel" style="display:none; margin-top:24px;">
+          <div class="review-coming-soon-icon">📝</div>
+          <h3>Reviews are coming soon</h3>
+          <p>We're building a verified review system. Every review will be checked by the Lagos Updates team before it goes live. No spam, no fake ratings.</p>
+          <div class="review-notify-row">
+            <input
+              type="tel"
+              id="review-notify-input"
+              class="review-notify-input"
+              placeholder="Your WhatsApp number"
+              aria-label="WhatsApp number for review notifications"
+            >
+            <button class="review-notify-btn" onclick="submitNotify()">Notify me</button>
+          </div>
+          <div class="review-notify-sent" id="review-notify-sent">Got it. We'll let you know when reviews go live. ✓</div>
+          <div class="review-moderation-note">
+            <span>🔒</span>
+            <span><strong>How it works:</strong> When reviews launch, you'll submit your experience and our team verifies it before it's published. Your phone number is only used to confirm you've actually visited.</span>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- BACK LINK -->
+      <a href="directory.html" class="btn-secondary" style="display:inline-flex; margin-top:32px;">← Back to all listings</a>
+
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-disclaimer" style="padding: 16px 0; border-top: 1px solid var(--border-hairline); margin-bottom: 16px; font-size: 12px; color: var(--text-muted); line-height: 1.6;">
+        <strong>Editorial Notice:</strong> Lagos Updates Directory manually vets listed businesses for operational legitimacy and reputation. All bookings, service delivery, and transactions occur directly between clients and verified operators.
+      </div>
+      <div class="footer-bottom">
+        <p class="footer-copy">© <span id="footer-year"></span> <span>Lagos Updates</span>. All rights reserved.</p>
+        <p class="footer-yoruba">Èkó ò ní bàjẹ́ oooooo!</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/telemetry.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    /* Duplicate info grid values after app.js hydrates */
+    document.addEventListener('DOMContentLoaded', () => {
+      requestAnimationFrame(() => {
+        const areaEl    = document.getElementById('listing-area');
+        const priceEl   = document.getElementById('listing-price');
+        const catEl     = document.getElementById('listing-category');
+        const statusEl  = document.getElementById('listing-status-info');
+        const areaInfo  = document.getElementById('listing-area-info');
+        const priceInfo = document.getElementById('listing-price-info');
+        const catInfo   = document.getElementById('listing-category-info');
+
+        // Mirror values once app.js has set them
+        const mirror = () => {
+          if (areaInfo && areaEl) areaInfo.textContent  = areaEl.textContent  || '—';
+          if (priceInfo && priceEl) priceInfo.textContent = priceEl.textContent || '—';
+          if (catInfo && catEl) catInfo.textContent   = catEl.textContent   || '—';
+          const verifiedEl = document.getElementById('listing-verified');
+          if (statusEl) {
+            statusEl.textContent = verifiedEl && !verifiedEl.classList.contains('hidden')
+              ? '✓ Verified'
+              : 'Not yet verified';
+            statusEl.style.color = verifiedEl && !verifiedEl.classList.contains('hidden')
+              ? 'var(--verified-green)'
+              : 'var(--text-muted)';
+          }
+        };
+        setTimeout(mirror, 300);
+      });
+    });
+  </script>
+  <script>
+    function openReviewPanel() {
+      const panel = document.getElementById('review-panel');
+      const btn   = document.getElementById('btn-leave-review');
+      const isOpen = panel.style.display !== 'none';
+      panel.style.display = isOpen ? 'none' : 'block';
+      btn.textContent = isOpen ? '★ Leave a Review' : '✕ Close';
+      if (!isOpen && typeof window.trackEvent === 'function') {
+        const params = new URLSearchParams(window.location.search);
+        window.trackEvent('review_panel_opened', { listing_id: params.get('id') || 'unknown' });
+      }
+    }
+
+    async function submitNotify() {
+      const input = document.getElementById('review-notify-input');
+      const sent  = document.getElementById('review-notify-sent');
+      const val   = input.value.trim();
+      if (!val) { input.focus(); return; }
+      
+      const params = new URLSearchParams(window.location.search);
+      const listingId = params.get('id') || 'unknown';
+
+      if (typeof window.trackEvent === 'function') {
+        window.trackEvent('review_notify_subscribed', { listing_id: listingId });
+      }
+
+      try {
+        await fetch(`/api/listings/${listingId}/notify-reviews`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: val })
+        });
+      } catch (_) {}
+
+      input.style.display   = 'none';
+      document.querySelector('.review-notify-btn').style.display = 'none';
+      sent.style.display    = 'block';
+    }
+  </script>
+</body>
+</html>

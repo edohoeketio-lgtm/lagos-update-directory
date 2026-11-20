@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en-NG">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editorial Admin — Lagos Updates Directory</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="js/telemetry.js"></script>
+  <style>
+    .admin-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px 80px;
+    }
+    .admin-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-hairline);
+      padding-bottom: 24px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .admin-stats {
+      display: flex;
+      gap: 20px;
+    }
+    .stat-pill {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-hairline);
+      padding: 10px 18px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .stat-pill strong {
+      font-size: 16px;
+      color: var(--accent-black);
+    }
+    .submissions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .sub-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: var(--transition);
+    }
+    .sub-card:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+    .sub-card.approved {
+      border-left: 4px solid #008A05;
+      background: #FDFDFD;
+    }
+    .sub-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .sub-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+    .sub-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+    }
+    .sub-badge.featured {
+      background: #FFF9C4;
+      color: #9A6F00;
+    }
+    .sub-badge.verified {
+      background: #E8F5E9;
+      color: #008A05;
+    }
+    .sub-badge.pending {
+      background: #F3F4F6;
+      color: #4B5563;
+    }
+    .sub-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      background: var(--bg-subtle);
+      padding: 16px;
+      border-radius: 10px;
+      font-size: 13px;
+    }
+    .sub-grid-item span {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+    .sub-grid-item strong {
+      color: var(--text-primary);
+    }
+    .sub-desc {
+      font-size: 14px;
+      color: #444;
+      line-height: 1.5;
+    }
+    .sub-photos {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .sub-photo-thumb {
+      width: 100px;
+      height: 100px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid var(--border-hairline);
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .sub-photo-thumb:hover {
+      transform: scale(1.05);
+    }
+    .sub-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-hairline);
+    }
+    .btn-approve {
+      background: var(--accent-black);
+      color: #FFFFFF;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 10px 18px;
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+    }
+    .btn-approve-featured {
+      background: #FFD400;
+      color: #000000;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 10px 18px;
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+    }
+    .btn-reject {
+      background: #F3F4F6;
+      color: #6B7280;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 16px;
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+    }
+    .btn-reject:hover {
+      background: #FEE2E2;
+      color: #DC2626;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body data-page="admin">
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="container nav-inner">
+      <a href="index.html" class="nav-logo" style="text-decoration:none;">
+        <img src="/img/logo.png" alt="Lagos Updates" style="height:38px; width:auto; object-fit:contain;">
+        <span style="font-size:11px; font-weight:800; color:#B45309; background:#FFFBEB; border:1px solid #FCD34D; padding:4px 8px; border-radius:6px; letter-spacing:0.5px;">EDITORIAL DESK</span>
+      </a>
+      <div class="nav-right" style="display:flex; align-items:center; gap:12px;">
+        <a href="index.html" class="nav-action-link">View Public Directory</a>
+        <button onclick="lockAdmin()" style="padding:6px 14px; border:1px solid #CCC; background:#FFF; border-radius:8px; font-weight:700; font-size:12px; cursor:pointer;">🔒 Lock Desk</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="admin-wrap">
+    
+    <div class="admin-header">
+      <div>
+        <h1 style="font-size: 28px; font-weight: 800; margin-bottom: 4px;">Editorial Review Dashboard</h1>
+        <p style="color: var(--text-muted); font-size: 14px;">Review business applications, verify credentials, and publish live to Lagos Updates Directory.</p>
+      </div>
+      <div class="admin-stats" style="display:flex; flex-wrap:wrap; gap:12px;">
+        <div class="stat-pill">Listings Today: <strong id="stat-listings-today">0</strong> <span style="font-size:11px; color:var(--text-muted); font-weight:normal;">(<span id="stat-total-listings">0</span> total)</span></div>
+        <div class="stat-pill">Featured Spots: <strong id="stat-featured" style="color:#B78103;">0</strong></div>
+        <div class="stat-pill" style="border-color:#FCD34D; background:#FFFBEB;">Total Pending: <strong id="stat-pending" style="color:#B45309;">0</strong></div>
+        <div class="stat-pill">Applications Today: <strong id="stat-apps-today" style="color:#008A05;">0</strong></div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div style="display:flex; gap:10px; margin-bottom:24px; border-bottom:1px solid var(--border-hairline); padding-bottom:14px; flex-wrap:wrap;">
+      <button type="button" id="tab-btn-pending" class="filter-tab active" onclick="switchAdminTab('pending')">
+        📥 Pending Applications (<span id="tab-count-pending">0</span>)
+      </button>
+      <button type="button" id="tab-btn-requests" class="filter-tab" onclick="switchAdminTab('requests')">
+        🔄 Vendor Requests (<span id="tab-count-requests">0</span>)
+      </button>
+      <button type="button" id="tab-btn-listings" class="filter-tab" onclick="switchAdminTab('listings')">
+        📂 Manage Live Listings (<span id="tab-count-listings">0</span>)
+      </button>
+    </div>
+
+    <!-- PENDING SUBMISSIONS LIST -->
+    <div id="section-pending">
+      <div class="submissions-list" id="submissions-list">
+        <div class="empty-state">Loading applications…</div>
+      </div>
+    </div>
+
+    <!-- VENDOR ACTION REQUESTS (EDITS, DELETIONS, RENEWALS) -->
+    <div id="section-requests" style="display:none;">
+      <div class="submissions-list" id="requests-list">
+        <div class="empty-state">Loading vendor requests…</div>
+      </div>
+    </div>
+
+    <!-- LIVE LISTINGS MANAGEMENT LIST -->
+    <div id="section-listings" style="display:none;">
+      <div class="submissions-list" id="live-listings-list">
+        <div class="empty-state">Loading live listings…</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- EDITORIAL PASSKEY GATE MODAL -->
+  <div id="admin-gate-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:99999;">
+    <div style="background:#FFF;padding:40px;border-radius:18px;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);text-align:center;">
+      <img src="/img/logo.png" alt="Lagos Updates" style="height:44px;margin-bottom:16px;">
+      <h2 style="font-size:1.3rem;font-weight:900;margin-bottom:6px;">Editorial Desk Access</h2>
+      <p style="color:#717171;font-size:0.88rem;margin-bottom:24px;">Enter your editorial passkey to manage directory listings.</p>
+      <form onsubmit="unlockAdmin(event)">
+        <input type="password" id="gate-passkey" placeholder="Enter editorial passkey…" required style="width:100%;padding:14px;border:1px solid #CCC;border-radius:10px;font-size:1rem;margin-bottom:14px;box-sizing:border-box;outline:none;">
+        <button type="submit" class="btn-vendor-primary" style="width:100%;padding:14px;background:#000;color:#FFF;border:none;border-radius:10px;font-weight:800;cursor:pointer;">Unlock Editorial Desk &rarr;</button>
+        <p id="gate-error" style="color:#DC2626;font-size:0.85rem;margin-top:12px;display:none;"></p>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let adminKey = sessionStorage.getItem('lagos_admin_key') || '';
+
+    function checkAdminAuth() {
+      const gate = document.getElementById('admin-gate-modal');
+      if (!adminKey) {
+        if (gate) gate.style.display = 'flex';
+        return false;
+      }
+      if (gate) gate.style.display = 'none';
+      return true;
+    }
+
+    async function unlockAdmin(e) {
+      e.preventDefault();
+      const input = document.getElementById('gate-passkey');
+      const errEl = document.getElementById('gate-error');
+      const val = input.value.trim();
+      if (!val) return;
+
+      try {
+        const res = await fetch('/api/admin/metrics', {
+          headers: { 'X-Admin-Key': val }
+        });
+        if (res.status === 401) {
+          errEl.textContent = 'Invalid passkey. Access denied.';
+          errEl.style.display = 'block';
+          input.value = '';
+          return;
+        }
+        adminKey = val;
+        sessionStorage.setItem('lagos_admin_key', val);
+        document.getElementById('admin-gate-modal').style.display = 'none';
+        loadSubmissions();
+        loadRequests();
+        loadMetrics();
+      } catch (err) {
+        errEl.textContent = 'Connection error checking passkey.';
+        errEl.style.display = 'block';
+      }
+    }
+
+    function lockAdmin() {
+      sessionStorage.removeItem('lagos_admin_key');
+      adminKey = '';
+      location.reload();
+    }
+
+    async function adminFetch(url, options = {}) {
+      options.headers = options.headers || {};
+      options.headers['X-Admin-Key'] = adminKey;
+      const res = await fetch(url, options);
+      if (res.status === 401) {
+        sessionStorage.removeItem('lagos_admin_key');
+        adminKey = '';
+        checkAdminAuth();
+      }
+      return res;
+    }
+    async function loadMetrics() {
+      if (!adminKey) return;
+      try {
+        const res = await adminFetch('/api/admin/metrics');
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('stat-listings-today').textContent = data.listings_today;
+          document.getElementById('stat-total-listings').textContent = data.total_listings;
+          document.getElementById('stat-featured').textContent = data.featured_spots;
+          document.getElementById('stat-pending').textContent = data.total_pending;
+          document.getElementById('stat-apps-today').textContent = data.submissions_today;
+        }
+      } catch (err) {
+        console.error('Could not load real-time metrics:', err);
+      }
+    }
+
+    async function loadSubmissions() {
+      if (!adminKey) return;
+      const listEl = document.getElementById('submissions-list');
+      loadMetrics();
+      try {
+        const res = await adminFetch('/api/admin/submissions');
+        const data = await res.json();
+        const subs = data.submissions || [];
+        const pendingCount = subs.filter(s => s.status === 'pending').length;
+        document.getElementById('tab-count-pending').textContent = pendingCount;
+
+        if (subs.length === 0) {
+          listEl.innerHTML = '<div class="empty-state"><h3>No business submissions yet.</h3><p>When vendors apply via "List Business", they appear here for review.</p></div>';
+          return;
+        }
+
+        listEl.innerHTML = '';
+        subs.forEach(s => {
+          const card = document.createElement('div');
+          card.className = 'sub-card ' + (s.status === 'approved' ? 'approved' : '');
+          card.id = 'sub-' + s.id;
+
+          const photos = s.photos || [];
+          let photosHtml = '';
+          if (photos.length > 0) {
+            photosHtml = `
+              <div>
+                <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display:block; margin-bottom: 6px;">Uploaded Photos (${photos.length}):</span>
+                <div class="sub-photos">
+                  ${photos.map(p => `<a href="${p}" target="_blank"><img src="${p}" class="sub-photo-thumb" alt="Photo"></a>`).join('')}
+                </div>
+              </div>
+            `;
+          }
+
+          let driveHtml = '';
+          if (s.drive_link) {
+            driveHtml = `<div style="font-size: 13px;"><a href="${s.drive_link}" target="_blank" style="color: #0066cc; font-weight: 600;">📁 View Cloud Drive Folder &rarr;</a></div>`;
+          }
+
+          card.innerHTML = `
+            <div class="sub-top">
+              <div>
+                <div class="sub-title">${s.business_name}</div>
+                <div style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
+                  Ref: ${s.id.slice(0, 8).toUpperCase()} &middot; Applied on ${s.created_at}
+                </div>
+              </div>
+              <div>
+                <span class="sub-badge ${s.plan_tier}">${s.plan_tier === 'featured' ? '★ Featured Tier' : (s.plan_tier === 'featured_1w' ? '🚀 1-Week Boost' : 'Standard Verified')}</span>
+                <span class="sub-badge ${s.status}" style="margin-left: 6px;">Status: ${s.status.toUpperCase()}</span>
+                ${s.payment_status === 'paid' ? `<span class="sub-badge" style="background:#E8F5E9; color:#008A05; font-weight:800; margin-left:6px;">💳 PAID (Flutterwave)</span>` : `<span class="sub-badge" style="background:#FFFBEB; color:#B45309; font-weight:600; margin-left:6px;">⏳ UNPAID</span>`}
+              </div>
+            </div>
+
+            <div class="sub-grid">
+              <div class="sub-grid-item"><span>Category</span><strong>${s.category.toUpperCase()}</strong></div>
+              <div class="sub-grid-item"><span>Neighborhood</span><strong>${s.area}, Lagos</strong></div>
+              <div class="sub-grid-item"><span>Rates</span><strong>${s.price_range || 'On Request'}</strong></div>
+              <div class="sub-grid-item"><span>Contact Person</span><strong>${s.contact_name} (${s.contact_email})</strong></div>
+            </div>
+
+            <div class="sub-desc">
+              <strong>Description:</strong> ${s.description}
+            </div>
+
+            ${photosHtml}
+            ${driveHtml}
+
+            <div class="sub-actions">
+              <a href="https://wa.me/${s.whatsapp.replace(/[^0-9]/g, '')}?text=Hello%20${encodeURIComponent(s.contact_name)},%20this%20is%20Lagos%20Updates%20Directory%20team%20regarding%20your%20application%20for%20${encodeURIComponent(s.business_name)}" target="_blank" class="btn-approve" style="background:#25D366; text-decoration:none;">
+                Chat on WhatsApp &rarr;
+              </a>
+              ${s.status === 'pending' ? `
+                <button type="button" class="btn-approve" onclick="handleApprove('${s.id}', false)">✓ Approve & Publish</button>
+                <button type="button" class="btn-approve-featured" onclick="handleApprove('${s.id}', true)">⭐ Approve as Featured Spot</button>
+                <button type="button" class="btn-reject" onclick="handleReject('${s.id}')">✕ Reject</button>
+              ` : `
+                <span style="font-size: 13px; font-weight: 700; color: #008A05; align-self: center;">✓ Active in Live Directory</span>
+              `}
+            </div>
+          `;
+          listEl.appendChild(card);
+        });
+
+      } catch (err) {
+        listEl.innerHTML = '<div class="empty-state">Failed to load submissions. Please ensure backend is running.</div>';
+      }
+    }
+
+    async function handleApprove(subId, featured) {
+      if (!confirm(`Are you sure you want to approve this business and publish it live${featured ? ' as a FEATURED listing' : ''}?`)) return;
+
+      if (typeof window.trackEvent === 'function') {
+        window.trackEvent('admin_submission_approved', { sub_id: subId, featured });
+      }
+
+      try {
+        const res = await adminFetch(`/api/admin/submissions/${subId}/approve?featured=${featured ? '1' : '0'}`, {
+          method: 'POST'
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert(`Approved! Published live as listing ID: ${data.listing_id}`);
+          loadSubmissions();
+        } else {
+          alert('Error: ' + data.error);
+        }
+      } catch (err) {
+        alert('Connection error');
+      }
+    }
+
+    function switchAdminTab(tab) {
+      document.getElementById('section-pending').style.display = tab === 'pending' ? 'block' : 'none';
+      document.getElementById('section-requests').style.display = tab === 'requests' ? 'block' : 'none';
+      document.getElementById('section-listings').style.display = tab === 'listings' ? 'block' : 'none';
+      
+      document.getElementById('tab-btn-pending').classList.toggle('active', tab === 'pending');
+      document.getElementById('tab-btn-requests').classList.toggle('active', tab === 'requests');
+      document.getElementById('tab-btn-listings').classList.toggle('active', tab === 'listings');
+
+      if (tab === 'listings') loadLiveListings();
+      if (tab === 'requests') loadRequests();
+    }
+
+    async function loadRequests() {
+      if (!adminKey) return;
+      const listEl = document.getElementById('requests-list');
+      try {
+        const res = await adminFetch('/api/admin/requests');
+        const data = await res.json();
+        const reqs = data.requests || [];
+        document.getElementById('tab-count-requests').textContent = reqs.length;
+
+        if (reqs.length === 0) {
+          listEl.innerHTML = '<div class="empty-state"><h3>No pending vendor action requests.</h3><p>When vendors request edits, deletion, or renewals from their dashboard, they appear here for verification.</p></div>';
+          return;
+        }
+
+        listEl.innerHTML = '';
+        reqs.forEach(r => {
+          const card = document.createElement('div');
+          card.className = 'sub-card';
+          card.style.borderLeft = r.request_type === 'delete' ? '4px solid #DC2626' : (r.request_type === 'renew' ? '4px solid #FFD400' : '4px solid #008A05');
+
+          const payload = r.payload || {};
+          let diffHtml = '';
+          if (r.request_type === 'edit') {
+            diffHtml = `
+              <div style="background:#F9FAFB; padding:12px; border-radius:8px; margin:10px 0; font-size:13px;">
+                <strong>Requested Updates:</strong><br>
+                ${payload.name ? `• <b>Name:</b> ${payload.name}<br>` : ''}
+                ${payload.area ? `• <b>Area:</b> ${payload.area}<br>` : ''}
+                ${payload.price_range ? `• <b>Price:</b> ${payload.price_range}<br>` : ''}
+                ${payload.phone ? `• <b>Phone:</b> ${payload.phone}<br>` : ''}
+                ${payload.whatsapp ? `• <b>WhatsApp:</b> ${payload.whatsapp}<br>` : ''}
+                ${payload.instagram ? `• <b>Instagram:</b> @${payload.instagram}<br>` : ''}
+                ${payload.description ? `• <b>Description:</b> ${payload.description}<br>` : ''}
+              </div>
+            `;
+          } else if (r.request_type === 'delete') {
+            diffHtml = `
+              <div style="background:#FEF2F2; padding:12px; border-radius:8px; margin:10px 0; font-size:13px; color:#991B1B;">
+                <strong>Deletion Reason:</strong> ${payload.reason || 'Vendor requested removal.'}
+              </div>
+            `;
+          } else if (r.request_type === 'renew') {
+            diffHtml = `
+              <div style="background:#FFFBEB; padding:12px; border-radius:8px; margin:10px 0; font-size:13px; color:#92400E;">
+                <strong>Standard Listing Renewal:</strong> Requested 30-Day Extension (₦30,000 / month).
+              </div>
+            `;
+          } else if (r.request_type === 'boost') {
+            diffHtml = `
+              <div style="background:#FFFDF0; border:1px solid #FCD34D; padding:12px; border-radius:8px; margin:10px 0; font-size:13px; color:#92400E;">
+                <strong>⚡ Featured Boost Request:</strong> ${payload.label || 'Boost'} (${payload.price || ''} &middot; ${payload.days || 30} days top-row placement).
+              </div>
+            `;
+          }
+
+          card.innerHTML = `
+            <div class="sub-top">
+              <div>
+                <div class="sub-title">${r.listing_name}</div>
+                <div style="font-size:13px; color:var(--text-muted); margin-top:2px;">
+                  Listing ID: ${r.listing_id} &middot; Vendor: ${r.vendor_email} &middot; ${r.vendor_whatsapp || ''}
+                </div>
+              </div>
+              <div>
+                <span class="sub-badge" style="background:#000; color:#FFF; font-weight:700;">
+                  ${r.request_type.toUpperCase()} REQUEST
+                </span>
+              </div>
+            </div>
+
+            ${diffHtml}
+
+            <div class="sub-actions">
+              <button type="button" class="btn-approve" onclick="handleResolveRequest('${r.id}', 'approve')">
+                ✓ Approve & Apply Changes
+              </button>
+              <button type="button" class="btn-reject" onclick="handleResolveRequest('${r.id}', 'reject')">
+                ✕ Reject Request
+              </button>
+            </div>
+          `;
+          listEl.appendChild(card);
+        });
+      } catch (err) {
+        listEl.innerHTML = '<div class="empty-state">Failed to load vendor requests.</div>';
+      }
+    }
+
+    async function handleResolveRequest(reqId, action) {
+      if (!confirm(`Are you sure you want to ${action} this vendor request?`)) return;
+      if (typeof window.trackEvent === 'function') {
+        window.trackEvent(`admin_request_${action}d`, { request_id: reqId });
+      }
+      try {
+        const res = await adminFetch(`/api/admin/requests/${reqId}/${action}`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          alert(`Request ${action}d successfully!`);
+          loadRequests();
+          loadMetrics();
+          loadLiveListings();
+        } else {
+          alert('Error: ' + data.error);
+        }
+      } catch (e) {
+        alert('Action failed');
+      }
+    }
+
+    async function loadLiveListings() {
+      if (!adminKey) return;
+      const listEl = document.getElementById('live-listings-list');
+      try {
+        const res = await adminFetch('/api/admin/listings');
+        const data = await res.json();
+        const listings = data.listings || [];
+        document.getElementById('tab-count-listings').textContent = listings.length;
+
+        if (listings.length === 0) {
+          listEl.innerHTML = '<div class="empty-state"><h3>No live listings in directory.</h3></div>';
+          return;
+        }
+
+        listEl.innerHTML = '';
+        listings.forEach(l => {
+          const card = document.createElement('div');
+          card.className = 'sub-card ' + (l.is_active ? '' : 'paused');
+          card.style.borderLeft = l.is_active ? '4px solid #008A05' : '4px solid #9CA3AF';
+          card.style.opacity = l.is_active ? '1' : '0.7';
+
+          card.innerHTML = `
+            <div class="sub-top">
+              <div>
+                <div class="sub-title">${l.name}</div>
+                <div style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
+                  ID: ${l.id} &middot; ${l.category.toUpperCase()} &middot; ${l.area}, Lagos
+                </div>
+              </div>
+              <div>
+                <span class="sub-badge ${l.promoted ? 'featured' : 'pending'}">${l.promoted ? '⭐ Featured Spot' : 'Standard'}</span>
+                <span class="sub-badge" style="background:${l.is_active ? '#E8F5E9' : '#F3F4F6'}; color:${l.is_active ? '#008A05' : '#6B7280'}; margin-left:6px;">
+                  ${l.is_active ? '● LIVE / VISIBLE' : '⏸ PAUSED / HIDDEN'}
+                </span>
+              </div>
+            </div>
+
+            <div style="font-size:14px; color:var(--text-secondary);">
+              <strong>Price:</strong> ${l.priceRange || 'On Request'} &nbsp;&middot;&nbsp; 
+              <a href="/listing?id=${l.id}" target="_blank" style="color:#0066cc; font-weight:600;">View public page &rarr;</a>
+            </div>
+
+            <div style="margin-top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <span style="font-size:12px; font-weight:700; color:var(--text-muted);">Quick Boost:</span>
+              <button type="button" class="btn-approve-featured" style="padding:6px 12px; font-size:12px;" onclick="handleAdminBoost('${l.id}', 7)">+7d (₦35k)</button>
+              <button type="button" class="btn-approve-featured" style="padding:6px 12px; font-size:12px;" onclick="handleAdminBoost('${l.id}', 14)">+14d (₦60k)</button>
+              <button type="button" class="btn-approve-featured" style="padding:6px 12px; font-size:12px;" onclick="handleAdminBoost('${l.id}', 30)">+30d (₦100k)</button>
+              ${l.featured_until ? `<span style="font-size:11px; color:#B45309; font-weight:600;">(Active until ${l.featured_until.split('T')[0]})</span>` : ''}
+            </div>
+
+            <div class="sub-actions">
+              <button type="button" class="btn-approve-featured" onclick="handleTogglePromoted('${l.id}')">
+                ${l.promoted ? '★ Remove from Featured' : '⭐ Make Featured Spot'}
+              </button>
+              <button type="button" class="btn-reject" onclick="handleDeleteListing('${l.id}', '${l.name.replace(/'/g, "\\'")}')">
+                🗑 Delete Permanently
+              </button>
+            </div>
+          `;
+          listEl.appendChild(card);
+        });
+      } catch (err) {
+        listEl.innerHTML = '<div class="empty-state">Could not load live listings.</div>';
+      }
+    }
+
+    async function handleTogglePromoted(listingId) {
+      try {
+        const res = await adminFetch(`/api/admin/listings/${listingId}/toggle-promoted`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          loadLiveListings();
+          loadMetrics();
+        }
+      } catch (err) {
+        alert('Action failed');
+      }
+    }
+
+    async function handleAdminBoost(listingId, days) {
+      try {
+        const res = await adminFetch(`/api/admin/listings/${listingId}/boost?days=${days}`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          alert(data.message || `Listing boosted for ${days} days!`);
+          loadLiveListings();
+          loadMetrics();
+        }
+      } catch (err) {
+        alert('Boost action failed');
+      }
+    }
+
+    async function handleDeleteListing(listingId, name) {
+      if (!confirm(`Are you SURE you want to permanently delete "${name}" from Lagos Updates Directory? This cannot be undone.`)) return;
+      if (typeof window.trackEvent === 'function') {
+        window.trackEvent('admin_listing_deleted', { listing_id: listingId, name });
+      }
+      try {
+        const res = await adminFetch(`/api/admin/listings/${listingId}/delete`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          loadLiveListings();
+          loadMetrics();
+        }
+      } catch (err) {
+        alert('Delete failed');
+      }
+    }
+
+    async function handleReject(subId) {
+      if (!confirm('Reject this application?')) return;
+      if (typeof window.trackEvent === 'function') {
+        window.trackEvent('admin_submission_rejected', { sub_id: subId });
+      }
+      try {
+        await adminFetch(`/api/admin/submissions/${subId}/reject`, { method: 'POST' });
+        loadSubmissions();
+      } catch (err) {
+        alert('Connection error');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!checkAdminAuth()) return;
+      loadSubmissions();
+      loadRequests();
+      loadMetrics();
+      setInterval(() => {
+        if (adminKey) loadMetrics();
+      }, 10000);
+    });
+  </script>
+</body>
+</html>

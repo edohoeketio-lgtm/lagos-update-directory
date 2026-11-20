@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vendor Portal — Lagos Updates Directory</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cabinet+Grotesk:wght@800;900&display=swap" rel="stylesheet">
+  <script src="https://checkout.flutterwave.com/v3.js"></script>
+  <script src="js/payments.js"></script>
+  <script src="js/telemetry.js"></script>
+  <style>
+    .vendor-nav {
+      border-bottom: 1px solid #EBEBEB;
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #FFFFFF;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .vendor-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #000;
+      font-weight: 800;
+      font-size: 1.1rem;
+    }
+    .vendor-user-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .vendor-container {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+    .auth-card {
+      background: #FFFFFF;
+      border: 1px solid #EBEBEB;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 440px;
+      margin: 60px auto;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+    }
+    .auth-tabs {
+      display: flex;
+      border-bottom: 2px solid #F3F4F6;
+      margin-bottom: 24px;
+    }
+    .auth-tab {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      font-weight: 700;
+      cursor: pointer;
+      color: #717171;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+    }
+    .auth-tab.active {
+      color: #000000;
+      border-bottom-color: #000000;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #222222;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .form-group input, .form-group textarea, .form-group select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #CCCCCC;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      box-sizing: border-box;
+      outline: none;
+      transition: border 0.15s;
+    }
+    .form-group input:focus, .form-group textarea:focus {
+      border-color: #000000;
+    }
+    .btn-vendor-primary {
+      width: 100%;
+      padding: 14px;
+      background: #000000;
+      color: #FFFFFF;
+      border: none;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.15s;
+    }
+    .btn-vendor-primary:hover {
+      opacity: 0.92;
+    }
+    .listing-box {
+      background: #FFFFFF;
+      border: 1px solid #EBEBEB;
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    }
+    .listing-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .listing-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #000000;
+      margin-bottom: 4px;
+    }
+    .listing-meta-row {
+      color: #717171;
+      font-size: 0.95rem;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    .status-badge.active {
+      background: #ECFDF5;
+      color: #065F46;
+      border: 1px solid #A7F3D0;
+    }
+    .status-badge.paused {
+      background: #FEF3C7;
+      color: #92400E;
+      border: 1px solid #FDE68A;
+    }
+    .renewal-card {
+      background: #FAFAFA;
+      border: 1px solid #EBEBEB;
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 20px 0;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .renewal-info strong {
+      display: block;
+      color: #000000;
+      font-size: 0.95rem;
+    }
+    .renewal-info span {
+      font-size: 0.85rem;
+      color: #717171;
+    }
+    .btn-renew {
+      background: #FFD400;
+      color: #000000;
+      border: none;
+      padding: 10px 18px;
+      font-weight: 800;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .pending-alert {
+      background: #FFFBEB;
+      border: 1px solid #FDE68A;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      color: #B45309;
+      font-weight: 600;
+    }
+    .action-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 24px;
+      border-top: 1px solid #F0F0F0;
+      padding-top: 20px;
+    }
+    .btn-action {
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border: 1px solid #CCCCCC;
+      background: #FFFFFF;
+      transition: all 0.15s;
+    }
+    .btn-action:hover {
+      background: #F7F7F7;
+    }
+    .btn-action.btn-pause {
+      border-color: #D1D5DB;
+      color: #374151;
+    }
+    .btn-action.btn-delete {
+      border-color: #FECACA;
+      color: #DC2626;
+      background: #FEF2F2;
+    }
+    .btn-action.btn-delete:hover {
+      background: #FEE2E2;
+    }
+    /* Modal */
+    .edit-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .edit-modal {
+      background: #FFFFFF;
+      border-radius: 16px;
+      max-width: 560px;
+      width: 100%;
+      padding: 30px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <nav class="vendor-nav">
+    <a href="/" class="vendor-brand" style="display:flex; align-items:center; gap:10px;">
+      <img src="/img/logo.png" alt="Lagos Updates" style="height:36px; width:auto; object-fit:contain;">
+      <span style="font-weight:800; color:#000; font-size:1.05rem;">Vendor Desk</span>
+    </a>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <a href="/directory.html" style="font-size:0.88rem; font-weight:700; color:#4B5563; text-decoration:none;">← Browse Directory</a>
+      <div id="nav-user-bar" class="vendor-user-meta" style="display:none;">
+        <a href="/index.html?action=list_business" style="padding:8px 16px;border:1px solid #000;border-radius:8px;background:#000;color:#FFF;text-decoration:none;font-size:0.85rem;font-weight:700;">+ List New Business</a>
+        <span id="nav-user-email" style="font-size:0.9rem;font-weight:600;color:#222;"></span>
+        <button onclick="vendorLogout()" style="padding:6px 14px;border:1px solid #CCC;border-radius:8px;background:#FFF;cursor:pointer;font-weight:600;">Log Out</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="vendor-container">
+
+    <!-- 1. AUTHENTICATION VIEW -->
+    <div id="auth-section" class="auth-card">
+      <div class="auth-tabs">
+        <div id="tab-login" class="auth-tab active" onclick="switchAuthTab('login')">Sign In</div>
+        <div id="tab-register" class="auth-tab" onclick="switchAuthTab('register')">Create Account</div>
+      </div>
+
+      <!-- Sign In Form -->
+      <form id="form-login" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>Business Email</label>
+          <input type="email" id="login-email" required placeholder="vendor@business.ng">
+        </div>
+        <div class="form-group">
+          <label>Password / Passcode</label>
+          <input type="password" id="login-password" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn-vendor-primary">Sign In to Dashboard</button>
+        <p id="login-error" style="color:#DC2626;font-size:0.85rem;margin-top:12px;display:none;"></p>
+
+        <!-- One-Click Demo Vendor Login Helper -->
+        <div style="margin-top:20px; padding:14px; background:#F9FAFB; border:1px solid #E5E7EB; border-radius:10px; font-size:0.83rem;">
+          <div style="font-weight:700; color:#374151; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+            <span>⚡</span> One-Click Demo Vendor Login:
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <button type="button" onclick="fillDemo('demo@circa.ng', 'password123')" style="padding:8px 12px; background:#FFF; border:1px solid #D1D5DB; border-radius:6px; cursor:pointer; text-align:left; font-size:0.82rem; font-weight:600; color:#111; display:flex; justify-content:space-between; align-items:center;">
+              <span>🍷 <b>Circa Lagos</b> (demo@circa.ng)</span>
+              <span style="font-size:0.75rem; color:#6B7280;">Auto-sign in →</span>
+            </button>
+            <button type="button" onclick="fillDemo('vendor@lagosupdates.com', 'password123')" style="padding:8px 12px; background:#FFF; border:1px solid #D1D5DB; border-radius:6px; cursor:pointer; text-align:left; font-size:0.82rem; font-weight:600; color:#111; display:flex; justify-content:space-between; align-items:center;">
+              <span>🏨 <b>The Wheatbaker</b> (vendor@lagosupdates.com)</span>
+              <span style="font-size:0.75rem; color:#6B7280;">Auto-sign in →</span>
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Register Form -->
+      <form id="form-register" style="display:none;" onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label>Business Name</label>
+          <input type="text" id="reg-name" required placeholder="e.g. Circa Lagos">
+        </div>
+        <div class="form-group">
+          <label>Business Email</label>
+          <input type="email" id="reg-email" required placeholder="contact@circalagos.ng">
+        </div>
+        <div class="form-group">
+          <label>WhatsApp Number</label>
+          <input type="tel" id="reg-whatsapp" placeholder="08012345678">
+        </div>
+        <div class="form-group">
+          <label>Create Password</label>
+          <input type="password" id="reg-password" required placeholder="Minimum 6 characters">
+        </div>
+        <button type="submit" class="btn-vendor-primary">Create Vendor Account</button>
+        <p id="reg-error" style="color:#DC2626;font-size:0.85rem;margin-top:12px;display:none;"></p>
+      </form>
+    </div>
+
+    <!-- 2. VENDOR DASHBOARD VIEW -->
+    <div id="dashboard-section" style="display:none;">
+      <div style="margin-bottom: 28px; display:flex; justify-content:space-between; align-items:flex-end;">
+        <div>
+          <h1 id="dash-greeting" style="font-size: 1.8rem; font-weight: 900; margin-bottom: 4px; color: #000;">Vendor Dashboard</h1>
+          <p style="color: #717171; font-size: 0.95rem;">Manage your listing, request updates, and renew subscriptions with Lagos Updates verification.</p>
+        </div>
+      </div>
+
+      <div id="listings-list">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 3. EDIT LISTING MODAL -->
+  <div id="edit-modal-wrap" class="edit-modal-backdrop" style="display:none;">
+    <div class="edit-modal">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+        <h2 style="font-size:1.3rem;font-weight:800;margin:0;">Request Listing Changes</h2>
+        <button onclick="closeEditModal()" style="border:none;background:none;font-size:1.5rem;cursor:pointer;">&times;</button>
+      </div>
+      <p style="font-size:0.85rem;color:#717171;margin-bottom:20px;">
+        All modifications are verified by Lagos Updates editors before publishing live to the public directory.
+      </p>
+
+      <form id="form-edit-listing" onsubmit="submitEditRequest(event)">
+        <input type="hidden" id="edit-listing-id">
+        <div class="form-group">
+          <label>Business Name</label>
+          <input type="text" id="edit-name" required>
+        </div>
+        <div class="form-group">
+          <label>Neighborhood / Area</label>
+          <input type="text" id="edit-area" required placeholder="e.g. Victoria Island, Lagos">
+        </div>
+        <div class="form-group">
+          <label>Price Range</label>
+          <input type="text" id="edit-price" placeholder="e.g. ₦150,000 / night">
+        </div>
+        <div class="form-group">
+          <label>Direct Phone</label>
+          <input type="tel" id="edit-phone">
+        </div>
+        <div class="form-group">
+          <label>WhatsApp</label>
+          <input type="tel" id="edit-whatsapp">
+        </div>
+        <div class="form-group">
+          <label>Instagram Handle</label>
+          <input type="text" id="edit-instagram" placeholder="@handle">
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="edit-description" rows="3"></textarea>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+          <button type="button" onclick="closeEditModal()" style="flex:1;padding:12px;border:1px solid #CCC;background:#FFF;border-radius:8px;font-weight:700;cursor:pointer;">Cancel</button>
+          <button type="submit" class="btn-vendor-primary" style="flex:2;">Submit for Admin Verification</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. BOOST LISTING MODAL -->
+  <div id="boost-modal-wrap" class="edit-modal-backdrop" style="display:none;">
+    <div class="edit-modal">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+        <h2 style="font-size:1.3rem;font-weight:800;margin:0;">⚡ Boost Listing Visibility</h2>
+        <button onclick="closeBoostModal()" style="border:none;background:none;font-size:1.5rem;cursor:pointer;">&times;</button>
+      </div>
+      <p style="font-size:0.85rem;color:#717171;margin-bottom:20px;">
+        Pin your business to the top of the Lagos Updates Directory 6-column feed to drive immediate WhatsApp leads.
+      </p>
+
+      <form id="form-boost-listing" onsubmit="submitBoostRequest(event)">
+        <input type="hidden" id="boost-listing-id">
+        <div class="form-group">
+          <label>Select Boost Duration</label>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
+            <label style="border:1px solid #CCC; border-radius:10px; padding:14px; display:flex; align-items:center; gap:12px; cursor:pointer;">
+              <input type="radio" name="boost_duration" value="1_week" style="width:auto;">
+              <div>
+                <strong style="display:block;font-size:0.95rem;">🚀 1-Week Boost (7 Days) &middot; ₦35,000</strong>
+                <span style="font-size:0.8rem;color:#717171;">Fast crowd surge for weekend events and promotions (~₦5,000/day)</span>
+              </div>
+            </label>
+            <label style="border:1px solid #CCC; border-radius:10px; padding:14px; display:flex; align-items:center; gap:12px; cursor:pointer;">
+              <input type="radio" name="boost_duration" value="2_weeks" style="width:auto;">
+              <div>
+                <strong style="display:block;font-size:0.95rem;">🔥 2-Week Boost (14 Days) &middot; ₦60,000</strong>
+                <span style="font-size:0.8rem;color:#717171;">Save ₦10,000 &middot; Perfect for mid-month campaigns</span>
+              </div>
+            </label>
+            <label style="border:2px solid #FFD400; background:#FFFDF0; border-radius:10px; padding:14px; display:flex; align-items:center; gap:12px; cursor:pointer;">
+              <input type="radio" name="boost_duration" value="1_month" checked style="width:auto;">
+              <div>
+                <strong style="display:block;font-size:0.95rem;color:#92400E;">👑 1-Month Featured (30 Days) &middot; ₦100,000</strong>
+                <span style="font-size:0.8rem;color:#78350F;">Top-row priority placement &middot; Best ROI (~₦3,333/day)</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div style="background:#F9FAFB; border-radius:10px; padding:14px; margin:16px 0; font-size:0.85rem; color:#4B5563;">
+          💳 <b>Payment Process:</b> Once submitted, Lagos Updates Editorial Desk verifies your payment and activates your boost within 1 hour.
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:20px;">
+          <button type="button" onclick="closeBoostModal()" style="flex:1;padding:12px;border:1px solid #CCC;background:#FFF;border-radius:8px;font-weight:700;cursor:pointer;">Cancel</button>
+          <button type="submit" class="btn-vendor-primary" style="flex:2;background:#FFD400;color:#000;">Confirm & Activate Boost</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let activeToken = localStorage.getItem('lagos_vendor_token') || '';
+    let currentVendor = null;
+    let currentListings = [];
+    let currentSubmissions = [];
+
+    function fillDemo(email, pass) {
+      document.getElementById('login-email').value = email;
+      document.getElementById('login-password').value = pass;
+      document.getElementById('form-login').dispatchEvent(new Event('submit', { cancelable: true }));
+    }
+
+    function switchAuthTab(tab) {
+      document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+      document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+      document.getElementById('form-login').style.display = tab === 'login' ? 'block' : 'none';
+      document.getElementById('form-register').style.display = tab === 'register' ? 'block' : 'none';
+      document.getElementById('login-error').style.display = 'none';
+      document.getElementById('reg-error').style.display = 'none';
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const errEl = document.getElementById('login-error');
+
+      try {
+        const res = await fetch('/api/vendor/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          errEl.textContent = data.error || 'Login failed';
+          errEl.style.display = 'block';
+          return;
+        }
+        localStorage.setItem('lagos_vendor_token', data.token);
+        localStorage.setItem('lagos_vendor_user', JSON.stringify(data.vendor || {}));
+        activeToken = data.token;
+        currentVendor = data.vendor;
+
+        if (typeof window.trackEvent === 'function') {
+          window.trackEvent('vendor_login_success', {
+            email: email,
+            vendor_id: data.vendor ? data.vendor.id : null,
+            business_name: data.vendor ? data.vendor.business_name : null
+          });
+        }
+        if (typeof window.identifyVendor === 'function' && data.vendor) {
+          window.identifyVendor(String(data.vendor.id), {
+            email: data.vendor.email,
+            business_name: data.vendor.business_name,
+            role: 'vendor'
+          });
+        }
+
+        loadDashboard();
+      } catch (err) {
+        errEl.textContent = 'Server connection error.';
+        errEl.style.display = 'block';
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const name = document.getElementById('reg-name').value;
+      const email = document.getElementById('reg-email').value;
+      const whatsapp = document.getElementById('reg-whatsapp').value;
+      const password = document.getElementById('reg-password').value;
+      const errEl = document.getElementById('reg-error');
+
+      try {
+        const res = await fetch('/api/vendor/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ business_name: name, email, whatsapp, password })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          errEl.textContent = data.error || 'Registration failed';
+          errEl.style.display = 'block';
+          return;
+        }
+        localStorage.setItem('lagos_vendor_token', data.token);
+        localStorage.setItem('lagos_vendor_user', JSON.stringify(data.vendor || {}));
+        activeToken = data.token;
+        currentVendor = data.vendor;
+
+        if (typeof window.trackEvent === 'function') {
+          window.trackEvent('vendor_register_success', {
+            email: email,
+            business_name: name
+          });
+        }
+        if (typeof window.identifyVendor === 'function' && data.vendor) {
+          window.identifyVendor(String(data.vendor.id), {
+            email: data.vendor.email,
+            business_name: data.vendor.business_name,
+            role: 'vendor'
+          });
+        }
+
+        loadDashboard();
+      } catch (err) {
+        errEl.textContent = 'Server connection error.';
+        errEl.style.display = 'block';
+      }
+    }
+
+    function vendorLogout() {
+      if (typeof window.trackEvent === 'function') {
+        window.trackEvent('vendor_logout');
+      }
+      localStorage.removeItem('lagos_vendor_token');
+      localStorage.removeItem('lagos_vendor_user');
+      activeToken = '';
+      currentVendor = null;
+      currentSubmissions = [];
+      document.getElementById('auth-section').style.display = 'block';
+      document.getElementById('dashboard-section').style.display = 'none';
+      document.getElementById('nav-user-bar').style.display = 'none';
+    }
+
+    async function loadDashboard() {
+      if (!activeToken) return;
+
+      try {
+        const res = await fetch('/api/vendor/listings', {
+          headers: { 'Authorization': `Bearer ${activeToken}` }
+        });
+        if (!res.ok) {
+          vendorLogout();
+          return;
+        }
+        const data = await res.json();
+        currentListings = data.listings || [];
+
+        // Fetch vendor info
+        const meRes = await fetch('/api/vendor/me', {
+          headers: { 'Authorization': `Bearer ${activeToken}` }
+        });
+        if (meRes.ok) {
+          const meData = await meRes.json();
+          currentVendor = meData.vendor;
+          localStorage.setItem('lagos_vendor_user', JSON.stringify(currentVendor || {}));
+        }
+
+        // Fetch vendor applications/submissions
+        try {
+          const subsRes = await fetch('/api/vendor/submissions', {
+            headers: { 'Authorization': `Bearer ${activeToken}` }
+          });
+          if (subsRes.ok) {
+            const subsData = await subsRes.json();
+            currentSubmissions = subsData.submissions || [];
+          }
+        } catch (_) {}
+
+        renderDashboard();
+      } catch (err) {
+        console.error('Failed to load dashboard:', err);
+      }
+    }
+
+    function renderDashboard() {
+      document.getElementById('auth-section').style.display = 'none';
+      document.getElementById('dashboard-section').style.display = 'block';
+      document.getElementById('nav-user-bar').style.display = 'flex';
+      
+      if (currentVendor) {
+        document.getElementById('nav-user-email').textContent = currentVendor.business_name || currentVendor.email;
+        document.getElementById('dash-greeting').textContent = `Welcome, ${currentVendor.business_name || 'Vendor'}`;
+      }
+
+      const listEl = document.getElementById('listings-list');
+      listEl.innerHTML = '';
+
+      // Check for pending submissions
+      const pendingSubmissions = currentSubmissions.filter(s => s.status === 'pending');
+      if (pendingSubmissions.length > 0) {
+        pendingSubmissions.forEach(sub => {
+          const banner = document.createElement('div');
+          banner.style.cssText = 'background:#FFFBEB; border:1px solid #FCD34D; border-radius:14px; padding:18px 22px; margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,0.03); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;';
+          banner.innerHTML = `
+            <div>
+              <div style="font-weight:800; font-size:1.05rem; color:#92400E; display:flex; align-items:center; gap:8px;">
+                <span>⏳</span> Application Under Verification: <strong>${sub.business_name}</strong>
+              </div>
+              <div style="font-size:0.85rem; color:#B45309; margin-top:5px; line-height:1.5;">
+                Reference: <code style="background:#FEF3C7; padding:2px 6px; border-radius:4px; font-weight:700;">${sub.ref_id || sub.id}</code> &middot; 
+                Area: <b>${sub.area}</b> &middot; 
+                Category: <b>${sub.category}</b> &middot; 
+                Payment: <b>${sub.payment_status === 'paid' ? '💳 Confirmed via Flutterwave' : 'Pending Invoice'}</b>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:0.8rem; font-weight:700; background:#FEF3C7; color:#92400E; padding:6px 14px; border-radius:9999px; border:1px solid #FCD34D;">
+                Editorial Review Active
+              </span>
+            </div>
+          `;
+          listEl.appendChild(banner);
+        });
+      }
+
+      if (currentListings.length === 0 && pendingSubmissions.length === 0) {
+        listEl.innerHTML = `
+          <div class="listing-box" style="text-align:center;padding:48px;">
+            <div style="font-size:2.5rem;margin-bottom:12px;">🏢</div>
+            <h3 style="font-size:1.2rem;font-weight:800;margin-bottom:6px;">No listings linked to your account yet</h3>
+            <p style="color:#717171;font-size:0.9rem;max-width:440px;margin:0 auto 20px;">
+              If you recently submitted your business through the public listing form, our team is verifying it. Once verified, it will appear here automatically.
+            </p>
+            <a href="/index.html?action=list_business" class="btn-vendor-primary" style="display:inline-block;width:auto;padding:12px 24px;text-decoration:none;">+ List Your Business</a>
+          </div>`;
+        return;
+      } else if (currentListings.length === 0 && pendingSubmissions.length > 0) {
+        const infoBox = document.createElement('div');
+        infoBox.className = 'listing-box';
+        infoBox.style.cssText = 'text-align:center; padding:36px 24px; background:#F9FAFB;';
+        infoBox.innerHTML = `
+          <div style="font-size:2rem; margin-bottom:8px;">🔍</div>
+          <h3 style="font-size:1.1rem; font-weight:800; margin-bottom:6px;">Your Listing Application is in Review</h3>
+          <p style="color:#6B7280; font-size:0.88rem; max-width:480px; margin:0 auto 16px;">
+            The Lagos Updates editorial desk is reviewing your business credentials. Once approved, your live listing management controls will appear right here.
+          </p>
+          <a href="/index.html" style="font-size:0.85rem; font-weight:700; color:#111; text-decoration:underline;">← Browse Directory while waiting</a>
+        `;
+        listEl.appendChild(infoBox);
+        return;
+      }
+
+      currentListings.forEach(l => {
+        const box = document.createElement('div');
+        box.className = 'listing-box';
+
+        const isPaused = !l.is_active;
+        const pending = l.pending_request;
+
+        box.innerHTML = `
+          ${pending ? `
+            <div class="pending-alert">
+              <span>⏳</span>
+              <div>
+                <strong>Modification Pending Verification:</strong> 
+                Your ${pending.type} request is awaiting review by Lagos Updates editors.
+              </div>
+            </div>` : ''}
+
+          <div class="listing-header">
+            <div>
+              <div class="listing-title">${l.name}</div>
+              <div class="listing-meta-row">
+                <span>📍 ${l.area}, Lagos</span>
+                <span>•</span>
+                <span>${l.category}</span>
+                <span>•</span>
+                <span>${l.price_range || 'Price on request'}</span>
+              </div>
+            </div>
+            <div>
+              <span class="status-badge active">
+                🟢 Live on Directory
+              </span>
+            </div>
+          </div>
+
+          <!-- Subscription & Boost Cards -->
+          <div class="renewal-card" style="border-left: 4px solid #000;">
+            <div class="renewal-info">
+              <strong>📋 Standard Directory Listing (₦30,000 / month)</strong>
+              <span>Subscription status: <b>Active</b> &middot; Renews on ${l.expires_at || 'in 30 days'}</span>
+            </div>
+            <button class="btn-renew" style="background:#000; color:#FFF;" onclick="requestRenewal('${l.id}')">🔄 Renew Monthly (₦30,000)</button>
+          </div>
+
+          <div class="renewal-card" style="border-left: 4px solid #FFD400; background: #FFFDF0;">
+            <div class="renewal-info">
+              <strong style="color: #92400E;">
+                ${l.promoted ? `⭐ Featured Boost Active (${l.boost_days_left || 7} days left)` : '🚀 Boost Visibility to Top of Lagos Feed'}
+              </strong>
+              <span style="color: #78350F;">
+                ${l.promoted ? `Pinned at the top of the feed until ${l.featured_until ? l.featured_until.split('T')[0] : 'expiration'}.` : 'Jiji-style top-of-feed placement: ₦35k (1 wk), ₦60k (2 wks), or ₦100k (1 mo).'}
+              </span>
+            </div>
+            <button class="btn-renew" onclick="openBoostModal('${l.id}', '${l.name.replace(/'/g, "\\'")}')">⚡ ${l.promoted ? 'Extend Boost' : 'Boost Listing Now'}</button>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="action-row">
+            <button class="btn-action" onclick="openEditModal('${l.id}')">✏️ Edit Details</button>
+            <a href="/listing?id=${l.id}" target="_blank" class="btn-action" style="text-decoration:none;color:#000;">👁️ View Live Card</a>
+            <button class="btn-action btn-delete" style="margin-left:auto;" onclick="requestDelete('${l.id}')">🗑️ Delete Listing</button>
+          </div>
+        `;
+        listEl.appendChild(box);
+      });
+    }
+
+    async function requestRenewal(listingId) {
+      const l = currentListings.find(x => x.id === listingId);
+      const renewalAmount = 30000;
+
+      if (typeof window.trackEvent === 'function') {
+        window.trackEvent('vendor_renewal_initiated', { listing_id: listingId, amount: renewalAmount });
+      }
+
+      if (typeof window.payWithFlutterwave === 'function') {
+        window.payWithFlutterwave({
+          amount: renewalAmount,
+          title: 'Lagos Updates Directory',
+          description: `Monthly Listing Renewal (30 Days) for ${l ? l.name : 'Business'}`,
+          paymentType: 'renewal',
+          targetId: listingId,
+          customer: {
+            email: (currentVendor && currentVendor.email) || '',
+            name: (currentVendor && currentVendor.business_name) || (l ? l.name : 'Vendor'),
+            phone: (currentVendor && currentVendor.whatsapp) || ''
+          },
+          metadata: {
+            listing_id: listingId,
+            period: '1_month'
+          },
+          onSuccess: function (verifyData) {
+            alert(`🎉 Renewal payment of ₦${renewalAmount.toLocaleString()} verified! Your listing "${l ? l.name : ''}" has been successfully renewed.`);
+            loadDashboard();
+          },
+          onClose: async function () {
+            try {
+              await fetch(`/api/vendor/listings/${listingId}/renew`, {
+                method: 'POST',
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${activeToken}` 
+                },
+                body: JSON.stringify({ period: '1_month' })
+              });
+              loadDashboard();
+            } catch (_) {}
+          }
+        });
+      } else {
+        if (!confirm('Submit a subscription renewal request (₦30,000/mo) to Lagos Updates?')) return;
+        try {
+          const res = await fetch(`/api/vendor/listings/${listingId}/renew`, {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${activeToken}` 
+            },
+            body: JSON.stringify({ period: '1_month' })
+          });
+          const data = await res.json();
+          alert(data.message || 'Renewal requested.');
+          loadDashboard();
+        } catch (e) {
+          alert('Failed to submit renewal request.');
+        }
+      }
+    }
+
+    async function requestDelete(listingId) {
+      const reason = prompt('Please enter the reason for deletion (e.g. permanently closed):');
+      if (reason === null) return;
+
+      if (typeof window.trackEvent === 'function') {
+        window.trackEvent('vendor_delete_requested', { listing_id: listingId, reason });
+      }
+
+      try {
+        const res = await fetch(`/api/vendor/listings/${listingId}/request-delete`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${activeToken}` 
+          },
+          body: JSON.stringify({ reason })
+        });
+        const data = await res.json();
+        alert(data.message || 'Deletion request sent for admin verification.');
+        loadDashboard();
+      } catch (e) {
+        alert('Failed to request deletion.');
+      }
+    }
+
+    function openEditModal(listingId) {
+      const l = currentListings.find(x => x.id === listingId);
+      if (!l) return;
+      document.getElementById('edit-listing-id').value = l.id;
+      document.getElementById('edit-name').value = l.name;
+      document.getElementById('edit-area').value = l.area;
+      document.getElementById('edit-price').value = l.price_range || '';
+      document.getElementById('edit-phone').value = l.phone || '';
+      document.getElementById('edit-whatsapp').value = l.whatsapp || '';
+      document.getElementById('edit-instagram').value = l.instagram || '';
+      document.getElementById('edit-description').value = l.description || '';
+      document.getElementById('edit-modal-wrap').style.display = 'flex';
+    }
+
+    function closeEditModal() {
+      document.getElementById('edit-modal-wrap').style.display = 'none';
+    }
+
+    async function submitEditRequest(e) {
+      e.preventDefault();
+      const listingId = document.getElementById('edit-listing-id').value;
+      const payload = {
+        name: document.getElementById('edit-name').value,
+        area: document.getElementById('edit-area').value,
+        price_range: document.getElementById('edit-price').value,
+        phone: document.getElementById('edit-phone').value,
+        whatsapp: document.getElementById('edit-whatsapp').value,
+        instagram: document.getElementById('edit-instagram').value,
+        description: document.getElementById('edit-description').value
+      };
+
+      if (typeof window.trackEvent === 'function') {
+        window.trackEvent('vendor_edit_requested', { listing_id: listingId, name: payload.name, area: payload.area });
+      }
+
+      try {
+        const res = await fetch(`/api/vendor/listings/${listingId}/request-edit`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${activeToken}` 
+          },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        closeEditModal();
+        alert(data.message || 'Edits submitted for Lagos Updates verification.');
+        loadDashboard();
+      } catch (err) {
+        alert('Error submitting changes.');
+      }
+    }
+
+    function openBoostModal(listingId, name) {
+      document.getElementById('boost-listing-id').value = listingId;
+      document.getElementById('boost-modal-wrap').style.display = 'flex';
+    }
+
+    function closeBoostModal() {
+      document.getElementById('boost-modal-wrap').style.display = 'none';
+    }
+
+    async function submitBoostRequest(e) {
+      e.preventDefault();
+      const listingId = document.getElementById('boost-listing-id').value;
+      const duration = document.querySelector('input[name="boost_duration"]:checked').value;
+      const l = currentListings.find(x => x.id === listingId);
+
+      let boostAmount = 35000;
+      let boostLabel = '1-Week Boost (7 Days)';
+      if (duration === '2_weeks') {
+        boostAmount = 60000;
+        boostLabel = '2-Week Boost (14 Days)';
+      } else if (duration === '1_month') {
+        boostAmount = 100000;
+        boostLabel = '1-Month Featured (30 Days)';
+      }
+
+      if (typeof window.trackEvent === 'function') {
+        window.trackEvent('vendor_boost_requested', { listing_id: listingId, duration, amount: boostAmount });
+      }
+
+      // Instant Flutterwave Checkout & Automated Boost Activation
+      if (typeof window.payWithFlutterwave === 'function') {
+        closeBoostModal();
+        window.payWithFlutterwave({
+          amount: boostAmount,
+          title: 'Lagos Updates Directory',
+          description: `${boostLabel} for ${l ? l.name : 'Business'}`,
+          paymentType: 'boost',
+          targetId: listingId,
+          customer: {
+            email: (currentVendor && currentVendor.email) || '',
+            name: (currentVendor && currentVendor.business_name) || (l ? l.name : 'Vendor'),
+            phone: (currentVendor && currentVendor.whatsapp) || ''
+          },
+          metadata: {
+            duration: duration,
+            listing_id: listingId
+          },
+          onSuccess: function (verifyData) {
+            alert(`🎉 Payment of ₦${boostAmount.toLocaleString()} verified! Your listing "${l ? l.name : ''}" has been actively boosted to the top of Lagos Updates Directory!`);
+            loadDashboard();
+          },
+          onClose: async function () {
+            try {
+              await fetch(`/api/vendor/listings/${listingId}/boost`, {
+                method: 'POST',
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${activeToken}` 
+                },
+                body: JSON.stringify({ duration })
+              });
+              loadDashboard();
+            } catch (_) {}
+          }
+        });
+      } else {
+        try {
+          const res = await fetch(`/api/vendor/listings/${listingId}/boost`, {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${activeToken}` 
+            },
+            body: JSON.stringify({ duration })
+          });
+          const data = await res.json();
+          closeBoostModal();
+          alert(data.message || 'Boost requested successfully!');
+          loadDashboard();
+        } catch (err) {
+          alert('Failed to submit boost request.');
+        }
+      }
+    }
+
+    // Auto-load if token exists
+    if (activeToken) {
+      loadDashboard();
+    }
+  </script>
+</body>
+</html>

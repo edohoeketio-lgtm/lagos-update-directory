@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en-NG">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lagos Updates Directory — Find Verified Hotels, Services & Stays in Lagos</title>
+  <meta name="description" content="Browse verified hotels, serviced apartments, restaurants, private chefs, personal security and airport pickups across Lagos State. Curated by Lagos Updates.">
+  <meta name="theme-color" content="#FFFFFF">
+  <link rel="canonical" href="https://directory.lagosupdates.com">
+  <meta property="og:title" content="Lagos Updates Directory">
+  <meta property="og:description" content="Verified hotels, apartments, chefs, security and services in Lagos State.">
+  <meta property="og:type" content="website">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="home">
+
+  <!-- AIRBNB-STYLE NAVIGATION HEADER -->
+  <nav class="nav">
+    <div class="container nav-inner">
+      
+      <!-- LOGO -->
+      <a href="index.html" class="nav-logo" aria-label="Lagos Updates Directory Home">
+        <img src="/img/logo.png" alt="Lagos Updates" class="nav-logo-img">
+        <span class="nav-brand-badge">Directory</span>
+      </a>
+
+      <!-- AIRBNB FLOATING SEARCH CAPSULE -->
+      <div class="nav-search-capsule" role="search">
+        <div class="capsule-input-wrap">
+          <input 
+            type="search" 
+            id="home-search-input" 
+            class="capsule-input" 
+            placeholder="Search hotels, chefs, neighborhoods (e.g. Festac, Ikoyi)…" 
+            autocomplete="off"
+            aria-label="Search listings"
+          >
+        </div>
+        <div class="capsule-divider"></div>
+        <select id="home-area-select" class="capsule-select" aria-label="Filter by neighborhood">
+          <option value="all">Any neighborhood</option>
+          <option value="Ikoyi">Ikoyi</option>
+          <option value="Victoria Island">Victoria Island</option>
+          <option value="Lekki Phase 1">Lekki Phase 1</option>
+          <option value="Lekki">Lekki (Chevron / Agungi)</option>
+          <option value="Ajah">Ajah / Sangotedo</option>
+          <option value="Ikeja GRA">Ikeja GRA</option>
+          <option value="Ikeja">Ikeja / Maryland</option>
+          <option value="Magodo">Magodo / Shangisha</option>
+          <option value="Gbagada">Gbagada</option>
+          <option value="Surulere">Surulere</option>
+          <option value="Yaba">Yaba</option>
+          <option value="Epe">Epe / Ibeju Lekki</option>
+        </select>
+        <button class="capsule-search-btn" aria-label="Submit search">🔍</button>
+      </div>
+
+      <!-- RIGHT ACTIONS -->
+      <div class="nav-right">
+        <a href="vendor.html" class="nav-action-link nav-vendor-link">Vendor Login</a>
+        <a href="directory.html" class="nav-action-link">Browse All</a>
+        <button type="button" class="nav-cta-btn" id="btn-open-list-modal">
+          List Business
+        </button>
+      </div>
+
+    </div>
+  </nav>
+
+  <!-- STICKY AIRBNB CATEGORY ICON BAR -->
+  <div class="category-strip" id="home-category-strip">
+    <div class="container">
+      <div class="category-scroll-wrap" role="tablist" aria-label="Categories">
+        
+        <div class="cat-item active" data-category="all" role="tab" tabindex="0">
+          <span class="cat-icon">✨</span>
+          <span class="cat-label">All Spots</span>
+        </div>
+
+        <div class="cat-item" data-category="hotel" role="tab" tabindex="0">
+          <span class="cat-icon">🏨</span>
+          <span class="cat-label">Hotels</span>
+        </div>
+
+        <div class="cat-item" data-category="apartment" role="tab" tabindex="0">
+          <span class="cat-icon">🏢</span>
+          <span class="cat-label">Apartments</span>
+        </div>
+
+        <div class="cat-item" data-category="restaurant" role="tab" tabindex="0">
+          <span class="cat-icon">🍽️</span>
+          <span class="cat-label">Restaurants</span>
+        </div>
+
+        <div class="cat-item" data-category="lounge" role="tab" tabindex="0">
+          <span class="cat-icon">🥂</span>
+          <span class="cat-label">Lounges</span>
+        </div>
+
+        <div class="cat-item" data-category="private-chef" role="tab" tabindex="0">
+          <span class="cat-icon">🧑‍🍳</span>
+          <span class="cat-label">Private Chefs</span>
+        </div>
+
+        <div class="cat-item" data-category="personal-security" role="tab" tabindex="0">
+          <span class="cat-icon">🛡️</span>
+          <span class="cat-label">Security</span>
+        </div>
+
+        <div class="cat-item" data-category="airport-pickup" role="tab" tabindex="0">
+          <span class="cat-icon">✈️</span>
+          <span class="cat-label">Airport Rides</span>
+        </div>
+
+        <div class="cat-item" data-category="service" role="tab" tabindex="0">
+          <span class="cat-icon">🔧</span>
+          <span class="cat-label">Services</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN DIRECTORY CONTENT (ZERO FLUFF, IMMEDIATE IMMERSION) -->
+  <main class="main-feed-section">
+    <div class="container">
+
+      <!-- FEED META & QUICK FILTERS -->
+      <div class="feed-header-bar">
+        <div class="feed-count" id="home-results-meta">
+          Showing verified spots in Lagos…
+        </div>
+        <div class="feed-filters-quick">
+          <select id="filter-price-select" class="filter-chip" style="cursor: pointer; outline: none;" aria-label="Filter by price">
+            <option value="all">Any Price</option>
+            <option value="under-50k">Under ₦50,000</option>
+            <option value="50k-150k">₦50k – ₦150k</option>
+            <option value="150k-300k">₦150k – ₦300k</option>
+            <option value="300k-plus">₦300k+ (Luxury)</option>
+          </select>
+          <button type="button" class="filter-chip" id="chip-verified">
+            <span>✓</span> Verified only
+          </button>
+          <button type="button" class="filter-chip" id="chip-featured">
+            <span>★</span> Featured only
+          </button>
+          <button type="button" class="filter-chip" id="btn-reset-filters" style="display: none; color: #DC2626; border-color: #FCA5A5;">
+            ✕ Reset
+          </button>
+        </div>
+      </div>
+
+      <!-- AIRBNB CARD GRID -->
+      <div class="listings-grid" id="home-listings-grid" role="list"></div>
+
+    </div>
+  </main>
+
+  <!-- VERIFICATION REASSURANCE BANNER -->
+  <section class="reassurance-strip">
+    <div class="container">
+      <div class="reassurance-inner">
+        <div class="reassurance-text">
+          <h3>Vetted and verified by Lagos Updates.</h3>
+          <p>Every business listed here has been screened by our editorial team. Look for the Verified badge to ensure you're transacting with legitimate, high-reputation Lagos operators.</p>
+        </div>
+        <div class="reassurance-badge">
+          <div class="reassurance-badge-icon">✓</div>
+          <div>
+            <div class="reassurance-badge-label">100% Manual Review</div>
+            <div class="reassurance-badge-sub">No spam. No fake listings.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AIRBNB-STYLE FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        
+        <div class="footer-col">
+          <div class="nav-logo" style="margin-bottom: 8px;">
+            <img src="/img/logo.png" alt="Lagos Updates" class="nav-logo-img" style="height:32px;">
+            <span class="nav-brand-badge">Directory</span>
+          </div>
+          <p class="footer-tagline">The trusted civic directory for Lagos State. Connecting Lagosians and visitors with top-tier vetted businesses and services.</p>
+        </div>
+
+        <div class="footer-col">
+          <h4>Hospitality & Stays</h4>
+          <a href="directory.html?category=hotel">Luxury Hotels</a>
+          <a href="directory.html?category=apartment">Serviced Apartments</a>
+          <a href="directory.html?category=restaurant">Dining & Fine Food</a>
+          <a href="directory.html?category=lounge">Lounges & Nightlife</a>
+        </div>
+
+        <div class="footer-col">
+          <h4>Bespoke Services</h4>
+          <a href="directory.html?category=private-chef">Private Chefs</a>
+          <a href="directory.html?category=personal-security">Personal Security</a>
+          <a href="directory.html?category=airport-pickup">Airport Transfers</a>
+          <a href="directory.html?category=service">Executive Services</a>
+        </div>
+
+        <div class="footer-col">
+          <h4>Directory Support</h4>
+          <a href="https://wa.me/2348000000000?text=I%20want%20to%20get%20verified" target="_blank" rel="noopener">Get Verified</a>
+          <a href="https://wa.me/2348000000000?text=I%20want%20to%20advertise%20as%20featured" target="_blank" rel="noopener">Promote a Listing</a>
+          <a href="https://lagosupdates.com" target="_blank" rel="noopener">Lagos Updates Main Page</a>
+        </div>
+
+      </div>
+
+      <div class="footer-disclaimer" style="padding: 16px 0; border-top: 1px solid var(--border-hairline); margin-top: 24px; font-size: 12px; color: var(--text-muted); line-height: 1.6;">
+        <strong>Editorial Notice:</strong> Lagos Updates Directory manually vets listed businesses for operational legitimacy and reputation. All bookings, service delivery, and transactions occur directly between clients and verified operators. Lagos Updates is not a party to private agreements.
+      </div>
+
+      <div class="footer-bottom">
+        <p>© <span id="footer-year"></span> Lagos Updates Directory. All rights reserved.</p>
+        <p class="footer-yoruba">Èkó ò ní bàjẹ́ oooooo!</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- AIRBNB-STYLE QUESTIONNAIRE MODAL -->
+  <div class="modal-backdrop" id="business-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-step-title">
+    <div class="modal-card">
+      
+      <!-- HEADER -->
+      <div class="modal-header">
+        <div class="modal-title">List Your Business</div>
+        <button type="button" class="modal-close-btn" id="btn-close-modal" aria-label="Close dialog">✕</button>
+      </div>
+
+      <!-- PROGRESS INDICATOR -->
+      <div class="modal-step-bar" id="modal-step-bar">
+        <div class="step-segment active" id="step-seg-1"></div>
+        <div class="step-segment" id="step-seg-2"></div>
+        <div class="step-segment" id="step-seg-3"></div>
+      </div>
+
+      <!-- ERROR ALERT (HIDDEN BY DEFAULT) -->
+      <div style="padding: 16px 28px 0;">
+        <div class="form-error-alert" id="modal-error-alert" style="display: none;">
+          <span id="modal-error-msg">Please fill out all required fields.</span>
+        </div>
+      </div>
+
+      <!-- FORM -->
+      <form id="business-listing-form" novalidate>
+
+        <!-- STEP 1: BUSINESS BASICS -->
+        <div class="modal-body modal-step" id="modal-step-1">
+          <div class="modal-step-title" id="modal-step-title">Tell us about your business</div>
+          <div class="modal-step-sub">Step 1 of 3 &middot; Business Identity</div>
+
+          <div class="form-group">
+            <label class="form-label" for="form-name">Business / Brand Name <span class="req">*</span></label>
+            <input type="text" id="form-name" class="form-input" placeholder="e.g. The Wheatbaker, Chef Michael's Table" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="form-category">Category <span class="req">*</span></label>
+              <select id="form-category" class="form-select" required onchange="handleCategoryChange(this)">
+                <option value="" disabled selected>Select category</option>
+                <option value="hotel">🏨 Hotels</option>
+                <option value="apartment">🏢 Serviced Apartments</option>
+                <option value="restaurant">🍽️ Restaurants & Dining</option>
+                <option value="lounge">🥂 Lounges & Nightlife</option>
+                <option value="private-chef">🧑‍🍳 Private Chefs</option>
+                <option value="personal-security">🛡️ Personal Security</option>
+                <option value="airport-pickup">✈️ Airport Pickups</option>
+                <option value="service">🔧 Professional Services</option>
+                <option value="other">📍 Other Category (Specify below)</option>
+              </select>
+              <div id="wrap-custom-category" style="display:none; margin-top:8px;">
+                <input type="text" id="form-custom-category" class="form-input" placeholder="Type category (e.g. Boat Cruise, Spa, Photography)">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="form-area">Neighborhood / Area <span class="req">*</span></label>
+              <select id="form-area" class="form-select" required onchange="handleAreaChange(this)">
+                <option value="" disabled selected>Select neighborhood</option>
+                <option value="Ikoyi">Ikoyi</option>
+                <option value="Victoria Island">Victoria Island</option>
+                <option value="Lekki Phase 1">Lekki Phase 1</option>
+                <option value="Lekki (Chevron / Agungi)">Lekki (Chevron / Agungi)</option>
+                <option value="Ajah / Sangotedo">Ajah / Sangotedo</option>
+                <option value="Ikeja GRA">Ikeja GRA</option>
+                <option value="Ikeja / Maryland">Ikeja / Maryland</option>
+                <option value="Magodo / Shangisha">Magodo / Shangisha</option>
+                <option value="Gbagada">Gbagada</option>
+                <option value="Surulere">Surulere</option>
+                <option value="Yaba">Yaba</option>
+                <option value="Festac Town">Festac Town</option>
+                <option value="Ogudu / Ojota">Ogudu / Ojota</option>
+                <option value="Ilupeju / Anthony">Ilupeju / Anthony</option>
+                <option value="Epe / Ibeju Lekki">Epe / Ibeju Lekki</option>
+                <option value="Other">📍 Other Neighborhood (Type custom)</option>
+              </select>
+              <div id="wrap-custom-area" style="display:none; margin-top:8px;">
+                <input type="text" id="form-custom-area" class="form-input" placeholder="Type neighborhood (e.g. Alausa, Ikorodu, Badagry)">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="form-desc">Short Description & Highlights <span class="req">*</span></label>
+            <textarea id="form-desc" class="form-textarea" rows="3" placeholder="What makes your service stand out? Mention luxury amenities, specialties, or experience." required></textarea>
+            <div class="form-help">Minimum 10 characters. Hand-vetted by our editorial team.</div>
+          </div>
+        </div>
+
+        <!-- STEP 2: RATES & SOCIALS -->
+        <div class="modal-body modal-step" id="modal-step-2" style="display: none;">
+          <div class="modal-step-title">Rates & Social Profiles</div>
+          <div class="modal-step-sub">Step 2 of 3 &middot; How clients find and contact you</div>
+
+          <div class="form-group">
+            <label class="form-label" for="form-price">Typical Price Range / Starting Rate</label>
+            <input type="text" id="form-price" class="form-input" placeholder="e.g. ₦150,000 / night or ₦35,000 avg spend">
+            <div class="form-help">Optional: Leave blank for "Price on request".</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="form-whatsapp">Business WhatsApp / Phone Number <span class="req">*</span></label>
+            <input type="tel" id="form-whatsapp" class="form-input" placeholder="e.g. 0803 123 4567 or +234..." required>
+            <div class="form-help">Used for instant client bookings and Lagos Updates verification.</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="form-instagram">Instagram Handle</label>
+            <input type="text" id="form-instagram" class="form-input" placeholder="e.g. @mybusiness or mybusiness">
+            <div class="form-help">Crucial for Lagos social proof and verification screening.</div>
+          </div>
+
+          <!-- PHOTO UPLOAD & MEDIA -->
+          <div class="form-group">
+            <label class="form-label">Photos of your space or service (Optional, up to 3)</label>
+            <div class="photo-drop-zone" id="photo-drop-zone">
+              <input type="file" id="form-photos-input" accept="image/jpeg,image/png,image/webp" multiple style="display:none;">
+              <div class="drop-zone-icon">📷</div>
+              <div class="drop-zone-text"><strong>Click to select</strong> or drag & drop photos</div>
+              <div class="drop-zone-hint">High-res JPEG, PNG, or WebP (max 5MB each)</div>
+            </div>
+            <div class="photo-preview-grid" id="photo-preview-grid"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="form-drive-link">Or Google Drive / Dropbox folder link (Optional)</label>
+            <input type="url" id="form-drive-link" class="form-input" placeholder="https://drive.google.com/drive/folders/...">
+            <div class="form-help">Our team will pull your best shots during verification.</div>
+          </div>
+        </div>
+
+        <!-- STEP 3: CONTACT & PLAN SELECTION -->
+        <div class="modal-body modal-step" id="modal-step-3" style="display: none;">
+          <div class="modal-step-title">Contact & Placement Plan</div>
+          <div class="modal-step-sub">Step 3 of 3 &middot; Finalize your application</div>
+
+          <!-- HONEYPOT BOT TRAP -->
+          <input type="text" id="form-hp" style="display:none;" tabindex="-1" autocomplete="off">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="form-contact-name">Your Full Name <span class="req">*</span></label>
+              <input type="text" id="form-contact-name" class="form-input" placeholder="e.g. Babatunde Alabi" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="form-contact-email">Your Work Email <span class="req">*</span></label>
+              <input type="email" id="form-contact-email" class="form-input" placeholder="name@company.com" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Select Placement Tier</label>
+            <div class="plan-selection-grid" style="grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));">
+              
+              <div class="plan-card active" data-plan="verified" id="card-plan-verified">
+                <span class="plan-card-tag verified">Standard Verified</span>
+                <div class="plan-card-name" style="font-size:1.15rem;font-weight:800;margin:6px 0 2px;">₦30,000 <span style="font-size:0.78rem;font-weight:normal;color:#717171;">/ month</span></div>
+                <div class="plan-card-desc">Editorial vetting by Lagos Updates team, verified badge, listed in category directory with direct WhatsApp leads.</div>
+              </div>
+
+              <div class="plan-card" data-plan="featured_1w" id="card-plan-boost1w">
+                <span class="plan-card-tag featured" style="background:#FFFBEB;color:#B45309;">🚀 1-Week Boost</span>
+                <div class="plan-card-name" style="font-size:1.15rem;font-weight:800;margin:6px 0 2px;">₦35,000 <span style="font-size:0.78rem;font-weight:normal;color:#717171;">/ 7 days</span></div>
+                <div class="plan-card-desc">7 Days pinned to top of feed for instant crowd surge and weekend booking rush.</div>
+              </div>
+
+              <div class="plan-card" data-plan="featured" id="card-plan-featured">
+                <span class="plan-card-tag featured">👑 1-Month Featured</span>
+                <div class="plan-card-name" style="font-size:1.15rem;font-weight:800;margin:6px 0 2px;">₦100,000 <span style="font-size:0.78rem;font-weight:normal;color:#717171;">/ 30 days</span></div>
+                <div class="plan-card-desc">Full 30-day top-row priority placement + gold star badge + maximum visibility across Lagos.</div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- SUCCESS VIEW -->
+        <div class="modal-body" id="modal-step-success" style="display: none;">
+          <div class="modal-success-box">
+            <div class="modal-success-icon">✓</div>
+            <h3>Application Received!</h3>
+            <p>Your business application has been dispatched to <strong>vendors@lagosupdates.com</strong>. Our team will review your credentials and contact you via WhatsApp to finalize verification within 24 hours.</p>
+            <div class="modal-success-ref">Ref: <span id="success-ref-id">LU-XXXX</span></div>
+            <div id="success-payment-status" style="margin: 10px 0 18px; font-weight: 700; font-size: 14px;"></div>
+            <div>
+              <button type="button" class="btn-modal-submit" id="btn-success-done" style="padding: 12px 28px;">Done</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- FOOTER ACTIONS -->
+        <div class="modal-footer" id="modal-footer-controls">
+          <button type="button" class="btn-modal-back" id="btn-modal-prev" style="visibility: hidden;">&larr; Back</button>
+          <button type="button" class="btn-modal-next" id="btn-modal-next">Next: Rates &rarr;</button>
+          <button type="submit" class="btn-modal-submit" id="btn-modal-submit" style="display: none;">Submit Application &check;</button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+  <script src="https://checkout.flutterwave.com/v3.js"></script>
+  <script src="js/payments.js"></script>
+  <script src="js/telemetry.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

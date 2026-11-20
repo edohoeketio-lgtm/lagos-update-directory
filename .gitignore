@@ -1,0 +1,23 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# SQLite local databases and write-ahead logs (auto-seeded from data/listings.json)
+data/*.db
+data/*.db-shm
+data/*.db-wal
+data/email_log.txt
+data/uploads/*
+!data/uploads/.gitkeep
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment variables
+.env
