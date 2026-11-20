@@ -291,6 +291,48 @@ class TestMobileLayoutAndUX(unittest.TestCase):
             vendor_content = f.read()
         self.assertIn("Application Not Approved", vendor_content, "Vendor portal missing immediate rejection status banner")
 
+    def test_carousel_markup_and_css(self):
+        """Verify that swipeable carousel elements and CSS scroll-snap rules are present in listing.html and styles.css."""
+        listing_path = os.path.join(BASE_DIR, "listing.html")
+        with open(listing_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        self.assertIn("listing-carousel-track", content, "listing.html missing carousel track element")
+        self.assertIn("carousel-prev", content, "listing.html missing carousel previous button")
+        self.assertIn("carousel-next", content, "listing.html missing carousel next button")
+        self.assertIn("carousel-dots", content, "listing.html missing carousel dots container")
+        self.assertIn("carousel-counter", content, "listing.html missing carousel counter container")
+        self.assertIn("scroll-snap-type: x mandatory", content, "listing.html missing CSS scroll-snap rule")
+
+        # Also check card carousel styles in styles.css
+        styles_path = os.path.join(BASE_DIR, "css", "styles.css")
+        with open(styles_path, "r", encoding="utf-8") as f:
+            styles_content = f.read()
+        self.assertIn(".card-carousel-track", styles_content, "styles.css missing .card-carousel-track")
+        self.assertIn(".card-carousel-btn", styles_content, "styles.css missing .card-carousel-btn")
+
+    def test_create_account_button_centered(self):
+        """Verify that the Create Account & Continue button is centered in index.html."""
+        index_path = os.path.join(BASE_DIR, "index.html")
+        with open(index_path, "r", encoding="utf-8") as f:
+            index_content = f.read()
+
+        # Find button with id btn-auth-register
+        m = re.search(r'<button[^>]+id="btn-auth-register"[^>]*>', index_content)
+        self.assertIsNotNone(m, "btn-auth-register not found in index.html")
+        btn_tag = m.group(0)
+        self.assertIn("justify-content:center", btn_tag.replace(" ", ""), "btn-auth-register must be centered")
+
+    def test_listings_have_photos_array(self):
+        """Verify all listings in data/listings.json have multiple photos populated."""
+        import json
+        json_path = os.path.join(BASE_DIR, "data", "listings.json")
+        with open(json_path, "r", encoding="utf-8") as f:
+            listings = json.load(f)
+        for l in listings:
+            self.assertIn("photos", l, f"Listing {l['name']} missing photos array")
+            self.assertGreaterEqual(len(l["photos"]), 1, f"Listing {l['name']} photos array is empty")
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -88,11 +88,44 @@ function buildCard(listing) {
   card.className = 'card';
   card.setAttribute('data-id', listing.id);
 
-  const hasPhoto = Boolean(listing.image);
+  let photos = [];
+  if (Array.isArray(listing.photos) && listing.photos.length > 0) {
+    photos = listing.photos.filter(Boolean);
+  } else if (Array.isArray(listing.images) && listing.images.length > 0) {
+    photos = listing.images.filter(Boolean);
+  } else if (listing.image) {
+    photos = [listing.image];
+  }
+
+  const hasPhoto = photos.length > 0;
+  const isMultiPhoto = photos.length > 1;
+
+  let imgContent = '';
+  if (isMultiPhoto) {
+    const slidesHtml = photos.map((src, i) => `
+      <div class="card-carousel-slide">
+        <img src="${src}" alt="${listing.name} ${i + 1}" class="card-img-photo" loading="lazy" onerror="this.style.display='none';">
+      </div>
+    `).join('');
+    const dotsHtml = photos.map((_, i) => `<span class="card-carousel-dot ${i === 0 ? 'active' : ''}"></span>`).join('');
+
+    imgContent = `
+      <div class="card-carousel-track">
+        ${slidesHtml}
+      </div>
+      <button type="button" class="card-carousel-btn prev" aria-label="Previous photo">‹</button>
+      <button type="button" class="card-carousel-btn next" aria-label="Next photo">›</button>
+      <div class="card-carousel-dots">${dotsHtml}</div>
+    `;
+  } else if (hasPhoto) {
+    imgContent = `<img src="${photos[0]}" alt="${listing.name}" class="card-img-photo" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><span class="card-img-placeholder" style="display:none;">${meta.emoji}</span>`;
+  } else {
+    imgContent = `<span class="card-img-placeholder">${meta.emoji}</span>`;
+  }
+
   card.innerHTML = `
     <div class="card-img">
-      ${hasPhoto ? `<img src="${listing.image}" alt="${listing.name}" class="card-img-photo" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">` : ''}
-      <span class="card-img-placeholder" style="${hasPhoto ? 'display:none;' : ''}">${meta.emoji}</span>
+      ${imgContent}
       <span class="card-category-badge">${meta.label}</span>
       ${listing.promoted ? '<span class="card-promoted-tag"><span>★</span> Featured</span>' : ''}
       ${listing.verified ? '<span class="card-verified-badge">Verified</span>' : ''}
@@ -107,6 +140,52 @@ function buildCard(listing) {
       <div class="card-price-row">${formatPriceAirbnb(listing.priceRange, listing.category)}</div>
     </div>
   `;
+
+  if (isMultiPhoto) {
+    const track = card.querySelector('.card-carousel-track');
+    const btnPrev = card.querySelector('.card-carousel-btn.prev');
+    const btnNext = card.querySelector('.card-carousel-btn.next');
+    const dots = card.querySelectorAll('.card-carousel-dot');
+    let cardIdx = 0;
+
+    function updateCardDots(idx) {
+      cardIdx = Math.max(0, Math.min(idx, photos.length - 1));
+      dots.forEach((d, i) => d.classList.toggle('active', i === cardIdx));
+    }
+
+    if (btnPrev && track) {
+      btnPrev.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const prevIdx = cardIdx === 0 ? photos.length - 1 : cardIdx - 1;
+        track.scrollTo({ left: prevIdx * track.clientWidth, behavior: 'smooth' });
+        updateCardDots(prevIdx);
+      });
+    }
+
+    if (btnNext && track) {
+      btnNext.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const nextIdx = cardIdx === photos.length - 1 ? 0 : cardIdx + 1;
+        track.scrollTo({ left: nextIdx * track.clientWidth, behavior: 'smooth' });
+        updateCardDots(nextIdx);
+      });
+    }
+
+    if (track) {
+      let scrollTimer;
+      track.addEventListener('scroll', (e) => {
+        e.stopPropagation();
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(() => {
+          const w = track.clientWidth || 1;
+          const detected = Math.round(track.scrollLeft / w);
+          if (detected !== cardIdx) updateCardDots(detected);
+        }, 40);
+      }, { passive: true });
+    }
+  }
 
   card.addEventListener('click', () => {
     if (typeof window.trackEvent === 'function') {
@@ -1236,6 +1315,143 @@ async function initDirectory() {
 /* ========================================
    LISTING DETAIL PAGE — listing.html
    ======================================== */
+function initListingHeroCarousel(listing, meta) {
+  const track     = document.getElementById('listing-carousel-track');
+  const btnPrev   = document.getElementById('carousel-prev');
+  const btnNext   = document.getElementById('carousel-next');
+  const dotsWrap  = document.getElementById('carousel-dots');
+  const counterEl = document.getElementById('carousel-counter');
+
+  if (!track) return;
+
+  let photos = [];
+  if (Array.isArray(listing.photos) && listing.photos.length > 0) {
+    photos = listing.photos.filter(Boolean);
+  } else if (Array.isArray(listing.images) && listing.images.length > 0) {
+    photos = listing.images.filter(Boolean);
+  } else if (listing.image) {
+    photos = [listing.image];
+  }
+
+  track.innerHTML = '';
+
+  if (photos.length === 0) {
+    track.innerHTML = `
+      <div class="carousel-slide">
+        <span class="listing-hero-emoji">${meta.emoji || '📍'}</span>
+      </div>`;
+    if (btnPrev) btnPrev.classList.add('hidden');
+    if (btnNext) btnNext.classList.add('hidden');
+    if (dotsWrap) dotsWrap.classList.add('hidden');
+    if (counterEl) counterEl.classList.add('hidden');
+    return;
+  }
+
+  photos.forEach((src, idx) => {
+    const slide = document.createElement('div');
+    slide.className = 'carousel-slide';
+    slide.setAttribute('data-index', idx);
+    slide.innerHTML = `
+      <img src="${src}" alt="${listing.name} - Photo ${idx + 1}" class="listing-hero-photo" loading="${idx === 0 ? 'eager' : 'lazy'}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+      <span class="listing-hero-emoji" style="display:none;">${meta.emoji || '📍'}</span>
+    `;
+    track.appendChild(slide);
+  });
+
+  const total = photos.length;
+
+  if (total <= 1) {
+    if (btnPrev) btnPrev.classList.add('hidden');
+    if (btnNext) btnNext.classList.add('hidden');
+    if (dotsWrap) dotsWrap.classList.add('hidden');
+    if (counterEl) counterEl.classList.add('hidden');
+    return;
+  }
+
+  if (btnPrev) btnPrev.classList.remove('hidden');
+  if (btnNext) btnNext.classList.remove('hidden');
+  if (dotsWrap) dotsWrap.classList.remove('hidden');
+  if (counterEl) counterEl.classList.remove('hidden');
+
+  if (dotsWrap) {
+    dotsWrap.innerHTML = '';
+    for (let i = 0; i < total; i++) {
+      const dot = document.createElement('button');
+      dot.type = 'button';
+      dot.className = `carousel-dot ${i === 0 ? 'active' : ''}`;
+      dot.setAttribute('aria-label', `View photo ${i + 1} of ${total}`);
+      dot.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        goToSlide(i);
+      });
+      dotsWrap.appendChild(dot);
+    }
+  }
+
+  let currentIndex = 0;
+
+  function updateCarouselUI(idx) {
+    currentIndex = Math.max(0, Math.min(idx, total - 1));
+    if (counterEl) {
+      counterEl.textContent = `${currentIndex + 1} / ${total}`;
+    }
+    if (dotsWrap) {
+      const allDots = dotsWrap.querySelectorAll('.carousel-dot');
+      allDots.forEach((d, i) => d.classList.toggle('active', i === currentIndex));
+    }
+  }
+
+  function goToSlide(idx) {
+    const targetIdx = Math.max(0, Math.min(idx, total - 1));
+    const slideWidth = track.clientWidth || track.offsetWidth;
+    track.scrollTo({ left: targetIdx * slideWidth, behavior: 'smooth' });
+    updateCarouselUI(targetIdx);
+  }
+
+  if (btnPrev) {
+    btnPrev.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const prevIdx = currentIndex === 0 ? total - 1 : currentIndex - 1;
+      goToSlide(prevIdx);
+    };
+  }
+
+  if (btnNext) {
+    btnNext.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const nextIdx = currentIndex === total - 1 ? 0 : currentIndex + 1;
+      goToSlide(nextIdx);
+    };
+  }
+
+  track.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      goToSlide(currentIndex === 0 ? total - 1 : currentIndex - 1);
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      goToSlide(currentIndex === total - 1 ? 0 : currentIndex + 1);
+    }
+  });
+
+  let scrollTimeout;
+  track.addEventListener('scroll', () => {
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => {
+      const slideWidth = track.clientWidth || track.offsetWidth || 1;
+      const detected = Math.round(track.scrollLeft / slideWidth);
+      if (detected !== currentIndex) {
+        updateCarouselUI(detected);
+      }
+    }, 40);
+  }, { passive: true });
+
+  updateCarouselUI(0);
+}
+
 async function initListing() {
   const params = new URLSearchParams(window.location.search);
   const id = params.get('id');
@@ -1249,14 +1465,7 @@ async function initListing() {
 
   document.title = `${listing.name} — Lagos Updates Directory`;
 
-  const heroImg = document.getElementById('listing-hero-img');
-  if (heroImg) {
-    if (listing.image) {
-      heroImg.innerHTML = `<img src="${listing.image}" alt="${listing.name}" class="listing-hero-photo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><span class="listing-hero-emoji" style="display:none;">${meta.emoji}</span>`;
-    } else {
-      heroImg.innerHTML = `<span class="listing-hero-emoji">${meta.emoji}</span>`;
-    }
-  }
+  initListingHeroCarousel(listing, meta);
 
   const nameEl = document.getElementById('listing-name');
   if (nameEl) nameEl.textContent = listing.name;

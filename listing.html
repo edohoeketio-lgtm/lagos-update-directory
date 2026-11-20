@@ -85,7 +85,7 @@
       border-color: var(--text-muted);
     }
 
-    /* Responsive Gallery Hero */
+    /* Responsive Gallery Hero & Carousel */
     .listing-hero-container {
       position: relative;
       width: 100%;
@@ -95,7 +95,161 @@
       background: linear-gradient(135deg, #181F2C 0%, #111827 50%, #0B0F17 100%);
       border: 1px solid rgba(255, 255, 255, 0.08);
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+      user-select: none;
     }
+    .listing-carousel {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+    }
+    .listing-carousel-track {
+      display: flex;
+      width: 100%;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      aspect-ratio: 16 / 9;
+      min-height: 220px;
+      max-height: 400px;
+    }
+    .listing-carousel-track::-webkit-scrollbar {
+      display: none;
+    }
+    .carousel-slide {
+      flex: 0 0 100%;
+      width: 100%;
+      height: 100%;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #111827;
+    }
+    .carousel-slide img,
+    .listing-hero-photo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+    .carousel-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      color: #111827;
+      font-size: 22px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 5;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+      opacity: 0;
+      touch-action: manipulation;
+    }
+    .carousel-arrow.prev { left: 14px; }
+    .carousel-arrow.next { right: 14px; }
+    .listing-hero-container:hover .carousel-arrow {
+      opacity: 1;
+    }
+    .carousel-arrow:hover {
+      background: #FFFFFF;
+      transform: translateY(-50%) scale(1.08);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    }
+    .carousel-arrow:active {
+      transform: translateY(-50%) scale(0.96);
+    }
+    .carousel-arrow.hidden {
+      display: none !important;
+    }
+
+    /* Counter Badge (e.g. 1 / 3) */
+    .carousel-counter {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #FFFFFF;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 9999px;
+      letter-spacing: 0.5px;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .carousel-counter.hidden {
+      display: none !important;
+    }
+
+    /* Dots Indicator */
+    .carousel-dots {
+      position: absolute;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      z-index: 4;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 5px 10px;
+      border-radius: 9999px;
+    }
+    .carousel-dots.hidden {
+      display: none !important;
+    }
+    .carousel-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.55);
+      cursor: pointer;
+      transition: all 0.25s ease;
+      border: none;
+      padding: 0;
+      outline: none;
+    }
+    .carousel-dot.active {
+      background: #FFD400;
+      width: 18px;
+      border-radius: 4px;
+    }
+
+    @media (max-width: 768px) {
+      .carousel-arrow {
+        opacity: 0.88;
+        width: 34px;
+        height: 34px;
+        font-size: 18px;
+      }
+      .carousel-arrow.prev { left: 8px; }
+      .carousel-arrow.next { right: 8px; }
+    }
+
     .listing-hero-img {
       width: 100%;
       aspect-ratio: 16 / 9;
@@ -109,12 +263,6 @@
       background: radial-gradient(circle at 50% 40%, rgba(255, 212, 0, 0.15) 0%, transparent 70%);
       transition: transform 0.3s ease;
       overflow: hidden;
-    }
-    .listing-hero-photo {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
     }
     .listing-hero-badge {
       position: absolute;
@@ -134,7 +282,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      z-index: 2;
+      z-index: 3;
     }
     .listing-hero-curation {
       position: absolute;
@@ -152,6 +300,7 @@
       display: flex;
       align-items: center;
       gap: 4px;
+      z-index: 3;
     }
 
     /* Tags & Title */
@@ -766,12 +915,20 @@
         </div>
       </div>
 
-      <!-- RESPONSIVE GALLERY HERO -->
-      <div class="listing-hero-container">
+      <!-- RESPONSIVE GALLERY HERO WITH SWIPEABLE CAROUSEL -->
+      <div class="listing-hero-container" id="listing-hero-container">
         <div class="listing-hero-badge">
           <span aria-hidden="true">✨</span> Lagos Spot
         </div>
-        <div class="listing-hero-img" id="listing-hero-img" aria-hidden="true"></div>
+        <div class="listing-carousel" id="listing-carousel" role="region" aria-roledescription="carousel" aria-label="Listing photo gallery">
+          <div class="listing-carousel-track" id="listing-carousel-track" tabindex="0">
+            <div class="listing-hero-img" id="listing-hero-img" aria-hidden="true"></div>
+          </div>
+          <button type="button" class="carousel-arrow prev" id="carousel-prev" aria-label="Previous photo">‹</button>
+          <button type="button" class="carousel-arrow next" id="carousel-next" aria-label="Next photo">›</button>
+          <div class="carousel-counter" id="carousel-counter" aria-live="polite"></div>
+          <div class="carousel-dots" id="carousel-dots" role="tablist" aria-label="Photo dots"></div>
+        </div>
         <div class="listing-hero-curation">
           <span aria-hidden="true">✓</span> Vetted by Lagos Updates
         </div>

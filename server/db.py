@@ -174,6 +174,11 @@ def init_db():
         pass
 
     try:
+        cursor.execute("ALTER TABLE listings ADD COLUMN photos TEXT DEFAULT '[]';")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
         cursor.execute("ALTER TABLE submissions ADD COLUMN photos TEXT DEFAULT '[]';")
     except sqlite3.OperationalError:
         pass
@@ -237,12 +242,16 @@ def init_db():
             with open(DATA_JSON_PATH, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 for item in data:
+                    item_photos = item.get('photos', [])
+                    if not item_photos and item.get('image'):
+                        item_photos = [item.get('image')]
+                    photos_json = json.dumps(item_photos)
                     cursor.execute("""
                     INSERT OR IGNORE INTO listings (
                         id, name, category, area, description,
                         price_range, rating, verified, promoted,
-                        phone, whatsapp, instagram, image
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        phone, whatsapp, instagram, image, photos
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, (
                         item.get('id'),
                         item.get('name'),
@@ -256,7 +265,8 @@ def init_db():
                         item.get('phone', ''),
                         item.get('whatsapp', ''),
                         item.get('instagram', ''),
-                        item.get('image', '')
+                        item.get('image', ''),
+                        photos_json
                     ))
             conn.commit()
             print(f"Auto-seeded {len(data)} listings from listings.json into SQLite.")
@@ -301,6 +311,16 @@ def query_listings(category=None, area=None, query=None, verified_only=False, fe
 
     result = []
     for r in rows:
+        photos_val = []
+        if "photos" in r.keys() and r["photos"]:
+            try:
+                photos_val = json.loads(r["photos"])
+            except Exception:
+                photos_val = []
+        img_val = r["image"] if "image" in r.keys() else ""
+        if not photos_val and img_val:
+            photos_val = [img_val]
+
         result.append({
             "id": r["id"],
             "name": r["name"],
@@ -314,7 +334,8 @@ def query_listings(category=None, area=None, query=None, verified_only=False, fe
             "phone": r["phone"],
             "whatsapp": r["whatsapp"],
             "instagram": r["instagram"],
-            "image": r["image"] if "image" in r.keys() else ""
+            "image": img_val,
+            "photos": photos_val
         })
     return result
 
@@ -326,6 +347,17 @@ def get_listing_by_id(listing_id: str):
     conn.close()
     if not row:
         return None
+
+    photos_val = []
+    if "photos" in row.keys() and row["photos"]:
+        try:
+            photos_val = json.loads(row["photos"])
+        except Exception:
+            photos_val = []
+    img_val = row["image"] if "image" in row.keys() else ""
+    if not photos_val and img_val:
+        photos_val = [img_val]
+
     return {
         "id": row["id"],
         "name": row["name"],
@@ -341,7 +373,8 @@ def get_listing_by_id(listing_id: str):
         "phone": row["phone"],
         "whatsapp": row["whatsapp"],
         "instagram": row["instagram"],
-        "image": row["image"] if "image" in row.keys() else ""
+        "image": img_val,
+        "photos": photos_val
     }
 
 def insert_submission(cleaned_data: dict, saved_photos: list = None, vendor_id: str = "") -> str:
@@ -423,13 +456,21 @@ def approve_submission(submission_id: str, make_featured: bool = False):
     owner_email = (sub["contact_email"] or "").lower().strip()
     rc_number = sub["rc_number"] if "rc_number" in sub.keys() else ""
 
+    sub_photos_raw = sub["photos"] if "photos" in sub.keys() and sub["photos"] else "[]"
+    try:
+        sub_photos_list = json.loads(sub_photos_raw)
+    except Exception:
+        sub_photos_list = []
+    main_image = sub_photos_list[0] if sub_photos_list else ""
+
     cursor.execute("""
     INSERT INTO listings (
         id, name, category, area, description,
         price_range, rating, verified, promoted,
         phone, whatsapp, instagram, owner_email,
-        plan_tier, expires_at, featured_until, rc_number, is_active
-    ) VALUES (?, ?, ?, ?, ?, ?, '4.9', 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+        plan_tier, expires_at, featured_until, rc_number, is_active,
+        image, photos
+    ) VALUES (?, ?, ?, ?, ?, ?, '4.9', 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
     """, (
         listing_id,
         sub["business_name"],
@@ -445,7 +486,9 @@ def approve_submission(submission_id: str, make_featured: bool = False):
         sub["plan_tier"],
         expires_at,
         featured_until,
-        rc_number
+        rc_number,
+        main_image,
+        json.dumps(sub_photos_list)
     ))
 
     cursor.execute("UPDATE submissions SET status = 'approved' WHERE id = ?", (submission_id,))
