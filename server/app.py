@@ -55,11 +55,15 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
             return None
         return get_vendor_by_session(token)
 
+    def get_request_path(self):
+        raw = self.headers.get("x-forwarded-uri") or self.headers.get("x-matched-path") or self.path
+        return urllib.parse.urlparse(raw)
+
     def is_admin_authorized(self):
         """Validates X-Admin-Key header or admin_key query parameter against ADMIN_PASSKEY."""
         key = self.headers.get("X-Admin-Key", "").strip()
         if not key:
-            parsed = urllib.parse.urlparse(self.path)
+            parsed = self.get_request_path()
             params = urllib.parse.parse_qs(parsed.query)
             key = params.get("admin_key", [""])[0].strip()
         return key == ADMIN_PASSKEY
@@ -83,7 +87,7 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        parsed = urllib.parse.urlparse(self.path)
+        parsed = self.get_request_path()
         path = parsed.path
         params = urllib.parse.parse_qs(parsed.query)
 
@@ -224,7 +228,7 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
         return super().do_GET()
 
     def do_POST(self):
-        parsed = urllib.parse.urlparse(self.path)
+        parsed = self.get_request_path()
         path = parsed.path
 
         # Flutterwave Payment Verification & Webhooks
