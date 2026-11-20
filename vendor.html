@@ -825,22 +825,25 @@
       if (pendingSubmissions.length > 0) {
         pendingSubmissions.forEach(sub => {
           const banner = document.createElement('div');
-          banner.style.cssText = 'background:#FFFBEB; border:1px solid #FCD34D; border-radius:14px; padding:18px 22px; margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,0.03); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;';
+          banner.style.cssText = 'background:#F0FDF4; border:1px solid #BBF7D0; border-radius:14px; padding:18px 22px; margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,0.03); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;';
           banner.innerHTML = `
             <div>
-              <div style="font-weight:800; font-size:1.05rem; color:#92400E; display:flex; align-items:center; gap:8px;">
-                <span>⏳</span> Application Under Verification: <strong>${sub.business_name}</strong>
+              <div style="font-weight:800; font-size:1.05rem; color:#166534; display:flex; align-items:center; gap:8px;">
+                <span>🌿</span> Application Received: <strong>${sub.business_name}</strong>
               </div>
-              <div style="font-size:0.85rem; color:#B45309; margin-top:5px; line-height:1.5;">
-                Reference: <code style="background:#FEF3C7; padding:2px 6px; border-radius:4px; font-weight:700;">${sub.ref_id || sub.id}</code> &middot; 
+              <div style="font-size:0.85rem; color:#15803D; margin-top:5px; line-height:1.5;">
+                Reference: <code style="background:#DCFCE7; padding:2px 6px; border-radius:4px; font-weight:700;">${sub.ref_id || sub.id}</code> &middot; 
                 Area: <b>${sub.area}</b> &middot; 
                 Category: <b>${sub.category}</b> &middot; 
-                Payment: <b>${sub.payment_status === 'paid' ? '💳 Confirmed via Flutterwave' : 'Pending Invoice'}</b>
+                Payment: <b>${sub.payment_status === 'paid' ? '💳 Confirmed via Flutterwave' : 'Pending Confirmation'}</b>
+              </div>
+              <div style="font-size:0.82rem; color:#4B5563; margin-top:4px;">
+                Your application is in the admin review queue. Our team is doing a quick editorial check and it will go live shortly!
               </div>
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
-              <span style="font-size:0.8rem; font-weight:700; background:#FEF3C7; color:#92400E; padding:6px 14px; border-radius:9999px; border:1px solid #FCD34D;">
-                Editorial Review Active
+              <span style="font-size:0.8rem; font-weight:700; background:#DCFCE7; color:#166534; padding:6px 14px; border-radius:9999px; border:1px solid #86EFAC;">
+                In Editorial Review &bull; Going Live Soon
               </span>
             </div>
           `;
@@ -852,9 +855,9 @@
         listEl.innerHTML = `
           <div class="listing-box" style="text-align:center;padding:48px;">
             <div style="font-size:2.5rem;margin-bottom:12px;">🏢</div>
-            <h3 style="font-size:1.2rem;font-weight:800;margin-bottom:6px;">No listings linked to your account yet</h3>
+            <h3 style="font-size:1.2rem;font-weight:800;margin-bottom:6px;">Welcome to your Vendor Portal</h3>
             <p style="color:#717171;font-size:0.9rem;max-width:440px;margin:0 auto 20px;">
-              If you recently submitted your business through the public listing form, our team is verifying it. Once verified, it will appear here automatically.
+              You have no active listings yet. Submit your registered business today to get verified, receive direct WhatsApp inquiries, and track visitor views.
             </p>
             <a href="/index.html?action=list_business" class="btn-vendor-primary" style="display:inline-block;width:auto;padding:12px 24px;text-decoration:none;">+ List Your Business</a>
           </div>`;
@@ -862,14 +865,14 @@
       } else if (currentListings.length === 0 && pendingSubmissions.length > 0) {
         const infoBox = document.createElement('div');
         infoBox.className = 'listing-box';
-        infoBox.style.cssText = 'text-align:center; padding:36px 24px; background:#F9FAFB;';
+        infoBox.style.cssText = 'text-align:center; padding:36px 24px; background:#F9FAFB; border:1px solid #E5E7EB;';
         infoBox.innerHTML = `
-          <div style="font-size:2rem; margin-bottom:8px;">🔍</div>
-          <h3 style="font-size:1.1rem; font-weight:800; margin-bottom:6px;">Your Listing Application is in Review</h3>
-          <p style="color:#6B7280; font-size:0.88rem; max-width:480px; margin:0 auto 16px;">
-            The Lagos Updates editorial desk is reviewing your business credentials. Once approved, your live listing management controls will appear right here.
+          <div style="font-size:2rem; margin-bottom:8px;">✨</div>
+          <h3 style="font-size:1.15rem; font-weight:800; margin-bottom:6px; color:#111;">Your Spot is in the Lagos Review Queue</h3>
+          <p style="color:#4B5563; font-size:0.9rem; max-width:480px; margin:0 auto 16px; line-height:1.6;">
+            We've received your submission and payment! Our editorial desk is giving your photos and details a quick look. Once approved, your live listing controls, views analytics, and booking links will appear right here.
           </p>
-          <a href="/index.html" style="font-size:0.85rem; font-weight:700; color:#111; text-decoration:underline;">← Browse Directory while waiting</a>
+          <a href="/index.html" style="font-size:0.88rem; font-weight:700; color:#111; text-decoration:underline;">← Browse Lagos Updates Directory while waiting</a>
         `;
         listEl.appendChild(infoBox);
         return;
@@ -906,6 +909,26 @@
             <div>
               <span class="status-badge active">
                 🟢 Live on Directory
+              </span>
+            </div>
+          </div>
+
+          <!-- Private Performance & Impressions (Visible only to listing owner) -->
+          <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:14px 18px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div style="background:#EEF2F6; border-radius:10px; width:42px; height:42px; display:flex; align-items:center; justify-content:center; font-size:20px;">
+                👁
+              </div>
+              <div>
+                <div style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:0.5px;">Private Vendor Analytics</div>
+                <div style="font-size:17px; font-weight:800; color:#0F172A;">
+                  ${(l.views_count || 0).toLocaleString()} <span style="font-size:13px; font-weight:600; color:#64748B;">total visitors viewed this spot</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <span style="font-size:12px; font-weight:700; color:#059669; background:#ECFDF5; padding:4px 10px; border-radius:9999px; border:1px solid #A7F3D0;">
+                ● Live Impressions (Private)
               </span>
             </div>
           </div>

@@ -677,6 +677,32 @@ input, select, textarea {
   color: var(--text-muted);
   font-weight: 400;
 }
+.card-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 3px;
+}
+.card-views-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.listing-views-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #F3F4F6;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  border: 1px solid #E5E7EB;
+}
 
 /* No results state */
 .no-results {

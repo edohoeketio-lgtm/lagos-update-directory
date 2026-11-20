@@ -81,6 +81,15 @@ function formatPriceAirbnb(priceRange, category) {
   return `<strong>${priceRange}</strong> <span>/ ${unit}</span>`;
 }
 
+/* ---- Format Views Count in Jiji style (e.g. 1.2k views or 840 views) ---- */
+function formatViewsCount(n) {
+  const num = parseInt(n, 10) || 0;
+  if (num >= 1000) {
+    return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+  }
+  return num.toLocaleString();
+}
+
 /* ---- Build an Airbnb-style card element ---- */
 function buildCard(listing) {
   const meta = CATEGORY_META[listing.category] || { label: listing.category, emoji: '📍' };
@@ -1160,7 +1169,7 @@ function initBusinessModal() {
 
         const payStatusEl = document.getElementById('success-payment-status');
         if (payStatusEl) {
-          payStatusEl.innerHTML = `<span style="color:#008A05; font-weight:700;">✓ Flutterwave Payment Confirmed (${flwTxRef || 'Verified'}) &mdash; Sent to Admin Editorial Review Queue</span>`;
+          payStatusEl.innerHTML = `<span style="color:#008A05; font-weight:700;">✓ Payment Confirmed (${flwTxRef || 'Success'}) &mdash; Submitted to Lagos Updates editorial review</span>`;
         }
       }
 
@@ -1170,7 +1179,7 @@ function initBusinessModal() {
         if (selectedPlan === 'featured_1w') planPrice = '₦35,000';
         if (selectedPlan === 'featured') planPrice = '₦100,000';
         btnSubmit.textContent = `💳 Pay ${planPrice} with Flutterwave ✓`;
-        showError(msg || 'Payment was not completed. Your application will only be forwarded to the admin review queue after payment is confirmed.');
+        showError(msg || 'Payment could not be completed. Your application is saved; complete payment whenever you’re ready to submit for review.');
       }
 
       // Calculate amount for Flutterwave checkout
@@ -1499,6 +1508,24 @@ async function initListing() {
   if (statusInfo) {
     statusInfo.textContent = listing.verified ? '✓ Verified by Lagos Updates' : 'Active Listing';
     statusInfo.style.color = listing.verified ? '#008A05' : 'inherit';
+  }
+
+  // Views Counter (Jiji-style impression tracking)
+  const viewsEl = document.getElementById('listing-views-num');
+  let currentViews = listing.views_count || 180;
+  if (viewsEl) viewsEl.textContent = currentViews.toLocaleString();
+
+  const sessionKey = 'viewed_spot_' + listing.id;
+  if (!sessionStorage.getItem(sessionKey)) {
+    sessionStorage.setItem(sessionKey, '1');
+    fetch(`/api/listings/${encodeURIComponent(listing.id)}/view`, { method: 'POST' })
+      .then(r => r.json())
+      .then(d => {
+        if (d && d.success && d.views_count && viewsEl) {
+          viewsEl.textContent = Number(d.views_count).toLocaleString();
+        }
+      })
+      .catch(() => {});
   }
 
   // Telemetry: track listing view

@@ -11,7 +11,7 @@ import uuid
 
 from .config import PORT, BASE_DIR, FLW_PUBLIC_KEY, FLW_SECRET_KEY, FLW_ENCRYPTION_KEY, ADMIN_PASSKEY, POSTHOG_API_KEY, POSTHOG_API_HOST
 from .db import (
-    init_db, query_listings, get_listing_by_id,
+    init_db, query_listings, get_listing_by_id, increment_listing_views,
     insert_submission, get_recent_submission, mark_submission_email_sent,
     get_connection, approve_submission, reject_submission,
     get_all_admin_listings, toggle_listing_active, toggle_listing_promoted, delete_listing,
@@ -21,7 +21,13 @@ from .db import (
 )
 from .flutterwave import verify_flutterwave_transaction
 from .validators import validate_submission_payload, process_uploaded_photos
-from .email_service import dispatch_submission_email
+from .email_service import (
+    dispatch_submission_email,
+    send_account_creation_email,
+    send_submission_rejection_email,
+    send_submission_approved_email,
+    send_vendor_offer_email
+)
 from .rate_limiter import limiter
 
 class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
@@ -364,6 +370,15 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
             if err:
                 return self.send_json(400, {"error": err})
             auth_res, auth_err = authenticate_vendor(body["email"], body["password"])
+            try:
+                send_account_creation_email({
+                    "business_name": body["business_name"],
+                    "rc_number": body.get("rc_number", ""),
+                    "email": body["email"]
+                })
+            except Exception as e:
+                print("[Email Error - Account Creation]:", e)
+
             return self.send_json(201, {
                 "success": True,
                 "message": "Account created successfully!",
@@ -487,6 +502,19 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
                 "featured_until": new_boost,
                 "message": f"Listing boosted as Featured for {days} days!"
             })
+        # Listing View Counter (Jiji-style impression tracking)
+        if path.startswith("/api/listings/") and path.endswith("/view"):
+            parts = path.split("/")
+            # format: /api/listings/<listing_id>/view
+            if len(parts) >= 4:
+                listing_id = parts[3]
+                new_views = increment_listing_views(listing_id)
+                return self.send_json(200, {
+                    "success": True,
+                    "listing_id": listing_id,
+                    "views_count": new_views
+                })
+
         if path.startswith("/api/listings/") and path.endswith("/notify-reviews"):
             parts = path.split("/")
             listing_id = parts[3]
@@ -508,6 +536,18 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
             result = approve_submission(sub_id, make_featured=featured)
             if not result:
                 return self.send_json(404, {"error": "Submission not found"})
+
+            # Dispatch live confirmation email to vendor
+            try:
+                send_submission_approved_email(
+                    result.get("contact_email", ""),
+                    result.get("business_name", ""),
+                    result.get("listing_id", ""),
+                    result.get("plan_tier", "verified")
+                )
+            except Exception as ex:
+                print("[Email Error - Approved Notification]:", ex)
+
             return self.send_json(200, {
                 "success": True,
                 "message": "Business approved and published live to Lagos Updates Directory!",
@@ -520,8 +560,37 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
             sub_id = parts[4]
             body = self.parse_json_body() or {}
             reason = body.get("reason", "Business does not meet Lagos Updates directory verification requirements or CAC registration could not be verified.")
-            reject_submission(sub_id, reason=reason)
+            rej_info = reject_submission(sub_id, reason=reason)
+            if rej_info and rej_info.get("contact_email"):
+                try:
+                    send_submission_rejection_email(
+                        rej_info["contact_email"],
+                        rej_info["business_name"],
+                        rej_info.get("rc_number", ""),
+                        rej_info.get("ref_id", sub_id[:8]),
+                        reason
+                    )
+                except Exception as ex:
+                    print("[Email Error - Rejection Notification]:", ex)
+
             return self.send_json(200, {"success": True, "message": "Submission rejected."})
+
+        if path == "/api/admin/offers/send":
+            body = self.parse_json_body() or {}
+            to_email = body.get("to_email", "").strip()
+            business_name = body.get("business_name", "").strip()
+            offer_title = body.get("offer_title", "").strip()
+            offer_details = body.get("offer_details", "").strip()
+            promo_code = body.get("promo_code", "").strip()
+
+            if not to_email or not offer_title or not offer_details:
+                return self.send_json(400, {"error": "to_email, offer_title, and offer_details are required."})
+
+            sent = send_vendor_offer_email(to_email, business_name, offer_title, offer_details, promo_code)
+            return self.send_json(200, {
+                "success": bool(sent),
+                "message": f"Promotional offer email dispatched to {to_email}."
+            })
 
         # Admin Listing Controls: Pause / Hide, Feature, Delete
         if path.startswith("/api/admin/listings/") and path.endswith("/toggle-active"):

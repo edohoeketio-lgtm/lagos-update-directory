@@ -29,6 +29,11 @@ SMTP_PORT = int(os.environ.get("SMTP_PORT", 587))
 SMTP_USER = os.environ.get("SMTP_USER", "")
 SMTP_PASS = os.environ.get("SMTP_PASS", "")
 
+# Mailgun Transactional Email Provider
+MAILGUN_API_KEY = os.environ.get("MAILGUN_API_KEY", "")
+MAILGUN_DOMAIN = os.environ.get("MAILGUN_DOMAIN", "")
+MAILGUN_FROM_EMAIL = os.environ.get("MAILGUN_FROM_EMAIL", "Lagos Updates Directory <noreply@lagosupdates.com>")
+
 RATE_LIMIT_SUBMISSIONS_PER_HOUR = int(os.environ.get("RATE_LIMIT_SUBMISSIONS_PER_HOUR", 10))
 
 # Editorial Admin Passkey

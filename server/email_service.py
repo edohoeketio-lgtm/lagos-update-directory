@@ -5,11 +5,17 @@ Non-blocking, fail-safe with file/console fallback.
 """
 import smtplib
 import re
+import urllib.request
+import urllib.parse
+import base64
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 import os
-from .config import ADMIN_EMAIL, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, BASE_DIR
+from .config import (
+    ADMIN_EMAIL, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, BASE_DIR,
+    MAILGUN_API_KEY, MAILGUN_DOMAIN, MAILGUN_FROM_EMAIL
+)
 
 LOG_PATH = os.environ.get("LOG_PATH", os.path.join("/tmp", "email_log.txt") if os.environ.get("VERCEL") else os.path.join(BASE_DIR, "data", "email_log.txt"))
 
@@ -162,27 +168,60 @@ Contact vendor on WhatsApp to confirm details or arrange verification.
 """
     return text, html
 
-def dispatch_submission_email(submission_id: str, data: dict, photo_paths: list = None) -> bool:
+def send_email(to_email: str, subject: str, text_body: str, html_body: str, reply_to: str = "") -> bool:
     """
-    Attempts to send email via SMTP to vendors@lagosupdates.com.
-    Logs to file & stdout as fallback. Never raises an uncaught exception.
+    Unified transactional email dispatcher.
+    Priority 1: Mailgun REST API (if MAILGUN_API_KEY and MAILGUN_DOMAIN are present)
+    Priority 2: Standard SMTP (if SMTP_HOST is present)
+    Priority 3: Audit log file & console (fail-safe for development and audit record)
     """
-    text_body, html_body = format_email_body(submission_id, data, photo_paths)
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+    # Always log to audit file for compliance & debugging
     try:
         os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
         with open(LOG_PATH, "a", encoding="utf-8") as f:
-            f.write(text_body + "\n\n")
+            f.write(f"\n--- [{timestamp}] EMAIL TO: {to_email} | SUBJECT: {subject} ---\n{text_body}\n")
     except Exception as e:
         print("[Email Service] Could not write to log file:", e)
 
+    # 1. Try Mailgun REST API
+    if MAILGUN_API_KEY and MAILGUN_DOMAIN:
+        try:
+            url = f"https://api.mailgun.net/v3/{MAILGUN_DOMAIN}/messages"
+            fields = {
+                "from": MAILGUN_FROM_EMAIL,
+                "to": to_email,
+                "subject": subject,
+                "text": text_body,
+                "html": html_body
+            }
+            if reply_to:
+                fields["h:Reply-To"] = reply_to
+
+            encoded_data = urllib.parse.urlencode(fields).encode("utf-8")
+            req = urllib.request.Request(url, data=encoded_data, method="POST")
+
+            auth_string = f"api:{MAILGUN_API_KEY}".encode("utf-8")
+            b64_auth = base64.b64encode(auth_string).decode("utf-8")
+            req.add_header("Authorization", f"Basic {b64_auth}")
+
+            with urllib.request.urlopen(req, timeout=10) as response:
+                if response.status in [200, 201]:
+                    print(f"[Email Service / Mailgun] Sent email to {to_email} with subject '{subject}'")
+                    return True
+        except Exception as e:
+            print(f"[Email Service / Mailgun] Mailgun dispatch error:", e)
+
+    # 2. Try SMTP fallback
     if SMTP_HOST and SMTP_USER and SMTP_PASS:
         try:
             msg = MIMEMultipart("alternative")
-            msg["Subject"] = f"New Listing Application: {data['business_name']} ({data['area']})"
+            msg["Subject"] = subject
             msg["From"] = SMTP_USER
-            msg["To"] = ADMIN_EMAIL
-            msg["Reply-To"] = data['contact_email']
+            msg["To"] = to_email
+            if reply_to:
+                msg["Reply-To"] = reply_to
 
             part1 = MIMEText(text_body, "plain")
             part2 = MIMEText(html_body, "html")
@@ -192,12 +231,320 @@ def dispatch_submission_email(submission_id: str, data: dict, photo_paths: list 
             with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as server:
                 server.starttls()
                 server.login(SMTP_USER, SMTP_PASS)
-                server.sendmail(SMTP_USER, [ADMIN_EMAIL], msg.as_string())
-            print(f"[Email Service] Successfully emailed notification for {submission_id} to {ADMIN_EMAIL}")
+                server.sendmail(SMTP_USER, [to_email], msg.as_string())
+            print(f"[Email Service / SMTP] Successfully emailed {to_email} with subject '{subject}'")
             return True
         except Exception as e:
-            print(f"[Email Service] SMTP dispatch failed (logged to audit file):", e)
-            return False
-    else:
-        print(f"[Email Service] SMTP not configured. Notification recorded to audit log for: {data['business_name']} -> {ADMIN_EMAIL}")
-        return True
+            print(f"[Email Service / SMTP] SMTP dispatch failed:", e)
+
+    # 3. Log fallback confirmation
+    print(f"[Email Service] Dispatch recorded to audit log for: {to_email} (Subject: {subject})")
+    return True
+
+def dispatch_submission_email(submission_id: str, data: dict, photo_paths: list = None) -> bool:
+    """Sends new submission alert to the Lagos Updates editorial team."""
+    text_body, html_body = format_email_body(submission_id, data, photo_paths)
+    subject = f"New Listing Application: {data.get('business_name', '')} ({data.get('area', '')})"
+    return send_email(ADMIN_EMAIL, subject, text_body, html_body, reply_to=data.get('contact_email', ''))
+
+def send_account_creation_email(vendor_data: dict) -> bool:
+    """Welcomes a new vendor upon account creation with their CAC details."""
+    b_name = vendor_data.get("business_name", "Vendor Partner")
+    rc_num = vendor_data.get("rc_number", "")
+    email = vendor_data.get("email", "")
+    if not email:
+        return False
+
+    subject = f"Welcome to Lagos Updates — Vendor Account Created for {b_name}"
+    text_body = f"""
+=============================================================
+WELCOME TO LAGOS UPDATES DIRECTORY
+=============================================================
+Hello {b_name},
+
+Your vendor account has been created on the Lagos Updates Verified Operator Network.
+
+ACCOUNT CREDENTIALS:
+- Registered Business: {b_name}
+- CAC Registration Number: {rc_num or 'Recorded'}
+- Account Email: {email}
+
+NEXT STEPS:
+1. Log in to your Vendor Dashboard at https://lagos-update-directory.vercel.app/vendor.html
+2. Complete your business listing with photos and verify payment.
+3. Track editorial reviews, approval status, and visitor views in real time.
+
+All listings are manually vetted by our Lagos editorial desk.
+If you have questions, reply directly to this email or chat with our desk on WhatsApp.
+
+Lagos Updates Directory Team
+Èkó ò ní bàjẹ́!
+=============================================================
+"""
+
+    html_body = f"""
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f7f7f7; color: #111827; margin: 0; padding: 24px; }}
+  .container {{ max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 14px; border: 1px solid #e5e7eb; overflow: hidden; }}
+  .header {{ background: #000000; color: #ffffff; padding: 28px 24px; text-align: center; }}
+  .header h1 {{ margin: 0; font-size: 20px; text-transform: uppercase; letter-spacing: 1px; color: #FFD400; }}
+  .content {{ padding: 28px 24px; line-height: 1.6; font-size: 15px; color: #374151; }}
+  .box {{ background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 10px; padding: 16px 20px; margin: 20px 0; }}
+  .btn {{ display: inline-block; background: #FFD400; color: #111827 !important; font-weight: 800; text-decoration: none; padding: 13px 26px; border-radius: 9999px; margin-top: 14px; font-size: 14px; }}
+  .footer {{ background: #f9f9f9; padding: 18px 24px; font-size: 12px; color: #9CA3AF; text-align: center; border-top: 1px solid #eee; }}
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Lagos Updates Directory</h1>
+      <p style="margin: 6px 0 0; color: #D1D5DB; font-size: 13px;">Verified Operator Network</p>
+    </div>
+    <div class="content">
+      <h2 style="font-size: 18px; color: #111827; margin-top: 0;">Welcome, {b_name}! 👋</h2>
+      <p>Your vendor account has been created on the <strong>Lagos Updates Directory</strong> platform.</p>
+      
+      <div class="box">
+        <div style="font-size: 11px; text-transform: uppercase; color: #6B7280; font-weight: 700; margin-bottom: 6px;">Account Details</div>
+        <div><strong>Business:</strong> {b_name}</div>
+        <div><strong>CAC Registration:</strong> <span style="color:#0066cc; font-weight:700;">{rc_num or 'On File'}</span></div>
+        <div><strong>Email:</strong> {email}</div>
+      </div>
+
+      <p>You can now manage your listings, submit high-resolution photos, and monitor visitor impressions in real time.</p>
+
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="https://lagos-update-directory.vercel.app/vendor.html" class="btn">Open Vendor Dashboard &rarr;</a>
+      </div>
+    </div>
+    <div class="footer">
+      Lagos Updates Directory &bull; Only verified Lagos businesses.
+    </div>
+  </div>
+</body>
+</html>
+"""
+    return send_email(email, subject, text_body, html_body)
+
+def send_submission_rejection_email(to_email: str, business_name: str, rc_number: str, ref_id: str, reason: str) -> bool:
+    """Notifies a vendor that their application was not approved with editorial explanation."""
+    if not to_email:
+        return False
+
+    short_ref = (ref_id or "LU-REF")[:8].upper()
+    subject = f"Update regarding your listing application: {business_name} [Ref: {short_ref}]"
+
+    text_body = f"""
+=============================================================
+APPLICATION STATUS UPDATE — LAGOS UPDATES DIRECTORY
+=============================================================
+Hello {business_name},
+
+Thank you for applying to list on the Lagos Updates Directory.
+Our editorial review team has reviewed your application (Ref: {short_ref}).
+
+STATUS: Not Approved
+
+EDITORIAL REASON:
+{reason or 'Business credentials or CAC registration could not be verified according to Lagos Updates editorial standards.'}
+
+CAC RC NUMBER ON FILE: {rc_number or 'Not provided'}
+
+WHAT YOU CAN DO:
+1. Review your registered business name and CAC credentials at https://search.cac.gov.ng
+2. Sign in to your dashboard at https://lagos-update-directory.vercel.app/vendor.html to re-apply with updated details.
+
+If you have questions, reply to this email or chat with our verification team on WhatsApp.
+
+Editorial Desk,
+Lagos Updates Directory
+=============================================================
+"""
+
+    html_body = f"""
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f7f7f7; color: #111827; margin: 0; padding: 24px; }}
+  .container {{ max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 14px; border: 1px solid #e5e7eb; overflow: hidden; }}
+  .header {{ background: #991B1B; color: #ffffff; padding: 24px; text-align: center; }}
+  .header h1 {{ margin: 0; font-size: 19px; }}
+  .content {{ padding: 28px 24px; line-height: 1.6; font-size: 15px; color: #374151; }}
+  .reason-box {{ background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 10px; padding: 16px 20px; margin: 20px 0; color: #991B1B; }}
+  .btn {{ display: inline-block; background: #111827; color: #ffffff !important; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 9999px; margin-top: 14px; font-size: 14px; }}
+  .footer {{ background: #f9f9f9; padding: 18px 24px; font-size: 12px; color: #9CA3AF; text-align: center; border-top: 1px solid #eee; }}
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Application Status Update</h1>
+      <p style="margin: 4px 0 0; color: #FEE2E2; font-size: 13px;">Ref: {short_ref} &bull; {business_name}</p>
+    </div>
+    <div class="content">
+      <p>Hello <strong>{business_name}</strong>,</p>
+      <p>Our editorial team has reviewed your directory submission. At this time, we could not approve the application for the following reason:</p>
+
+      <div class="reason-box">
+        <strong>Editorial Note:</strong><br>
+        {reason or 'Business credentials or CAC registration could not be verified according to Lagos Updates editorial standards.'}
+      </div>
+
+      <p><strong>CAC Registration on File:</strong> <code>{rc_number or 'Unverified'}</code></p>
+      <p>You may verify your credentials at <a href="https://search.cac.gov.ng" target="_blank" style="color:#0066cc;">search.cac.gov.ng</a> and re-submit your updated application from your vendor dashboard.</p>
+
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="https://lagos-update-directory.vercel.app/vendor.html" class="btn">Go to Vendor Dashboard &rarr;</a>
+      </div>
+    </div>
+    <div class="footer">
+      Lagos Updates Directory &bull; Editorial Verification Desk
+    </div>
+  </div>
+</body>
+</html>
+"""
+    return send_email(to_email, subject, text_body, html_body)
+
+def send_submission_approved_email(to_email: str, business_name: str, listing_id: str, plan_tier: str) -> bool:
+    """Notifies a vendor that their listing is now live on the directory."""
+    if not to_email:
+        return False
+
+    listing_url = f"https://lagos-update-directory.vercel.app/listing.html?id={listing_id}"
+    subject = f"Congratulations! {business_name} is now LIVE on Lagos Updates"
+
+    text_body = f"""
+=============================================================
+YOUR LISTING IS NOW LIVE — LAGOS UPDATES DIRECTORY
+=============================================================
+Hello {business_name},
+
+Great news! Your listing has been approved by our editorial review team.
+It is now published and visible to thousands of Lagos residents and travelers.
+
+LISTING DETAILS:
+- Name: {business_name}
+- Plan: {(plan_tier or 'verified').upper()}
+- Live Link: {listing_url}
+
+Track your listing's real-time impressions, visitor views, and manage details in your Vendor Dashboard.
+
+Lagos Updates Directory Desk
+=============================================================
+"""
+
+    html_body = f"""
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f7f7f7; color: #111827; margin: 0; padding: 24px; }}
+  .container {{ max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 14px; border: 1px solid #e5e7eb; overflow: hidden; }}
+  .header {{ background: #065F46; color: #ffffff; padding: 28px 24px; text-align: center; }}
+  .header h1 {{ margin: 0; font-size: 20px; }}
+  .content {{ padding: 28px 24px; line-height: 1.6; font-size: 15px; color: #374151; }}
+  .btn {{ display: inline-block; background: #FFD400; color: #111827 !important; font-weight: 800; text-decoration: none; padding: 13px 26px; border-radius: 9999px; margin-top: 14px; font-size: 14px; }}
+  .footer {{ background: #f9f9f9; padding: 18px 24px; font-size: 12px; color: #9CA3AF; text-align: center; border-top: 1px solid #eee; }}
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>✓ Your Spot is Live!</h1>
+      <p style="margin: 6px 0 0; color: #A7F3D0; font-size: 13px;">{business_name} is published on Lagos Updates</p>
+    </div>
+    <div class="content">
+      <h2 style="margin-top: 0; color: #111827;">Congratulations, {business_name}! 🎉</h2>
+      <p>Your listing has passed our editorial verification and is now live on the <strong>Lagos Updates Directory</strong>.</p>
+      
+      <p>Users can now discover your services, browse your photo gallery, and reach out directly to your WhatsApp.</p>
+
+      <div style="text-align: center; margin: 26px 0;">
+        <a href="{listing_url}" class="btn">View Live Listing &rarr;</a>
+      </div>
+    </div>
+    <div class="footer">
+      Lagos Updates Directory &bull; Èkó ò ní bàjẹ́!
+    </div>
+  </div>
+</body>
+</html>
+"""
+    return send_email(to_email, subject, text_body, html_body)
+
+def send_vendor_offer_email(to_email: str, business_name: str, offer_title: str, offer_details: str, promo_code: str = "") -> bool:
+    """Sends exclusive promotional offers or placement opportunities to vendors."""
+    if not to_email:
+        return False
+
+    subject = f"Exclusive Vendor Offer for {business_name}: {offer_title}"
+    promo_text = f"Promo Code: {promo_code}\n" if promo_code else ""
+
+    text_body = f"""
+=============================================================
+SPECIAL VENDOR OFFER — LAGOS UPDATES DIRECTORY
+=============================================================
+Hello {business_name},
+
+We have an exclusive offer for verified operators on Lagos Updates:
+
+{offer_title}
+-------------------------------------------------------------
+{offer_details}
+{promo_text}
+Upgrade or boost your placement directly from your Vendor Dashboard:
+https://lagos-update-directory.vercel.app/vendor.html
+
+Lagos Updates Growth Team
+=============================================================
+"""
+
+    html_body = f"""
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f7f7f7; color: #111827; margin: 0; padding: 24px; }}
+  .container {{ max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 14px; border: 1px solid #e5e7eb; overflow: hidden; }}
+  .header {{ background: #000000; color: #ffffff; padding: 28px 24px; text-align: center; }}
+  .header h1 {{ margin: 0; font-size: 20px; color: #FFD400; }}
+  .content {{ padding: 28px 24px; line-height: 1.6; font-size: 15px; color: #374151; }}
+  .offer-box {{ background: #FFFBEB; border: 1px solid #FCD34D; border-radius: 10px; padding: 18px 20px; margin: 20px 0; }}
+  .btn {{ display: inline-block; background: #FFD400; color: #111827 !important; font-weight: 800; text-decoration: none; padding: 13px 26px; border-radius: 9999px; margin-top: 14px; font-size: 14px; }}
+  .footer {{ background: #f9f9f9; padding: 18px 24px; font-size: 12px; color: #9CA3AF; text-align: center; border-top: 1px solid #eee; }}
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Exclusive Partner Offer</h1>
+      <p style="margin: 6px 0 0; color: #D1D5DB; font-size: 13px;">Special promotion for {business_name}</p>
+    </div>
+    <div class="content">
+      <h2 style="margin-top: 0; color: #111827;">{offer_title}</h2>
+      <div class="offer-box">
+        {offer_details}
+        {f'<div style="margin-top:12px; font-weight:800; color:#B45309;">Use Code: <code style="background:#FEF3C7; padding:2px 8px; border-radius:4px;">{promo_code}</code></div>' if promo_code else ''}
+      </div>
+
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="https://lagos-update-directory.vercel.app/vendor.html" class="btn">Claim in Vendor Dashboard &rarr;</a>
+      </div>
+    </div>
+    <div class="footer">
+      Lagos Updates Directory &bull; Partnership &amp; Growth
+    </div>
+  </div>
+</body>
+</html>
+"""
+    return send_email(to_email, subject, text_body, html_body)

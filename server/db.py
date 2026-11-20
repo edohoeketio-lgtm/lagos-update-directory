@@ -179,6 +179,11 @@ def init_db():
         pass
 
     try:
+        cursor.execute("ALTER TABLE listings ADD COLUMN views_count INTEGER DEFAULT 0;")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
         cursor.execute("ALTER TABLE submissions ADD COLUMN photos TEXT DEFAULT '[]';")
     except sqlite3.OperationalError:
         pass
@@ -246,12 +251,13 @@ def init_db():
                     if not item_photos and item.get('image'):
                         item_photos = [item.get('image')]
                     photos_json = json.dumps(item_photos)
+                    v_count = int(item.get('views_count', 140))
                     cursor.execute("""
                     INSERT OR IGNORE INTO listings (
                         id, name, category, area, description,
                         price_range, rating, verified, promoted,
-                        phone, whatsapp, instagram, image, photos
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        phone, whatsapp, instagram, image, photos, views_count
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, (
                         item.get('id'),
                         item.get('name'),
@@ -266,7 +272,8 @@ def init_db():
                         item.get('whatsapp', ''),
                         item.get('instagram', ''),
                         item.get('image', ''),
-                        photos_json
+                        photos_json,
+                        v_count
                     ))
             conn.commit()
             print(f"Auto-seeded {len(data)} listings from listings.json into SQLite.")
@@ -321,6 +328,8 @@ def query_listings(category=None, area=None, query=None, verified_only=False, fe
         if not photos_val and img_val:
             photos_val = [img_val]
 
+        v_count = int(r["views_count"]) if ("views_count" in r.keys() and r["views_count"] is not None) else 0
+
         result.append({
             "id": r["id"],
             "name": r["name"],
@@ -335,7 +344,8 @@ def query_listings(category=None, area=None, query=None, verified_only=False, fe
             "whatsapp": r["whatsapp"],
             "instagram": r["instagram"],
             "image": img_val,
-            "photos": photos_val
+            "photos": photos_val,
+            "views_count": v_count
         })
     return result
 
@@ -358,6 +368,8 @@ def get_listing_by_id(listing_id: str):
     if not photos_val and img_val:
         photos_val = [img_val]
 
+    v_count = int(row["views_count"]) if ("views_count" in row.keys() and row["views_count"] is not None) else 0
+
     return {
         "id": row["id"],
         "name": row["name"],
@@ -374,8 +386,22 @@ def get_listing_by_id(listing_id: str):
         "whatsapp": row["whatsapp"],
         "instagram": row["instagram"],
         "image": img_val,
-        "photos": photos_val
+        "photos": photos_val,
+        "views_count": v_count
     }
+
+def increment_listing_views(listing_id: str) -> int:
+    """Atomically increments the view count for a listing and returns the new count."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE listings SET views_count = COALESCE(views_count, 0) + 1 WHERE id = ?", (listing_id,))
+    conn.commit()
+    cursor.execute("SELECT views_count FROM listings WHERE id = ?", (listing_id,))
+    row = cursor.fetchone()
+    conn.close()
+    if row and row["views_count"] is not None:
+        return int(row["views_count"])
+    return 0
 
 def insert_submission(cleaned_data: dict, saved_photos: list = None, vendor_id: str = "") -> str:
     """Inserts a new business application into SQLite with photos, CAC RC number, and vendor ID."""
@@ -498,17 +524,29 @@ def approve_submission(submission_id: str, make_featured: bool = False):
     return {
         "success": True,
         "listing_id": listing_id,
-        "promoted": bool(is_promoted)
+        "promoted": bool(is_promoted),
+        "business_name": sub["business_name"],
+        "contact_email": owner_email,
+        "plan_tier": sub["plan_tier"]
     }
 
 def reject_submission(submission_id: str, reason: str = ""):
     """Marks a submission as rejected with editorial explanation."""
     conn = get_connection()
     cursor = conn.cursor()
+    cursor.execute("SELECT * FROM submissions WHERE id = ?", (submission_id,))
+    sub = cursor.fetchone()
     cursor.execute("UPDATE submissions SET status = 'rejected', notes = ? WHERE id = ?", (reason, submission_id))
     conn.commit()
     conn.close()
-    return True
+    if sub:
+        return {
+            "business_name": sub["business_name"],
+            "contact_email": sub["contact_email"],
+            "rc_number": sub["rc_number"] if "rc_number" in sub.keys() else "",
+            "ref_id": submission_id[:8].upper()
+        }
+    return None
 
 def get_all_admin_listings():
     """Returns all listings for editorial administration, including paused/hidden ones."""
@@ -529,7 +567,8 @@ def get_all_admin_listings():
         "is_active": bool(r["is_active"]) if ("is_active" in r.keys() and r["is_active"] is not None) else True,
         "phone": r["phone"],
         "whatsapp": r["whatsapp"],
-        "instagram": r["instagram"]
+        "instagram": r["instagram"],
+        "views_count": int(r["views_count"]) if ("views_count" in r.keys() and r["views_count"] is not None) else 0
     } for r in rows]
 
 def toggle_listing_active(listing_id: str):
@@ -751,6 +790,7 @@ def get_vendor_listings(email: str, business_name: str = ""):
             "phone": r["phone"],
             "whatsapp": r["whatsapp"],
             "instagram": r["instagram"],
+            "views_count": int(r["views_count"]) if ("views_count" in r.keys() and r["views_count"] is not None) else 0,
             "expires_at": r["expires_at"] or (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d'),
             "plan_tier": r["plan_tier"] or "verified",
             "subscription_status": r["subscription_status"] or "active",

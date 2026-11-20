@@ -325,7 +325,7 @@
             <div class="form-group">
               <label class="form-label" for="auth-rc-number">CAC Registration Number (RC / BN Number) <span class="req">*</span></label>
               <input type="text" id="auth-rc-number" class="form-input" placeholder="e.g. RC 1849201 or BN 3829104" required>
-              <div class="form-help">Mandatory. Lagos Updates only lists legally registered Nigerian businesses.</div>
+              <div class="form-help">Mandatory. Lagos Updates partners exclusively with registered Nigerian companies to guarantee visitor trust.</div>
             </div>
             <div class="form-row">
               <div class="form-group">
@@ -381,7 +381,7 @@
           <div class="form-group">
             <label class="form-label" for="form-rc-number">CAC Registration Number (RC / BN Number) <span class="req">*</span></label>
             <input type="text" id="form-rc-number" class="form-input" placeholder="e.g. RC 1849201 or BN 3829104" required>
-            <div class="form-help">Mandatory. Lagos Updates only lists legally registered Nigerian businesses. Verified against CAC portal.</div>
+            <div class="form-help">Mandatory. Lagos Updates partners exclusively with registered Nigerian companies to guarantee visitor trust.</div>
           </div>
 
           <div class="form-row">
@@ -523,13 +523,14 @@
         <!-- SUCCESS VIEW -->
         <div class="modal-body" id="modal-step-success" style="display: none;">
           <div class="modal-success-box">
-            <div class="modal-success-icon">✓</div>
-            <h3>Application Received!</h3>
-            <p>Your business application has been dispatched to <strong>vendors@lagosupdates.com</strong>. Our team will review your credentials and contact you via WhatsApp to finalize verification within 24 hours.</p>
-            <div class="modal-success-ref">Ref: <span id="success-ref-id">LU-XXXX</span></div>
-            <div id="success-payment-status" style="margin: 10px 0 18px; font-weight: 700; font-size: 14px;"></div>
-            <div>
-              <button type="button" class="btn-modal-submit" id="btn-success-done" style="padding: 12px 28px;">Done</button>
+            <div class="modal-success-icon" style="background:#ECFDF5; color:#059669; border-radius:50%; width:64px; height:64px; display:flex; align-items:center; justify-content:center; font-size:28px; margin:0 auto 16px;">✓</div>
+            <h3 style="font-size:20px; font-weight:800; margin-bottom:8px;">You're All Set! Application Received</h3>
+            <p style="font-size:14px; line-height:1.6; color:#4B5563; max-width:440px; margin:0 auto 12px;">Thank you for submitting your business to Lagos Updates! Your application and payment have been confirmed. Our editorial team is doing a quick review of your details, and your listing will be published live shortly.</p>
+            <div class="modal-success-ref" style="margin:12px 0;">Ref: <span id="success-ref-id">LU-XXXX</span></div>
+            <div id="success-payment-status" style="margin: 10px 0 16px; font-weight: 700; font-size: 14px;"></div>
+            <div style="margin-top:20px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+              <a href="vendor.html" class="btn-modal-submit" style="display:inline-flex; align-items:center; justify-content:center; text-decoration:none; padding:12px 24px; font-size:14px;">Open Vendor Dashboard &rarr;</a>
+              <button type="button" class="btn-modal-back" id="btn-success-done" style="padding:12px 20px; font-size:14px; border:1px solid #D1D5DB; background:#fff; border-radius:10px; cursor:pointer;">Close</button>
             </div>
           </div>
         </div>
