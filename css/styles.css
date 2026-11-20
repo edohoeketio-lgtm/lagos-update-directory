@@ -1362,6 +1362,20 @@ input, select, textarea {
   transform: none;
 }
 
+/* Centered Auth Gate Buttons in Listing Modal */
+#auth-gate-register .btn-modal-next,
+#auth-gate-login .btn-modal-next,
+#btn-auth-register,
+#btn-auth-login {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+  float: none !important;
+}
+
 /* Success View */
 .modal-success-box {
   text-align: center;
