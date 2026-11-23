@@ -181,6 +181,22 @@
       color: var(--text-muted);
     }
 
+    .preset-chip {
+      background: #F3F4F6;
+      border: 1px solid #E5E7EB;
+      border-radius: 9999px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #374151;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .preset-chip:hover {
+      background: #E5E7EB;
+      border-color: #D1D5DB;
+    }
+
     /* Mobile Responsive Optimizations (iOS / Android) */
     @media (max-width: 768px) {
       .admin-wrap {
@@ -418,6 +434,38 @@
     </div>
   </div>
 
+  <!-- REJECTION FEEDBACK MODAL -->
+  <div id="rejection-modal" onclick="closeRejectModal()" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:100000;padding:16px;">
+    <div style="background:#FFF;border-radius:18px;max-width:540px;width:100%;padding:26px;box-shadow:0 20px 40px rgba(0,0,0,0.4);border:1px solid #E5E7EB;box-sizing:border-box;" onclick="event.stopPropagation()">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h3 style="margin:0;font-size:18px;font-weight:800;color:#111;">Reject Application with Feedback</h3>
+        <button type="button" onclick="closeRejectModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#6B7280;line-height:1;">&times;</button>
+      </div>
+      <p style="font-size:13px;color:#4B5563;margin:0 0 14px;line-height:1.5;">
+        Provide constructive editorial feedback for <strong id="reject-modal-biz"></strong>. This exact explanation will be emailed to the vendor so they know what to fix.
+      </p>
+
+      <div style="margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#6B7280;margin-bottom:8px;letter-spacing:0.5px;">Quick Presets (Tap to autofill):</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <button type="button" class="preset-chip" onclick="applyPresetReason('Your CAC registration number could not be confirmed on search.cac.gov.ng. Please verify your exact registered business name.')">🏢 CAC Mismatch</button>
+          <button type="button" class="preset-chip" onclick="applyPresetReason('The submitted photos appear to be stock imagery or low-resolution. Please provide high-resolution photos of your Lagos venue.')">📸 Low-Res Photos</button>
+          <button type="button" class="preset-chip" onclick="applyPresetReason('Physical address or operating location in Lagos could not be confirmed. Lagos Updates only lists verified Lagos businesses.')">📍 Location Unverified</button>
+          <button type="button" class="preset-chip" onclick="applyPresetReason('The phone/WhatsApp line provided was unreachable. Please provide an active business line for verification.')">📱 Unreachable Phone</button>
+          <button type="button" class="preset-chip" onclick="applyPresetReason('Instagram profile or online menu was inactive or did not match the business application.')">🌐 Inactive Socials</button>
+        </div>
+      </div>
+
+      <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Rejection Note (Included in Email):</label>
+      <textarea id="reject-modal-reason" rows="4" style="width:100%;border:1px solid #D1D5DB;border-radius:10px;padding:12px;font-size:14px;line-height:1.5;box-sizing:border-box;font-family:inherit;resize:vertical;" placeholder="Write a clear, helpful explanation..."></textarea>
+
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;">
+        <button type="button" onclick="closeRejectModal()" style="padding:10px 18px;border:1px solid #D1D5DB;background:#F9FAFB;border-radius:8px;font-weight:600;cursor:pointer;">Cancel</button>
+        <button type="button" id="reject-modal-submit-btn" onclick="submitRejectModal()" style="padding:10px 20px;border:none;background:#DC2626;color:#FFF;border-radius:8px;font-weight:700;cursor:pointer;">Confirm & Send Email</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let adminKey = sessionStorage.getItem('lagos_admin_key') || '';
 
@@ -610,7 +658,7 @@
               ${s.status === 'pending' ? `
                 <button type="button" class="btn-approve" onclick="handleApprove('${s.id}', false)">✓ Approve & Publish</button>
                 <button type="button" class="btn-approve-featured" onclick="handleApprove('${s.id}', true)">⭐ Approve as Featured Spot</button>
-                <button type="button" class="btn-reject" onclick="handleReject('${s.id}')">✕ Reject</button>
+                <button type="button" class="btn-reject" onclick="openRejectModal('${s.id}', '${escapeHtml(s.business_name).replace(/'/g, "\\'")}')">✕ Reject</button>
               ` : `
                 <span style="font-size: 13px; font-weight: 700; color: #008A05; align-self: center;">✓ Active in Live Directory</span>
               `}
@@ -983,21 +1031,59 @@
       }
     }
 
-    async function handleReject(subId) {
-      const reason = prompt('Please enter a rejection reason for the vendor:', 'Business credentials or CAC registration could not be verified according to Lagos Updates directory standards.');
-      if (reason === null) return; // User pressed Cancel
-      if (typeof window.trackEvent === 'function') {
-        window.trackEvent('admin_submission_rejected', { sub_id: subId });
+    let currentRejectSubId = null;
+
+    function openRejectModal(subId, bizName) {
+      currentRejectSubId = subId;
+      document.getElementById('reject-modal-biz').textContent = bizName || 'this business';
+      document.getElementById('reject-modal-reason').value = 'Your CAC registration number could not be confirmed on search.cac.gov.ng. Please verify your exact registered business name.';
+      document.getElementById('rejection-modal').style.display = 'flex';
+    }
+
+    function closeRejectModal() {
+      document.getElementById('rejection-modal').style.display = 'none';
+      currentRejectSubId = null;
+    }
+
+    function applyPresetReason(text) {
+      document.getElementById('reject-modal-reason').value = text;
+    }
+
+    async function submitRejectModal() {
+      if (!currentRejectSubId) return;
+      const reason = document.getElementById('reject-modal-reason').value.trim();
+      if (!reason) {
+        alert('Please provide a reason so the vendor knows what to fix.');
+        return;
       }
+
+      const btn = document.getElementById('reject-modal-submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Sending Email...';
+
+      if (typeof window.trackEvent === 'function') {
+        window.trackEvent('admin_submission_rejected', { sub_id: currentRejectSubId, reason });
+      }
+
       try {
-        await adminFetch(`/api/admin/submissions/${subId}/reject`, {
+        const res = await adminFetch(`/api/admin/submissions/${currentRejectSubId}/reject`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ reason: reason.trim() })
+          body: JSON.stringify({ reason })
         });
-        loadSubmissions();
+        const data = await res.json();
+        if (data.success) {
+          closeRejectModal();
+          loadSubmissions();
+          loadMetrics();
+        } else {
+          alert('Error: ' + (data.error || 'Failed to reject'));
+        }
       } catch (err) {
-        alert('Connection error');
+        alert('Connection error rejecting submission.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Confirm & Send Email';
       }
     }
 

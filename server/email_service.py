@@ -362,36 +362,42 @@ Lagos Updates Directory Team
     return send_email(email, subject, text_body, html_body)
 
 def send_submission_rejection_email(to_email: str, business_name: str, rc_number: str, ref_id: str, reason: str) -> bool:
-    """Notifies a vendor that their application was not approved with editorial explanation."""
+    """Notifies a vendor that their application needs updates with detailed editorial explanation."""
     if not to_email:
         return False
 
     short_ref = (ref_id or "LU-REF")[:8].upper()
-    subject = f"Update regarding your listing application: {business_name} [Ref: {short_ref}]"
+    subject = f"Application Feedback: {business_name} [Ref: {short_ref}] — Lagos Updates Directory"
+    editorial_note = reason.strip() if reason and reason.strip() else "Business credentials or CAC registration details could not be verified according to Lagos Updates editorial standards."
 
     text_body = f"""
 =============================================================
-APPLICATION STATUS UPDATE — LAGOS UPDATES DIRECTORY
+APPLICATION REVIEW UPDATE — LAGOS UPDATES DIRECTORY
 =============================================================
 Hello {business_name},
 
-Thank you for applying to list on the Lagos Updates Directory.
-Our editorial review team has reviewed your application (Ref: {short_ref}).
+Thank you for applying to list on the Lagos Updates Directory (Application Ref: {short_ref}).
+Our editorial review team has completed an initial review of your submission.
 
-STATUS: Not Approved
+At this time, your application could not be approved due to the following specific reason:
 
-EDITORIAL REASON:
-{reason or 'Business credentials or CAC registration could not be verified according to Lagos Updates editorial standards.'}
+EDITORIAL FEEDBACK:
+-------------------------------------------------------------
+"{editorial_note}"
+-------------------------------------------------------------
 
-CAC RC NUMBER ON FILE: {rc_number or 'Not provided'}
+CAC REGISTRATION ON FILE: {rc_number or 'Not provided'}
 
-WHAT YOU CAN DO:
-1. Review your registered business name and CAC credentials at https://search.cac.gov.ng
-2. Sign in to your dashboard at https://lagos-update-directory.vercel.app/vendor.html to re-apply with updated details.
+HOW TO RESOLVE THIS & GET APPROVED:
+1. Review the feedback provided above by our editorial desk.
+2. If your CAC details need updating, verify your legal entity at https://search.cac.gov.ng
+3. Sign in to your Vendor Dashboard at https://lagos-update-directory.vercel.app/vendor.html to update your submission.
+4. Once updated, your application will be re-queued for immediate review.
 
-If you have questions, reply to this email or chat with our verification team on WhatsApp.
+If you believe this is a misunderstanding, reply directly to this email or chat with our desk on WhatsApp. We are happy to help you get verified!
 
-Editorial Desk,
+Warm regards,
+Editorial Verification Desk
 Lagos Updates Directory
 =============================================================
 """
@@ -401,41 +407,61 @@ Lagos Updates Directory
 <html>
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
   body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f7f7f7; color: #111827; margin: 0; padding: 24px; }}
-  .container {{ max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 14px; border: 1px solid #e5e7eb; overflow: hidden; }}
-  .header {{ background: #991B1B; color: #ffffff; padding: 24px; text-align: center; }}
-  .header h1 {{ margin: 0; font-size: 19px; }}
-  .content {{ padding: 28px 24px; line-height: 1.6; font-size: 15px; color: #374151; }}
-  .reason-box {{ background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 10px; padding: 16px 20px; margin: 20px 0; color: #991B1B; }}
-  .btn {{ display: inline-block; background: #111827; color: #ffffff !important; font-weight: 700; text-decoration: none; padding: 12px 24px; border-radius: 9999px; margin-top: 14px; font-size: 14px; }}
-  .footer {{ background: #f9f9f9; padding: 18px 24px; font-size: 12px; color: #9CA3AF; text-align: center; border-top: 1px solid #eee; }}
+  .container {{ max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 16px; border: 1px solid #e5e7eb; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }}
+  .header {{ background: #0B0F19; color: #ffffff; padding: 28px 24px; text-align: center; border-bottom: 3px solid #FFD400; }}
+  .header h1 {{ margin: 0; font-size: 19px; letter-spacing: 0.5px; text-transform: uppercase; color: #FFD400; }}
+  .content {{ padding: 32px 28px; line-height: 1.6; font-size: 15px; color: #374151; }}
+  .badge {{ display: inline-block; background: #FEF3C7; color: #92400E; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 9999px; text-transform: uppercase; margin-bottom: 16px; }}
+  .reason-box {{ background: #FFFBEB; border-left: 4px solid #F59E0B; border-radius: 8px; padding: 18px 20px; margin: 20px 0; color: #1F2937; }}
+  .reason-title {{ font-size: 12px; font-weight: 800; text-transform: uppercase; color: #B45309; letter-spacing: 0.5px; margin-bottom: 6px; }}
+  .reason-text {{ font-size: 15px; line-height: 1.6; font-style: italic; color: #1F2937; }}
+  .steps-box {{ background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 10px; padding: 18px 20px; margin: 24px 0; }}
+  .step-item {{ margin-bottom: 10px; font-size: 14px; color: #4B5563; }}
+  .step-item strong {{ color: #111827; }}
+  .btn-primary {{ display: inline-block; background: #FFD400; color: #111827 !important; font-weight: 800; text-decoration: none; padding: 13px 26px; border-radius: 9999px; font-size: 14px; margin: 6px; }}
+  .btn-secondary {{ display: inline-block; background: #F3F4F6; color: #374151 !important; font-weight: 700; text-decoration: none; padding: 13px 22px; border-radius: 9999px; font-size: 14px; margin: 6px; }}
+  .footer {{ background: #F9FAFB; padding: 20px 24px; font-size: 12px; color: #9CA3AF; text-align: center; border-top: 1px solid #E5E7EB; line-height: 1.5; }}
 </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>Application Status Update</h1>
-      <p style="margin: 4px 0 0; color: #FEE2E2; font-size: 13px;">Ref: {short_ref} &bull; {business_name}</p>
+      <h1>Lagos Updates Directory</h1>
+      <p style="margin: 6px 0 0; color: #9CA3AF; font-size: 13px;">Editorial Verification Desk &bull; Ref: {short_ref}</p>
     </div>
     <div class="content">
-      <p>Hello <strong>{business_name}</strong>,</p>
-      <p>Our editorial team has reviewed your directory submission. At this time, we could not approve the application for the following reason:</p>
+      <span class="badge">Application Review Update</span>
+      <h2 style="font-size: 20px; color: #111827; margin: 0 0 14px;">Hello {business_name},</h2>
+      <p>Thank you for your interest in joining the <strong>Lagos Updates Directory</strong>. Our editorial team has completed a review of your business listing submission.</p>
+      
+      <p>At this time, we were unable to approve the application due to the following feedback:</p>
 
       <div class="reason-box">
-        <strong>Editorial Note:</strong><br>
-        {reason or 'Business credentials or CAC registration could not be verified according to Lagos Updates editorial standards.'}
+        <div class="reason-title">Feedback from Editorial Review Desk:</div>
+        <div class="reason-text">"{editorial_note}"</div>
       </div>
 
-      <p><strong>CAC Registration on File:</strong> <code>{rc_number or 'Unverified'}</code></p>
-      <p>You may verify your credentials at <a href="https://search.cac.gov.ng" target="_blank" style="color:#0066cc;">search.cac.gov.ng</a> and re-submit your updated application from your vendor dashboard.</p>
-
-      <div style="text-align: center; margin: 24px 0;">
-        <a href="https://lagos-update-directory.vercel.app/vendor.html" class="btn">Go to Vendor Dashboard &rarr;</a>
+      <div class="steps-box">
+        <div style="font-size: 13px; font-weight: 700; color: #111827; text-transform: uppercase; margin-bottom: 8px;">How to resolve this & get listed:</div>
+        <div class="step-item">1. <strong>Update Details:</strong> Review and correct the items highlighted in the editorial note above.</div>
+        <div class="step-item">2. <strong>CAC Verification:</strong> Ensure your registered business name matches official records at <a href="https://search.cac.gov.ng" target="_blank" style="color: #0066cc;">search.cac.gov.ng</a>. (Current RC on file: <code>{rc_number or 'Unspecified'}</code>).</div>
+        <div class="step-item">3. <strong>Re-Submit:</strong> Log into your Vendor Dashboard to update your profile and photos.</div>
       </div>
+
+      <div style="text-align: center; margin: 26px 0;">
+        <a href="https://lagos-update-directory.vercel.app/vendor.html" class="btn-primary">Update in Vendor Dashboard &rarr;</a>
+      </div>
+
+      <p style="font-size: 13px; color: #6B7280; text-align: center;">
+        Have questions or think we made an error? Reply directly to this email or chat with our desk on WhatsApp.
+      </p>
     </div>
     <div class="footer">
-      Lagos Updates Directory &bull; Editorial Verification Desk
+      Lagos Updates Directory &bull; Curating Lagos's most trusted businesses.<br>
+      Notice sent to {to_email} &middot; Ref: {short_ref}
     </div>
   </div>
 </body>
