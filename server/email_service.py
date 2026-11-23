@@ -189,11 +189,12 @@ def send_email(to_email: str, subject: str, text_body: str, html_body: str, repl
         print("[Email Service] Could not write to log file:", e)
 
     # 1. Try Resend REST API (Primary)
-    if RESEND_API_KEY:
+    if RESEND_API_KEY and os.environ.get("LAGOS_TEST_MODE") != "1":
         try:
             url = "https://api.resend.com/emails"
             headers = {
                 "Authorization": f"Bearer {RESEND_API_KEY}",
+                "User-Agent": "LagosUpdatesDirectory/1.0 (https://lagosupdates.com)",
                 "Content-Type": "application/json"
             }
             payload = {

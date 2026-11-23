@@ -32,7 +32,8 @@ class TestEmailService(unittest.TestCase):
         mock_urlopen.return_value = mock_response
 
         with patch("server.email_service.RESEND_API_KEY", "re_test_fake_api_key"), \
-             patch("server.email_service.RESEND_FROM_EMAIL", "Lagos Updates <onboarding@resend.dev>"):
+             patch("server.email_service.RESEND_FROM_EMAIL", "Lagos Updates <onboarding@resend.dev>"), \
+             patch.dict(os.environ, {"LAGOS_TEST_MODE": "0"}):
             success = send_email(
                 to_email="test@example.com",
                 subject="Welcome to Lagos Updates",
@@ -52,7 +53,8 @@ class TestEmailService(unittest.TestCase):
 
         with patch("server.email_service.RESEND_API_KEY", ""), \
              patch("server.email_service.MAILGUN_API_KEY", "key-test-fake-mailgun-key"), \
-             patch("server.email_service.MAILGUN_DOMAIN", "mg.lagosupdates.com"):
+             patch("server.email_service.MAILGUN_DOMAIN", "mg.lagosupdates.com"), \
+             patch.dict(os.environ, {"LAGOS_TEST_MODE": "0"}):
             success = send_email(
                 to_email="test@example.com",
                 subject="Welcome to Lagos Updates",
