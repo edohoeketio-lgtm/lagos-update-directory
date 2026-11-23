@@ -213,6 +213,21 @@ def send_email(to_email: str, subject: str, text_body: str, html_body: str, repl
                 if response.status in [200, 201]:
                     print(f"[Email Service / Resend] Sent email to {to_email} with subject '{subject}'")
                     return True
+        except urllib.error.HTTPError as he:
+            err_msg = he.read().decode('utf-8', errors='ignore')
+            print(f"[Email Service / Resend] HTTP {he.code}: {err_msg}")
+            # If custom domain is awaiting DNS verification, fallback to onboarding sandbox address
+            if ("domain" in err_msg.lower() or "verify" in err_msg.lower() or "not verified" in err_msg.lower()) and "onboarding@resend.dev" not in RESEND_FROM_EMAIL:
+                try:
+                    payload["from"] = "Lagos Updates Directory <onboarding@resend.dev>"
+                    data_bytes = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+                    retry_req = urllib.request.Request(url, data=data_bytes, headers=headers, method="POST")
+                    with urllib.request.urlopen(retry_req, timeout=10) as retry_resp:
+                        if retry_resp.status in [200, 201]:
+                            print(f"[Email Service / Resend Sandbox Fallback] Sent email to {to_email}")
+                            return True
+                except Exception as ex2:
+                    print(f"[Email Service / Resend Sandbox Fallback Error]:", ex2)
         except Exception as e:
             print(f"[Email Service / Resend] Resend dispatch error:", e)
 

@@ -31,7 +31,7 @@ SMTP_PASS = os.environ.get("SMTP_PASS", "")
 
 # Resend Transactional Email Provider (Primary)
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
-RESEND_FROM_EMAIL = os.environ.get("RESEND_FROM_EMAIL", "Lagos Updates Directory <onboarding@resend.dev>")
+RESEND_FROM_EMAIL = os.environ.get("RESEND_FROM_EMAIL", "Lagos Updates Directory <mail@lagosupdates.com>")
 
 # Mailgun Transactional Email Provider (Optional legacy fallback)
 MAILGUN_API_KEY = os.environ.get("MAILGUN_API_KEY", "")
