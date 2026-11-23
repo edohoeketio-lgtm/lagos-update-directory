@@ -717,6 +717,11 @@
       }
       localStorage.removeItem('lagos_vendor_token');
       localStorage.removeItem('lagos_vendor_user');
+      localStorage.removeItem('lagos_session_token');
+      localStorage.removeItem('lagos_auth_user');
+      if (window.LagosAuth && typeof window.LagosAuth.signOut === 'function') {
+        window.LagosAuth.signOut();
+      }
       activeToken = '';
       currentVendor = null;
       currentSubmissions = [];

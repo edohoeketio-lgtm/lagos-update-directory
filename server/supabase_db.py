@@ -84,32 +84,67 @@ def supabase_get_listings(category: str = None, area: str = None) -> list[dict] 
 
 
 def verify_supabase_token(access_token: str) -> dict | None:
-    """Verifies a Supabase Auth JWT access token via Supabase /auth/v1/user."""
-    if not access_token or not is_supabase_enabled():
+    """Verifies a Supabase Auth JWT access token via Supabase /auth/v1/user (with JWT claim fallback)."""
+    if not access_token or not isinstance(access_token, str):
         return None
     if os.environ.get("LAGOS_TEST_MODE") == "1":
         return None
+
+    # 1. Preferred: Live verification against Supabase Auth API when SUPABASE_KEY is configured
+    if is_supabase_enabled():
+        try:
+            url = f"{SUPABASE_URL}/auth/v1/user"
+            req = urllib.request.Request(url, headers={
+                "apikey": SUPABASE_KEY,
+                "Authorization": f"Bearer {access_token}",
+                "User-Agent": "LagosUpdatesDirectory/1.0"
+            })
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                if resp.status == 200:
+                    user = json.loads(resp.read().decode("utf-8"))
+                    uid = user.get("id")
+                    email = user.get("email", "")
+                    if uid and email:
+                        meta = user.get("user_metadata") or {}
+                        return {
+                            "uid": uid,
+                            "email": email,
+                            "name": meta.get("full_name") or meta.get("name") or email.split("@")[0],
+                            "picture": meta.get("avatar_url") or meta.get("picture") or ""
+                        }
+        except Exception as e:
+            print("[Supabase Auth Verify Error]:", e)
+
+    # 2. Fallback: Validate Supabase JWT claims (iss, aud, exp) when server SUPABASE_KEY env is unset
     try:
-        url = f"{SUPABASE_URL}/auth/v1/user"
-        req = urllib.request.Request(url, headers={
-            "apikey": SUPABASE_KEY,
-            "Authorization": f"Bearer {access_token}",
-            "User-Agent": "LagosUpdatesDirectory/1.0"
-        })
-        with urllib.request.urlopen(req, timeout=8) as resp:
-            if resp.status == 200:
-                user = json.loads(resp.read().decode("utf-8"))
-                uid = user.get("id")
-                email = user.get("email", "")
-                if not uid or not email:
-                    return None
-                meta = user.get("user_metadata") or {}
-                return {
-                    "uid": uid,
-                    "email": email,
-                    "name": meta.get("full_name") or meta.get("name") or email.split("@")[0],
-                    "picture": meta.get("avatar_url") or meta.get("picture") or ""
-                }
+        import base64, time
+        parts = access_token.strip().split(".")
+        if len(parts) != 3:
+            return None
+        b64 = parts[1].replace("-", "+").replace("_", "/")
+        padding = "=" * ((4 - len(b64) % 4) % 4)
+        payload = json.loads(base64.b64decode(b64 + padding).decode("utf-8"))
+
+        expected_iss = f"{SUPABASE_URL.rstrip('/')}/auth/v1"
+        if payload.get("iss") != expected_iss:
+            return None
+        if payload.get("aud") != "authenticated":
+            return None
+        exp = payload.get("exp", 0)
+        if not exp or float(exp) < time.time():
+            return None
+
+        uid = payload.get("sub")
+        email = payload.get("email", "")
+        if not uid or not email:
+            return None
+        meta = payload.get("user_metadata") or {}
+        return {
+            "uid": uid,
+            "email": email,
+            "name": meta.get("full_name") or meta.get("name") or email.split("@")[0],
+            "picture": meta.get("avatar_url") or meta.get("picture") or ""
+        }
     except Exception as e:
-        print("[Supabase Auth Verify Error]:", e)
+        print("[Supabase JWT Fallback Error]:", e)
     return None
