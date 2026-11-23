@@ -428,6 +428,18 @@
 
     <!-- 1. AUTHENTICATION VIEW -->
     <div id="auth-section" class="auth-card">
+      <div style="margin-bottom:20px;">
+        <button type="button" onclick="window.LagosAuth && window.LagosAuth.signInWithGoogle()" style="display:flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:13px 20px; border:1px solid #D1D5DB; border-radius:9999px; background:#FFFFFF; font-weight:700; font-size:0.95rem; cursor:pointer; color:#111827; box-shadow:0 1px 3px rgba(0,0,0,0.05); transition:background 0.15s ease;">
+          <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/></svg>
+          Continue with Google
+        </button>
+        <div style="display:flex; align-items:center; gap:12px; margin-top:18px; color:#9CA3AF; font-size:0.75rem; font-weight:700; letter-spacing:0.5px;">
+          <span style="flex:1; height:1px; background:#E5E7EB;"></span>
+          <span>OR WITH EMAIL</span>
+          <span style="flex:1; height:1px; background:#E5E7EB;"></span>
+        </div>
+      </div>
+
       <div class="auth-tabs">
         <div id="tab-login" class="auth-tab active" onclick="switchAuthTab('login')">Sign In</div>
         <div id="tab-register" class="auth-tab" onclick="switchAuthTab('register')">Create Account</div>
@@ -445,23 +457,6 @@
         </div>
         <button type="submit" class="btn-vendor-primary">Sign In to Dashboard</button>
         <p id="login-error" style="color:#DC2626;font-size:0.85rem;margin-top:12px;display:none;"></p>
-
-        <!-- One-Click Demo Vendor Login Helper -->
-        <div style="margin-top:20px; padding:14px; background:#F9FAFB; border:1px solid #E5E7EB; border-radius:12px; font-size:0.83rem;">
-          <div style="font-weight:700; color:#374151; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
-            <span>⚡</span> One-Click Demo Vendor Login:
-          </div>
-          <div style="display:flex; flex-direction:column; gap:8px;">
-            <button type="button" onclick="fillDemo('demo@circa.ng', 'password123')" style="padding:10px 14px; background:#FFF; border:1px solid #D1D5DB; border-radius:8px; cursor:pointer; text-align:left; font-size:0.84rem; font-weight:600; color:#111; display:flex; justify-content:space-between; align-items:center; min-height:48px; transition:all 0.15s ease;">
-              <span>🍷 <b>Circa Lagos</b> <small style="display:block; color:#6B7280; font-size:0.75rem;">demo@circa.ng</small></span>
-              <span style="font-size:0.78rem; font-weight:700; color:#111; background:#F3F4F6; padding:6px 10px; border-radius:6px; white-space:nowrap;">Auto-sign in →</span>
-            </button>
-            <button type="button" onclick="fillDemo('vendor@lagosupdates.com', 'password123')" style="padding:10px 14px; background:#FFF; border:1px solid #D1D5DB; border-radius:8px; cursor:pointer; text-align:left; font-size:0.84rem; font-weight:600; color:#111; display:flex; justify-content:space-between; align-items:center; min-height:48px; transition:all 0.15s ease;">
-              <span>🏨 <b>The Wheatbaker</b> <small style="display:block; color:#6B7280; font-size:0.75rem;">vendor@lagosupdates.com</small></span>
-              <span style="font-size:0.78rem; font-weight:700; color:#111; background:#F3F4F6; padding:6px 10px; border-radius:6px; white-space:nowrap;">Auto-sign in →</span>
-            </button>
-          </div>
-        </div>
       </form>
 
       <!-- Register Form -->
@@ -610,16 +605,10 @@
   </div>
 
   <script>
-    let activeToken = localStorage.getItem('lagos_vendor_token') || '';
+    let activeToken = localStorage.getItem('lagos_vendor_token') || localStorage.getItem('lagos_session_token') || '';
     let currentVendor = null;
     let currentListings = [];
     let currentSubmissions = [];
-
-    function fillDemo(email, pass) {
-      document.getElementById('login-email').value = email;
-      document.getElementById('login-password').value = pass;
-      document.getElementById('form-login').dispatchEvent(new Event('submit', { cancelable: true }));
-    }
 
     function switchAuthTab(tab) {
       document.getElementById('tab-login').classList.toggle('active', tab === 'login');
