@@ -5,6 +5,7 @@ Non-blocking, fail-safe with file/console fallback.
 """
 import smtplib
 import re
+import json
 import urllib.request
 import urllib.parse
 import base64
@@ -14,6 +15,7 @@ from datetime import datetime
 import os
 from .config import (
     ADMIN_EMAIL, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, BASE_DIR,
+    RESEND_API_KEY, RESEND_FROM_EMAIL,
     MAILGUN_API_KEY, MAILGUN_DOMAIN, MAILGUN_FROM_EMAIL
 )
 
@@ -171,9 +173,10 @@ Contact vendor on WhatsApp to confirm details or arrange verification.
 def send_email(to_email: str, subject: str, text_body: str, html_body: str, reply_to: str = "") -> bool:
     """
     Unified transactional email dispatcher.
-    Priority 1: Mailgun REST API (if MAILGUN_API_KEY and MAILGUN_DOMAIN are present)
-    Priority 2: Standard SMTP (if SMTP_HOST is present)
-    Priority 3: Audit log file & console (fail-safe for development and audit record)
+    Priority 1: Resend REST API (Preferred modern cloud email delivery)
+    Priority 2: Mailgun REST API (Legacy secondary fallback)
+    Priority 3: Standard SMTP (Direct server fallback)
+    Priority 4: Audit log file & console (fail-safe for development and audit record)
     """
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -185,7 +188,34 @@ def send_email(to_email: str, subject: str, text_body: str, html_body: str, repl
     except Exception as e:
         print("[Email Service] Could not write to log file:", e)
 
-    # 1. Try Mailgun REST API
+    # 1. Try Resend REST API (Primary)
+    if RESEND_API_KEY:
+        try:
+            url = "https://api.resend.com/emails"
+            headers = {
+                "Authorization": f"Bearer {RESEND_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "from": RESEND_FROM_EMAIL,
+                "to": [to_email],
+                "subject": subject,
+                "html": html_body,
+                "text": text_body
+            }
+            if reply_to:
+                payload["reply_to"] = reply_to
+
+            data_bytes = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+            req = urllib.request.Request(url, data=data_bytes, headers=headers, method="POST")
+            with urllib.request.urlopen(req, timeout=10) as response:
+                if response.status in [200, 201]:
+                    print(f"[Email Service / Resend] Sent email to {to_email} with subject '{subject}'")
+                    return True
+        except Exception as e:
+            print(f"[Email Service / Resend] Resend dispatch error:", e)
+
+    # 2. Try Mailgun REST API (Secondary)
     if MAILGUN_API_KEY and MAILGUN_DOMAIN:
         try:
             url = f"https://api.mailgun.net/v3/{MAILGUN_DOMAIN}/messages"

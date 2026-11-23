@@ -29,7 +29,11 @@ SMTP_PORT = int(os.environ.get("SMTP_PORT", 587))
 SMTP_USER = os.environ.get("SMTP_USER", "")
 SMTP_PASS = os.environ.get("SMTP_PASS", "")
 
-# Mailgun Transactional Email Provider
+# Resend Transactional Email Provider (Primary)
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+RESEND_FROM_EMAIL = os.environ.get("RESEND_FROM_EMAIL", "Lagos Updates Directory <onboarding@resend.dev>")
+
+# Mailgun Transactional Email Provider (Optional legacy fallback)
 MAILGUN_API_KEY = os.environ.get("MAILGUN_API_KEY", "")
 MAILGUN_DOMAIN = os.environ.get("MAILGUN_DOMAIN", "")
 MAILGUN_FROM_EMAIL = os.environ.get("MAILGUN_FROM_EMAIL", "Lagos Updates Directory <noreply@lagosupdates.com>")
@@ -46,7 +50,7 @@ RATE_LIMIT_SUBMISSIONS_PER_HOUR = int(os.environ.get("RATE_LIMIT_SUBMISSIONS_PER
 ADMIN_PASSKEY = os.environ.get("ADMIN_PASSKEY", "lagosupdates2026")
 
 # Flutterwave Payment Gateway Configuration
-FLW_PUBLIC_KEY = os.environ.get("FLW_PUBLIC_KEY", "FLWPUBK_TEST-907fc3ea1f385d5b0a3bd1c0d725a40d-X")
+FLW_PUBLIC_KEY = os.environ.get("FLW_PUBLIC_KEY") or "FLWPUBK_TEST-907fc3ea1f385d5b0a3bd1c0d725a40d-X"
 FLW_SECRET_KEY = os.environ.get("FLW_SECRET_KEY", "")
 FLW_SECRET_HASH = os.environ.get("FLW_SECRET_HASH", "")
 FLW_ENCRYPTION_KEY = os.environ.get("FLW_ENCRYPTION_KEY", "")

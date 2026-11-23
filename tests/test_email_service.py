@@ -24,6 +24,25 @@ class TestEmailService(unittest.TestCase):
         self.assertIn("RC 123456", html)
 
     @patch("urllib.request.urlopen")
+    def test_resend_dispatch_success(self, mock_urlopen):
+        # Mock successful Resend HTTP 200 response
+        mock_response = MagicMock()
+        mock_response.status = 200
+        mock_response.__enter__.return_value = mock_response
+        mock_urlopen.return_value = mock_response
+
+        with patch("server.email_service.RESEND_API_KEY", "re_test_fake_api_key"), \
+             patch("server.email_service.RESEND_FROM_EMAIL", "Lagos Updates <onboarding@resend.dev>"):
+            success = send_email(
+                to_email="test@example.com",
+                subject="Welcome to Lagos Updates",
+                text_body="Hello from Lagos Updates",
+                html_body="<p>Hello from Lagos Updates</p>"
+            )
+            self.assertTrue(success)
+            self.assertTrue(mock_urlopen.called)
+
+    @patch("urllib.request.urlopen")
     def test_mailgun_dispatch_success(self, mock_urlopen):
         # Mock successful Mailgun HTTP 200 response
         mock_response = MagicMock()
@@ -31,7 +50,8 @@ class TestEmailService(unittest.TestCase):
         mock_response.__enter__.return_value = mock_response
         mock_urlopen.return_value = mock_response
 
-        with patch("server.email_service.MAILGUN_API_KEY", "key-test-fake-mailgun-key"), \
+        with patch("server.email_service.RESEND_API_KEY", ""), \
+             patch("server.email_service.MAILGUN_API_KEY", "key-test-fake-mailgun-key"), \
              patch("server.email_service.MAILGUN_DOMAIN", "mg.lagosupdates.com"):
             success = send_email(
                 to_email="test@example.com",
@@ -43,7 +63,8 @@ class TestEmailService(unittest.TestCase):
             self.assertTrue(mock_urlopen.called)
 
     def test_fallback_logging_when_no_credentials(self):
-        with patch("server.email_service.MAILGUN_API_KEY", ""), \
+        with patch("server.email_service.RESEND_API_KEY", ""), \
+             patch("server.email_service.MAILGUN_API_KEY", ""), \
              patch("server.email_service.SMTP_HOST", ""):
             success = send_email(
                 to_email="audit@example.com",
