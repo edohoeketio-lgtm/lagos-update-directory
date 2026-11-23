@@ -417,7 +417,7 @@ Lagos Updates Directory
   .badge {{ display: inline-block; background: #FEF3C7; color: #92400E; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 9999px; text-transform: uppercase; margin-bottom: 16px; }}
   .reason-box {{ background: #FFFBEB; border-left: 4px solid #F59E0B; border-radius: 8px; padding: 18px 20px; margin: 20px 0; color: #1F2937; }}
   .reason-title {{ font-size: 12px; font-weight: 800; text-transform: uppercase; color: #B45309; letter-spacing: 0.5px; margin-bottom: 6px; }}
-  .reason-text {{ font-size: 15px; line-height: 1.6; font-style: italic; color: #1F2937; }}
+  .reason-text {{ font-size: 15px; line-height: 1.6; color: #1F2937; white-space: pre-line; }}
   .steps-box {{ background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 10px; padding: 18px 20px; margin: 24px 0; }}
   .step-item {{ margin-bottom: 10px; font-size: 14px; color: #4B5563; }}
   .step-item strong {{ color: #111827; }}
