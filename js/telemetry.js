@@ -4,23 +4,13 @@
  * questionnaire conversion funnels, and vendor actions.
  */
 
-// PostHog Configuration (Paste your free Project API Key from posthog.com)
+// PostHog Configuration (Configured securely via /api/telemetry/config)
 const savedKey = typeof localStorage !== 'undefined' ? localStorage.getItem('lagos_posthog_key') : null;
 const savedHost = typeof localStorage !== 'undefined' ? localStorage.getItem('lagos_posthog_host') : null;
-const urlParams = typeof window !== 'undefined' && window.location ? new URLSearchParams(window.location.search) : null;
-const urlKey = urlParams ? urlParams.get('posthog_key') : null;
-const urlHost = urlParams ? urlParams.get('posthog_host') : null;
-
-if (urlKey && typeof localStorage !== 'undefined') {
-  localStorage.setItem('lagos_posthog_key', urlKey);
-}
-if (urlHost && typeof localStorage !== 'undefined') {
-  localStorage.setItem('lagos_posthog_host', urlHost);
-}
 
 window.POSTHOG_CONFIG = {
-  apiKey: window.POSTHOG_API_KEY || urlKey || savedKey || '',
-  apiHost: window.POSTHOG_API_HOST || urlHost || savedHost || 'https://us.i.posthog.com', // US cloud default (use https://eu.i.posthog.com if EU region selected)
+  apiKey: window.POSTHOG_API_KEY || savedKey || '',
+  apiHost: window.POSTHOG_API_HOST || savedHost || 'https://us.i.posthog.com',
   enabled: true
 };
 
@@ -101,7 +91,7 @@ if (window.posthog && window.POSTHOG_CONFIG.apiKey && window.POSTHOG_CONFIG.apiK
     capture_pageview: true,
     capture_pageleave: true,
     session_recording: {
-      maskAllInputs: false,
+      maskAllInputs: true,
       maskInputOptions: { password: true }
     }
   });

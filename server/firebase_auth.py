@@ -22,10 +22,10 @@ def verify_firebase_token(id_token: str) -> dict | None:
     if not id_token:
         return None
 
-    # Handle test / mock tokens for local testing and CI
-    if id_token.startswith("mock_token_") or os.environ.get("LAGOS_TEST_MODE") == "1":
+    # Handle test / mock tokens strictly in test mode for local testing and CI
+    if os.environ.get("LAGOS_TEST_MODE") == "1" and id_token.startswith("mock_token_"):
         parts = id_token.split(":")
-        uid = parts[0].replace("mock_token_", "") if id_token.startswith("mock_token_") else id_token
+        uid = parts[0].replace("mock_token_", "")
         email = parts[1] if len(parts) > 1 else f"{uid}@example.com"
         name = parts[2] if len(parts) > 2 else "Test User"
         return {

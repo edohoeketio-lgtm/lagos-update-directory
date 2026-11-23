@@ -8,6 +8,7 @@ import os
 import uuid
 import hashlib
 import secrets
+import hmac
 from datetime import datetime, timedelta
 from .config import DB_PATH, DATA_JSON_PATH
 
@@ -694,11 +695,11 @@ def register_vendor(email: str, password: str, business_name: str, whatsapp: str
         conn.close()
         return None, "Email is already registered. Please log in."
 
-    # Associate any existing listings with same business email or name
+    # Associate any existing listings with matching owner email
     cursor.execute("""
-    UPDATE listings SET owner_email = ?, rc_number = CASE WHEN rc_number = '' THEN ? ELSE rc_number END
-    WHERE LOWER(owner_email) = ? OR LOWER(name) = ?
-    """, (email.lower().strip(), clean_rc, email.lower().strip(), business_name.lower().strip()))
+    UPDATE listings SET owner_email = ?, rc_number = CASE WHEN (rc_number IS NULL OR rc_number = '') THEN ? ELSE rc_number END
+    WHERE LOWER(owner_email) = ?
+    """, (email.lower().strip(), clean_rc, email.lower().strip()))
     conn.commit()
 
     conn.close()
@@ -716,7 +717,7 @@ def authenticate_vendor(email: str, password: str):
         return None, "No account found with this email."
 
     calc_hash, _ = hash_password(password, vendor["salt"])
-    if calc_hash != vendor["password_hash"]:
+    if not hmac.compare_digest(calc_hash, vendor["password_hash"]):
         conn.close()
         return None, "Incorrect password or passcode."
 

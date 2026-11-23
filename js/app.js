@@ -1638,35 +1638,52 @@ async function initListing() {
   const waDigits = listing.whatsapp ? listing.whatsapp.replace(/[^0-9]/g, '') : '';
 
   if (phoneBtn) {
-    phoneBtn.href = `tel:${listing.phone || listing.whatsapp}`;
-    phoneBtn.addEventListener('click', () => {
-      if (typeof window.trackEvent === 'function') {
-        window.trackEvent('lead_phone_call_clicked', { listing_id: listing.id, name: listing.name });
-      }
-    });
+    const rawPhone = listing.phone || listing.whatsapp;
+    if (rawPhone) {
+      phoneBtn.href = `tel:${rawPhone}`;
+      phoneBtn.style.display = 'inline-flex';
+      phoneBtn.addEventListener('click', () => {
+        if (typeof window.trackEvent === 'function') {
+          window.trackEvent('lead_phone_call_clicked', { listing_id: listing.id, name: listing.name });
+        }
+      });
+    } else {
+      phoneBtn.style.display = 'none';
+    }
   }
 
   if (waBtn) {
-    waBtn.href = `https://wa.me/${waDigits}?text=${waPreFill}`;
-    waBtn.addEventListener('click', () => {
-      if (typeof window.trackEvent === 'function') {
-        window.trackEvent('lead_whatsapp_chat_clicked', {
-          listing_id: listing.id,
-          name: listing.name,
-          category: listing.category,
-          area: listing.area
-        });
-      }
-    });
+    if (waDigits) {
+      waBtn.href = `https://wa.me/${waDigits}?text=${waPreFill}`;
+      waBtn.style.display = 'inline-flex';
+      waBtn.addEventListener('click', () => {
+        if (typeof window.trackEvent === 'function') {
+          window.trackEvent('lead_whatsapp_chat_clicked', {
+            listing_id: listing.id,
+            name: listing.name,
+            category: listing.category,
+            area: listing.area
+          });
+        }
+      });
+    } else {
+      waBtn.style.display = 'none';
+    }
   }
 
   if (igBtn) {
-    igBtn.href = `https://instagram.com/${(listing.instagram || '').replace('@', '')}`;
-    igBtn.addEventListener('click', () => {
-      if (typeof window.trackEvent === 'function') {
-        window.trackEvent('lead_instagram_clicked', { listing_id: listing.id, name: listing.name });
-      }
-    });
+    const igHandle = (listing.instagram || '').replace('@', '').trim();
+    if (igHandle) {
+      igBtn.href = `https://instagram.com/${igHandle}`;
+      igBtn.style.display = 'inline-flex';
+      igBtn.addEventListener('click', () => {
+        if (typeof window.trackEvent === 'function') {
+          window.trackEvent('lead_instagram_clicked', { listing_id: listing.id, name: listing.name });
+        }
+      });
+    } else {
+      igBtn.style.display = 'none';
+    }
   }
 
   // Viral Sharing (WhatsApp + Copy Link)

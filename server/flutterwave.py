@@ -6,6 +6,7 @@ import urllib.request
 import urllib.error
 import json
 import ssl
+import os
 from .config import FLW_SECRET_KEY, FLW_PUBLIC_KEY, FLW_BASE_URL
 
 def verify_flutterwave_transaction(transaction_id: str, expected_amount: float = None, expected_currency: str = "NGN"):
@@ -17,9 +18,9 @@ def verify_flutterwave_transaction(transaction_id: str, expected_amount: float =
     if not transaction_id:
         return False, {"error": "Missing transaction_id"}
 
-    # Handle local / test mocks if running in sandboxed environment or test mock ID passed
+    # Handle local / test mocks strictly if test mode is enabled
     tx_str = str(transaction_id)
-    if tx_str.startswith("mock_") or tx_str.startswith("test_flw_"):
+    if os.environ.get("LAGOS_TEST_MODE") == "1" and (tx_str.startswith("mock_") or tx_str.startswith("test_flw_")):
         return True, {
             "status": "successful",
             "amount": float(expected_amount) if expected_amount else 35000.0,

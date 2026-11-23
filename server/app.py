@@ -10,7 +10,7 @@ import os
 import uuid
 
 from .config import (
-    PORT, BASE_DIR, FLW_PUBLIC_KEY, FLW_SECRET_KEY, FLW_ENCRYPTION_KEY, ADMIN_PASSKEY, POSTHOG_API_KEY, POSTHOG_API_HOST,
+    PORT, BASE_DIR, FLW_PUBLIC_KEY, FLW_SECRET_KEY, FLW_SECRET_HASH, FLW_ENCRYPTION_KEY, ADMIN_PASSKEY, POSTHOG_API_KEY, POSTHOG_API_HOST,
     FIREBASE_PROJECT_ID, FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_APP_ID
 )
 from .db import (
@@ -49,7 +49,7 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Vendor-Token")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Vendor-Token, X-Admin-Key")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "SAMEORIGIN")
@@ -150,7 +150,7 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
         self.send_response(204)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Vendor-Token")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Vendor-Token, X-Admin-Key")
         self.end_headers()
 
     def do_GET(self):
@@ -338,8 +338,23 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
             })
 
         # -----------------------------
-        # Static Frontend Route Mapping
+        # Static Frontend Route Mapping & Security Boundary
         # -----------------------------
+        clean_path = path.lower().strip()
+        blocked_prefixes = (
+            "/.env", "/.git", "/server", "/tests", "/.tmp", "/.github", "/.vercel", "/.gemini", "/.agents"
+        )
+        blocked_suffixes = (
+            ".env", ".db", ".py", ".sqlite", ".sqlite3", ".sh", ".bash", ".log"
+        )
+        is_blocked = (
+            any(clean_path.startswith(p) for p in blocked_prefixes) or
+            any(clean_path.endswith(s) for s in blocked_suffixes) or
+            (clean_path.startswith("/data") and clean_path != "/data/listings.json")
+        )
+        if is_blocked:
+            return self.send_json(403, {"error": "Access denied: Request for protected server resource."})
+
         query_str = ('?' + parsed.query) if parsed.query else ''
         if path.rstrip('/') in ['/listing', '/directory', '/admin', '/vendor']:
             self.path = path.rstrip('/') + '.html' + query_str
@@ -442,6 +457,9 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
             })
 
         if path == "/api/payments/webhook":
+            verif_hash = self.headers.get("verif-hash", "")
+            if FLW_SECRET_HASH and (not verif_hash or verif_hash != FLW_SECRET_HASH):
+                return self.send_json(401, {"error": "Unauthorized: Invalid Flutterwave webhook signature."})
             body = self.parse_json_body() or {}
             event = body.get("event")
             data = body.get("data", {})

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Editorial Admin — Lagos Updates Directory</title>
   <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" href="img/logo.png">
   <link rel="stylesheet" href="css/styles.css">
   <script src="js/telemetry.js"></script>
   <style>
@@ -434,6 +435,25 @@
       if (modal) modal.style.display = 'none';
     }
 
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function sanitizeUrl(url) {
+      if (!url) return '';
+      const trimmed = String(url).trim();
+      if (trimmed.startsWith('https://') || trimmed.startsWith('http://')) {
+        return escapeHtml(trimmed);
+      }
+      return '';
+    }
+
     function checkAdminAuth() {
       const gate = document.getElementById('admin-gate-modal');
       if (!adminKey) {
@@ -549,34 +569,35 @@
           }
 
           let driveHtml = '';
-          if (s.drive_link) {
-            driveHtml = `<div style="font-size: 13px;"><a href="${s.drive_link}" target="_blank" style="color: #0066cc; font-weight: 600;">📁 View Cloud Drive Folder &rarr;</a></div>`;
+          const safeDriveUrl = sanitizeUrl(s.drive_link);
+          if (safeDriveUrl) {
+            driveHtml = `<div style="font-size: 13px;"><a href="${safeDriveUrl}" target="_blank" rel="noopener noreferrer" style="color: #0066cc; font-weight: 600;">📁 View Cloud Drive Folder &rarr;</a></div>`;
           }
 
           card.innerHTML = `
             <div class="sub-top">
               <div>
-                <div class="sub-title">${s.business_name}</div>
+                <div class="sub-title">${escapeHtml(s.business_name)}</div>
                 <div style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
-                  Ref: ${s.id.slice(0, 8).toUpperCase()} &middot; Applied on ${s.created_at}
+                  Ref: ${escapeHtml(s.id.slice(0, 8).toUpperCase())} &middot; Applied on ${escapeHtml(s.created_at)}
                 </div>
               </div>
               <div>
-                <span class="sub-badge ${s.plan_tier}">${s.plan_tier === 'featured' ? '★ Featured Tier' : (s.plan_tier === 'featured_1w' ? '🚀 1-Week Boost' : 'Standard Verified')}</span>
-                <span class="sub-badge ${s.status}" style="margin-left: 6px;">Status: ${s.status.toUpperCase()}</span>
+                <span class="sub-badge ${escapeHtml(s.plan_tier)}">${s.plan_tier === 'featured' ? '★ Featured Tier' : (s.plan_tier === 'featured_1w' ? '🚀 1-Week Boost' : 'Standard Verified')}</span>
+                <span class="sub-badge ${escapeHtml(s.status)}" style="margin-left: 6px;">Status: ${escapeHtml(s.status.toUpperCase())}</span>
                 ${s.payment_status === 'paid' ? `<span class="sub-badge" style="background:#E8F5E9; color:#008A05; font-weight:800; margin-left:6px;">💳 PAID (Flutterwave)</span>` : `<span class="sub-badge" style="background:#FFFBEB; color:#B45309; font-weight:600; margin-left:6px;">⏳ UNPAID</span>`}
               </div>
             </div>
 
             <div class="sub-grid">
-              <div class="sub-grid-item"><span>Category</span><strong>${s.category.toUpperCase()}</strong></div>
-              <div class="sub-grid-item"><span>Neighborhood</span><strong>${s.area}, Lagos</strong></div>
-              <div class="sub-grid-item"><span>CAC Reg No</span><strong style="color:#0066cc;">${s.rc_number || 'UNVERIFIED'}</strong><a href="https://search.cac.gov.ng" target="_blank" rel="noopener" style="font-size:11px; text-decoration:underline; color:#0066cc; display:block; margin-top:2px;">Verify on CAC Portal &rarr;</a></div>
-              <div class="sub-grid-item"><span>Contact Person</span><strong>${s.contact_name} (${s.contact_email})</strong></div>
+              <div class="sub-grid-item"><span>Category</span><strong>${escapeHtml(s.category.toUpperCase())}</strong></div>
+              <div class="sub-grid-item"><span>Neighborhood</span><strong>${escapeHtml(s.area)}, Lagos</strong></div>
+              <div class="sub-grid-item"><span>CAC Reg No</span><strong style="color:#0066cc;">${escapeHtml(s.rc_number || 'UNVERIFIED')}</strong><a href="https://search.cac.gov.ng" target="_blank" rel="noopener" style="font-size:11px; text-decoration:underline; color:#0066cc; display:block; margin-top:2px;">Verify on CAC Portal &rarr;</a></div>
+              <div class="sub-grid-item"><span>Contact Person</span><strong>${escapeHtml(s.contact_name)} (${escapeHtml(s.contact_email)})</strong></div>
             </div>
 
             <div class="sub-desc">
-              <strong>Description:</strong> ${s.description}
+              <strong>Description:</strong> ${escapeHtml(s.description)}
             </div>
 
             ${photosHtml}
@@ -766,13 +787,13 @@
             diffHtml = `
               <div style="background:#F9FAFB; padding:12px; border-radius:8px; margin:10px 0; font-size:13px;">
                 <strong>Requested Updates:</strong><br>
-                ${payload.name ? `• <b>Name:</b> ${payload.name}<br>` : ''}
-                ${payload.area ? `• <b>Area:</b> ${payload.area}<br>` : ''}
-                ${payload.price_range ? `• <b>Price:</b> ${payload.price_range}<br>` : ''}
-                ${payload.phone ? `• <b>Phone:</b> ${payload.phone}<br>` : ''}
-                ${payload.whatsapp ? `• <b>WhatsApp:</b> ${payload.whatsapp}<br>` : ''}
-                ${payload.instagram ? `• <b>Instagram:</b> @${payload.instagram}<br>` : ''}
-                ${payload.description ? `• <b>Description:</b> ${payload.description}<br>` : ''}
+                ${payload.name ? `• <b>Name:</b> ${escapeHtml(payload.name)}<br>` : ''}
+                ${payload.area ? `• <b>Area:</b> ${escapeHtml(payload.area)}<br>` : ''}
+                ${payload.price_range ? `• <b>Price:</b> ${escapeHtml(payload.price_range)}<br>` : ''}
+                ${payload.phone ? `• <b>Phone:</b> ${escapeHtml(payload.phone)}<br>` : ''}
+                ${payload.whatsapp ? `• <b>WhatsApp:</b> ${escapeHtml(payload.whatsapp)}<br>` : ''}
+                ${payload.instagram ? `• <b>Instagram:</b> @${escapeHtml(payload.instagram)}<br>` : ''}
+                ${payload.description ? `• <b>Description:</b> ${escapeHtml(payload.description)}<br>` : ''}
               </div>
             `;
           } else if (r.request_type === 'delete') {

@@ -80,11 +80,19 @@ def is_valid_email(email: str) -> bool:
     return bool(re.match(pattern, email.strip()))
 
 def is_valid_rc_number(rc_number: str) -> bool:
-    """Validates CAC registration number (RC/BN)."""
+    """
+    Validates CAC registration number (RC/BN/IT/LLP/LP).
+    Accepts:
+      - 'RC 1849201', 'RC-1849201', 'RC1849201'
+      - 'BN 9931023', 'BN-9931023', 'BN9931023'
+      - 'IT 12345', 'LLP 12345'
+      - Bare 5-8 digit registration numbers (e.g. '1849201')
+    """
     if not rc_number or not isinstance(rc_number, str):
         return False
     rc = rc_number.strip().upper()
-    return len(rc) >= 3
+    pattern = r'^(RC|BN|IT|LLP|LP)?[\s\-_]?[0-9]{5,8}$'
+    return bool(re.match(pattern, rc))
 
 def process_uploaded_photos(photos_raw: list, submission_id: str) -> list[str]:
     """

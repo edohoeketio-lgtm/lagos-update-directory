@@ -48,6 +48,7 @@ ADMIN_PASSKEY = os.environ.get("ADMIN_PASSKEY", "lagosupdates2026")
 # Flutterwave Payment Gateway Configuration
 FLW_PUBLIC_KEY = os.environ.get("FLW_PUBLIC_KEY", "FLWPUBK_TEST-907fc3ea1f385d5b0a3bd1c0d725a40d-X")
 FLW_SECRET_KEY = os.environ.get("FLW_SECRET_KEY", "")
+FLW_SECRET_HASH = os.environ.get("FLW_SECRET_HASH", "")
 FLW_ENCRYPTION_KEY = os.environ.get("FLW_ENCRYPTION_KEY", "")
 FLW_BASE_URL = os.environ.get("FLW_BASE_URL", "https://api.flutterwave.com/v3")
 
