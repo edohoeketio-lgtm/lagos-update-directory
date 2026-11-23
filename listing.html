@@ -867,6 +867,29 @@
     }
     .review-moderation-note strong { color: #111827; }
 
+    /* Desktop Modal styling for screens > 768px */
+    @media (min-width: 769px) {
+      .review-coming-soon.review-drawer {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 100% !important;
+        max-width: 540px !important;
+        max-height: 90vh !important;
+        overflow-y: auto !important;
+        z-index: 9999 !important;
+        border-radius: 20px !important;
+        padding: 32px !important;
+        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35) !important;
+        background: #FFFFFF !important;
+        border: 1px solid #E5E7EB !important;
+      }
+      .drawer-handle-bar {
+        display: none !important;
+      }
+    }
+
     /* Mobile Drawer specifics for screens <= 768px */
     @media (max-width: 768px) {
       .review-coming-soon.review-drawer {
