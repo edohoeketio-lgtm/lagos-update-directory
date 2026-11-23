@@ -56,3 +56,23 @@ python3 -m unittest discover tests
 ## License
 
 All rights reserved © Lagos Updates Directory.
+
+---
+
+## 📌 Current Roadmap & Action Items (What We Need Done)
+
+### 1. Mailgun Transactional Email Integration
+- [ ] Add the following environment variables to your deployment environment (Vercel & `.env`):
+  - `MAILGUN_API_KEY`: Mailgun Private API Key (`key-...`).
+  - `MAILGUN_DOMAIN`: Configured sending domain (e.g. `sandbox<id>.mailgun.org` or custom domain).
+  - `MAILGUN_FROM_EMAIL`: From address (e.g. `Lagos Updates <support@yourdomain.com>`).
+- [ ] Verify recipient authorization in Mailgun dashboard if testing on a sandbox domain.
+
+### 2. Unified User Accounts & Progressive Profiling
+- [ ] Migrate separate vendor registration into a single unified User account system (Google Sign-In + Email/Password via Firebase Auth).
+- [ ] **Progressive Profiling**: Standard users sign up with minimal friction (Name & Email); business info (CAC RC/BN number, business name, WhatsApp) is only requested when submitting a listing.
+
+### 3. Public Reviews & Admin Moderation
+- [ ] Add public reviews component on listing detail pages (`listing.html`) allowing authenticated users to submit star ratings and feedback.
+- [ ] Add a **Reviews Moderation** tab to `/admin.html` so reviews stay pending until approved by the editorial team.
+

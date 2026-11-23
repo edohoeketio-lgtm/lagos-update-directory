@@ -1171,6 +1171,23 @@ function initBusinessModal() {
         if (payStatusEl) {
           payStatusEl.innerHTML = `<span style="color:#008A05; font-weight:700;">✓ Payment Confirmed (${flwTxRef || 'Success'}) &mdash; Submitted to Lagos Updates editorial review</span>`;
         }
+
+        // Auto-redirect to home after 5 seconds
+        let countdown = 5;
+        const countdownEl = document.getElementById('success-redirect-countdown');
+        if (countdownEl) {
+          countdownEl.textContent = countdown;
+          const countdownTimer = setInterval(() => {
+            countdown--;
+            countdownEl.textContent = countdown;
+            if (countdown <= 0) {
+              clearInterval(countdownTimer);
+              window.location.href = '/';
+            }
+          }, 1000);
+        } else {
+          setTimeout(() => { window.location.href = '/'; }, 5000);
+        }
       }
 
       function handlePaymentIncomplete(msg) {
