@@ -638,7 +638,9 @@
           return;
         }
         localStorage.setItem('lagos_vendor_token', data.token);
+        localStorage.setItem('lagos_session_token', data.token);
         localStorage.setItem('lagos_vendor_user', JSON.stringify(data.vendor || {}));
+        localStorage.setItem('lagos_auth_user', JSON.stringify(data.vendor || {}));
         activeToken = data.token;
         currentVendor = data.vendor;
 
@@ -686,7 +688,9 @@
           return;
         }
         localStorage.setItem('lagos_vendor_token', data.token);
+        localStorage.setItem('lagos_session_token', data.token);
         localStorage.setItem('lagos_vendor_user', JSON.stringify(data.vendor || {}));
+        localStorage.setItem('lagos_auth_user', JSON.stringify(data.vendor || {}));
         activeToken = data.token;
         currentVendor = data.vendor;
 
@@ -731,28 +735,51 @@
     }
 
     async function loadDashboard() {
-      if (!activeToken) return;
+      activeToken = localStorage.getItem('lagos_session_token') || localStorage.getItem('lagos_vendor_token') || (window.LagosAuth && window.LagosAuth.getToken()) || '';
+      if (!activeToken) {
+        document.getElementById('auth-section').style.display = 'block';
+        document.getElementById('dashboard-section').style.display = 'none';
+        document.getElementById('nav-user-bar').style.display = 'none';
+        return;
+      }
+
+      // Check cached user for immediate optimistic UI rendering
+      let cachedUser = null;
+      try {
+        cachedUser = JSON.parse(localStorage.getItem('lagos_vendor_user') || localStorage.getItem('lagos_auth_user') || 'null');
+      } catch (_) {}
+      if (cachedUser) {
+        currentVendor = cachedUser.vendor_profile || cachedUser;
+        renderDashboard();
+      }
 
       try {
         const res = await fetch('/api/vendor/listings', {
           headers: { 'Authorization': `Bearer ${activeToken}` }
         });
-        if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
           vendorLogout();
           return;
         }
-        const data = await res.json();
-        currentListings = data.listings || [];
+        if (res.ok) {
+          const data = await res.json();
+          currentListings = data.listings || [];
+        }
 
         // Fetch vendor info
-        const meRes = await fetch('/api/vendor/me', {
-          headers: { 'Authorization': `Bearer ${activeToken}` }
-        });
-        if (meRes.ok) {
-          const meData = await meRes.json();
-          currentVendor = meData.vendor;
-          localStorage.setItem('lagos_vendor_user', JSON.stringify(currentVendor || {}));
-        }
+        try {
+          const meRes = await fetch('/api/vendor/me', {
+            headers: { 'Authorization': `Bearer ${activeToken}` }
+          });
+          if (meRes.ok) {
+            const meData = await meRes.json();
+            if (meData.vendor) {
+              currentVendor = meData.vendor;
+              localStorage.setItem('lagos_vendor_user', JSON.stringify(currentVendor));
+              localStorage.setItem('lagos_auth_user', JSON.stringify(currentVendor));
+            }
+          }
+        } catch (_) {}
 
         // Fetch vendor applications/submissions
         try {
@@ -768,6 +795,9 @@
         renderDashboard();
       } catch (err) {
         console.error('Failed to load dashboard:', err);
+        if (cachedUser) {
+          renderDashboard();
+        }
       }
     }
 
@@ -777,8 +807,11 @@
       document.getElementById('nav-user-bar').style.display = 'flex';
       
       if (currentVendor) {
-        document.getElementById('nav-user-email').textContent = currentVendor.business_name || currentVendor.email;
-        document.getElementById('dash-greeting').textContent = `Welcome, ${currentVendor.business_name || 'Vendor'}`;
+        const v = currentVendor;
+        const name = v.business_name || v.display_name || (v.email ? v.email.split('@')[0] : 'Vendor');
+        const email = v.email || '';
+        document.getElementById('nav-user-email').textContent = name + (email && email !== name ? ` (${email})` : '');
+        document.getElementById('dash-greeting').textContent = `Welcome, ${name}`;
       }
 
       const listEl = document.getElementById('listings-list');
@@ -1333,6 +1366,17 @@
       loadDashboard().then(() => checkUrlPaymentIntent());
     } else {
       checkUrlPaymentIntent();
+    }
+
+    // Real-time auth listener for OAuth callback completion
+    if (window.LagosAuth && typeof window.LagosAuth.onAuthStateChanged === 'function') {
+      window.LagosAuth.onAuthStateChanged(user => {
+        const token = localStorage.getItem('lagos_session_token') || localStorage.getItem('lagos_vendor_token') || (window.LagosAuth && window.LagosAuth.getToken()) || '';
+        if (token && token !== activeToken) {
+          activeToken = token;
+          loadDashboard();
+        }
+      });
     }
   </script>
 </body>

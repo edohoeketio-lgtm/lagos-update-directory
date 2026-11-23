@@ -8,13 +8,15 @@
 
   const STORAGE_KEY_SESSION = 'lagos_session_token';
   const STORAGE_KEY_USER = 'lagos_auth_user';
+  const STORAGE_KEY_VENDOR_TOKEN = 'lagos_vendor_token';
+  const STORAGE_KEY_VENDOR_USER = 'lagos_vendor_user';
   const SUPABASE_AUTH_URL = 'https://wpfyfommvhopjvwdzjsf.supabase.co/auth/v1';
 
   let authListeners = [];
   let currentUser = null;
 
   try {
-    const cached = localStorage.getItem(STORAGE_KEY_USER);
+    const cached = localStorage.getItem(STORAGE_KEY_USER) || localStorage.getItem(STORAGE_KEY_VENDOR_USER);
     if (cached) currentUser = JSON.parse(cached);
   } catch (e) {
     currentUser = null;
@@ -43,8 +45,11 @@
               display_name: (payload.user_metadata && payload.user_metadata.full_name) || payload.email.split('@')[0],
               has_vendor_profile: false
             };
+            // Persist across both unified and legacy vendor keys
             localStorage.setItem(STORAGE_KEY_SESSION, accessToken);
             localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(u));
+            localStorage.setItem(STORAGE_KEY_VENDOR_TOKEN, accessToken);
+            localStorage.setItem(STORAGE_KEY_VENDOR_USER, JSON.stringify(u));
             currentUser = u;
             notifyAuthListeners();
             if (window.history && window.history.replaceState) {
@@ -58,8 +63,14 @@
     }
   }
 
-  async function signInWithGoogle() {
-    const redirectUrl = encodeURIComponent(window.location.origin + '/vendor.html');
+  async function signInWithGoogle(customRedirect) {
+    let targetUrl = customRedirect;
+    if (!targetUrl) {
+      targetUrl = window.location.href.split('#')[0];
+    } else if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+      targetUrl = window.location.origin + (targetUrl.startsWith('/') ? targetUrl : '/' + targetUrl);
+    }
+    const redirectUrl = encodeURIComponent(targetUrl);
     window.location.href = `${SUPABASE_AUTH_URL}/authorize?provider=google&redirect_to=${redirectUrl}`;
   }
 
@@ -72,6 +83,7 @@
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Login failed.');
     localStorage.setItem(STORAGE_KEY_SESSION, data.token);
+    localStorage.setItem(STORAGE_KEY_VENDOR_TOKEN, data.token);
     const u = {
       id: data.vendor.id,
       email: data.vendor.email,
@@ -80,6 +92,7 @@
       vendor_profile: data.vendor
     };
     localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(u));
+    localStorage.setItem(STORAGE_KEY_VENDOR_USER, JSON.stringify(u));
     currentUser = u;
     notifyAuthListeners();
     return { success: true, session_token: data.token, user: u };
@@ -99,6 +112,7 @@
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Registration failed.');
     localStorage.setItem(STORAGE_KEY_SESSION, data.token);
+    localStorage.setItem(STORAGE_KEY_VENDOR_TOKEN, data.token);
     const u = {
       id: data.vendor.id,
       email: data.vendor.email,
@@ -107,6 +121,7 @@
       vendor_profile: data.vendor
     };
     localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(u));
+    localStorage.setItem(STORAGE_KEY_VENDOR_USER, JSON.stringify(u));
     currentUser = u;
     notifyAuthListeners();
     return { success: true, session_token: data.token, user: u };
@@ -132,6 +147,7 @@
       currentUser.has_vendor_profile = true;
       currentUser.vendor_profile = data.vendor_profile;
       localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(currentUser));
+      localStorage.setItem(STORAGE_KEY_VENDOR_USER, JSON.stringify(currentUser));
       notifyAuthListeners();
     }
     return data;
@@ -140,15 +156,23 @@
   function signOut() {
     localStorage.removeItem(STORAGE_KEY_SESSION);
     localStorage.removeItem(STORAGE_KEY_USER);
+    localStorage.removeItem(STORAGE_KEY_VENDOR_TOKEN);
+    localStorage.removeItem(STORAGE_KEY_VENDOR_USER);
     currentUser = null;
     notifyAuthListeners();
   }
 
   function getToken() {
-    return localStorage.getItem(STORAGE_KEY_SESSION) || '';
+    return localStorage.getItem(STORAGE_KEY_SESSION) || localStorage.getItem(STORAGE_KEY_VENDOR_TOKEN) || '';
   }
 
   function getUser() {
+    if (!currentUser) {
+      try {
+        const cached = localStorage.getItem(STORAGE_KEY_USER) || localStorage.getItem(STORAGE_KEY_VENDOR_USER);
+        if (cached) currentUser = JSON.parse(cached);
+      } catch (_) {}
+    }
     return currentUser;
   }
 

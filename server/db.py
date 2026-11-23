@@ -863,11 +863,21 @@ def upsert_user(firebase_uid: str, email: str, display_name: str = "", photo_url
             WHERE id = ?
         """, (email, display_name or row["display_name"], photo_url or row["photo_url"], user_id))
     else:
-        user_id = str(uuid.uuid4())
-        cursor.execute("""
-            INSERT INTO users (id, firebase_uid, email, display_name, photo_url)
-            VALUES (?, ?, ?, ?, ?)
-        """, (user_id, firebase_uid, email, display_name or "", photo_url or ""))
+        cursor.execute("SELECT * FROM users WHERE LOWER(email) = ?", (email.lower().strip(),))
+        row = cursor.fetchone()
+        if row:
+            user_id = row["id"]
+            cursor.execute("""
+                UPDATE users
+                SET firebase_uid = ?, display_name = ?, photo_url = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (firebase_uid, display_name or row["display_name"], photo_url or row["photo_url"], user_id))
+        else:
+            user_id = str(uuid.uuid4())
+            cursor.execute("""
+                INSERT INTO users (id, firebase_uid, email, display_name, photo_url)
+                VALUES (?, ?, ?, ?, ?)
+            """, (user_id, firebase_uid, email, display_name or "", photo_url or ""))
     conn.commit()
 
     cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))

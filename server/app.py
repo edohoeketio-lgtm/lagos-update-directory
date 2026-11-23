@@ -51,7 +51,7 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Vendor-Token, X-Admin-Key")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Vendor-Token, X-Session-Token, X-Admin-Key")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "SAMEORIGIN")
@@ -59,17 +59,25 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def get_authenticated_vendor(self):
-        """Extracts Bearer token, X-Vendor-Token header, or vendor_token query parameter."""
+        """Extracts Bearer token, X-Vendor-Token header, X-Session-Token header, or query parameters."""
         auth = self.headers.get("Authorization", "")
         token = ""
         if auth.startswith("Bearer "):
             token = auth.replace("Bearer ", "").strip()
         elif self.headers.get("X-Vendor-Token"):
             token = self.headers.get("X-Vendor-Token", "").strip()
+        elif self.headers.get("X-Session-Token"):
+            token = self.headers.get("X-Session-Token", "").strip()
         else:
             parsed = self.get_request_path()
             params = urllib.parse.parse_qs(parsed.query)
-            token = params.get("vendor_token", [""])[0].strip()
+            token = (
+                params.get("vendor_token", [""])[0]
+                or params.get("session_token", [""])[0]
+                or params.get("token", [""])[0]
+                or params.get("access_token", [""])[0]
+            ).strip()
+        token = token.strip('"').strip("'")
         if not token:
             return None
         vendor = get_vendor_by_session(token)
@@ -81,14 +89,30 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
         if sb:
             user = upsert_user(firebase_uid=sb["uid"], email=sb["email"], display_name=sb.get("name", ""), photo_url=sb.get("picture", ""))
             vp = get_vendor_profile_by_user_id(user["id"]) or {}
+
+            # Link with existing vendor record if previously created with this email
+            v_row = None
+            try:
+                conn = get_connection()
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM vendors WHERE LOWER(email) = ?", (user["email"].lower().strip(),))
+                v_row = cursor.fetchone()
+                conn.close()
+            except Exception:
+                pass
+
+            b_name = vp.get("business_name") or (v_row["business_name"] if v_row and v_row["business_name"] else "") or user.get("display_name") or user["email"].split("@")[0]
+            wa = vp.get("whatsapp") or (v_row["whatsapp"] if v_row and v_row["whatsapp"] else "") or ""
+            rc = vp.get("cac_number") or (v_row["rc_number"] if v_row and "rc_number" in v_row.keys() and v_row["rc_number"] else "") or ""
+
             return {
                 "id": user["id"],
                 "user_id": user["id"],
                 "email": user["email"],
-                "business_name": vp.get("business_name") or user.get("display_name") or user["email"].split("@")[0],
-                "whatsapp": vp.get("whatsapp", ""),
-                "rc_number": vp.get("cac_number", ""),
-                "cac_number": vp.get("cac_number", "")
+                "business_name": b_name,
+                "whatsapp": wa,
+                "rc_number": rc,
+                "cac_number": rc
             }
 
         # Check unified user session
@@ -121,17 +145,25 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
         return None
 
     def get_authenticated_user(self):
-        """Extracts Bearer token or X-Vendor-Token header and returns user or vendor."""
+        """Extracts Bearer token, X-Vendor-Token header, X-Session-Token header, or query parameters."""
         auth = self.headers.get("Authorization", "")
         token = ""
         if auth.startswith("Bearer "):
             token = auth.replace("Bearer ", "").strip()
         elif self.headers.get("X-Vendor-Token"):
             token = self.headers.get("X-Vendor-Token", "").strip()
+        elif self.headers.get("X-Session-Token"):
+            token = self.headers.get("X-Session-Token", "").strip()
         else:
             parsed = self.get_request_path()
             params = urllib.parse.parse_qs(parsed.query)
-            token = params.get("vendor_token", [""])[0].strip()
+            token = (
+                params.get("vendor_token", [""])[0]
+                or params.get("session_token", [""])[0]
+                or params.get("token", [""])[0]
+                or params.get("access_token", [""])[0]
+            ).strip()
+        token = token.strip('"').strip("'")
         if not token:
             return None
 
@@ -190,7 +222,7 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
         self.send_response(204)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Vendor-Token, X-Admin-Key")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Vendor-Token, X-Session-Token, X-Admin-Key")
         self.end_headers()
 
     def do_GET(self):

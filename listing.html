@@ -1380,7 +1380,7 @@
       }
       if (!user) {
         try {
-          user = JSON.parse(localStorage.getItem('lagos_auth_user') || 'null');
+          user = JSON.parse(localStorage.getItem('lagos_auth_user') || localStorage.getItem('lagos_vendor_user') || 'null');
         } catch (_) {}
       }
 
@@ -1443,7 +1443,7 @@
         return;
       }
 
-      let token = (window.LagosAuth && window.LagosAuth.getToken()) || localStorage.getItem('lagos_session_token') || '';
+      let token = (window.LagosAuth && window.LagosAuth.getToken()) || localStorage.getItem('lagos_session_token') || localStorage.getItem('lagos_vendor_token') || '';
       if (!token) {
         statusEl.style.display = 'block';
         statusEl.style.background = '#FEE2E2';
