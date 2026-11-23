@@ -1,6 +1,6 @@
 /* =========================================
    Lagos Updates Directory — auth.js
-   Unified Firebase Authentication & Progressive Profiling
+   Native Supabase & Vendor Authentication
    ========================================= */
 
 (function () {
@@ -8,8 +8,8 @@
 
   const STORAGE_KEY_SESSION = 'lagos_session_token';
   const STORAGE_KEY_USER = 'lagos_auth_user';
+  const SUPABASE_AUTH_URL = 'https://wpfyfommvhopjvwdzjsf.supabase.co/auth/v1';
 
-  let authConfig = null;
   let authListeners = [];
   let currentUser = null;
 
@@ -26,86 +26,44 @@
     });
   }
 
-  async function initFirebase() {
-    try {
-      const res = await fetch('/api/auth/config');
-      if (res.ok) {
-        const data = await res.json();
-        authConfig = data;
-        if (typeof firebase !== 'undefined' && authConfig.apiKey && !firebase.apps.length) {
-          firebase.initializeApp({
-            apiKey: authConfig.apiKey,
-            authDomain: authConfig.authDomain,
-            projectId: authConfig.projectId,
-            appId: authConfig.appId
-          });
+  // Handle Supabase OAuth callback token in URL hash (e.g. #access_token=...&type=recovery)
+  function handleOAuthCallback() {
+    const hash = window.location.hash;
+    if (hash && hash.includes('access_token=')) {
+      const params = new URLSearchParams(hash.substring(1));
+      const accessToken = params.get('access_token');
+      if (accessToken) {
+        try {
+          const payloadB64 = accessToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+          const payload = JSON.parse(atob(payloadB64));
+          if (payload && payload.email) {
+            const u = {
+              id: payload.sub || '',
+              email: payload.email,
+              display_name: (payload.user_metadata && payload.user_metadata.full_name) || payload.email.split('@')[0],
+              has_vendor_profile: false
+            };
+            localStorage.setItem(STORAGE_KEY_SESSION, accessToken);
+            localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(u));
+            currentUser = u;
+            notifyAuthListeners();
+            if (window.history && window.history.replaceState) {
+              window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
+          }
+        } catch (err) {
+          console.warn('[Supabase OAuth Callback Error]:', err);
         }
       }
-    } catch (e) {
-      console.warn('[Auth Config Fetch Failed]:', e);
-    }
-  }
-
-  async function verifyWithBackend(idToken, extraData = {}) {
-    try {
-      const res = await fetch('/api/auth/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id_token: idToken,
-          email: extraData.email || '',
-          display_name: extraData.displayName || '',
-          photo_url: extraData.photoURL || ''
-        })
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Backend authentication failed.');
-      }
-
-      const data = await res.json();
-      localStorage.setItem(STORAGE_KEY_SESSION, data.session_token);
-      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(data.user));
-      currentUser = data.user;
-      notifyAuthListeners();
-      return data;
-    } catch (e) {
-      console.error('[Verify Error]:', e);
-      throw e;
     }
   }
 
   async function signInWithGoogle() {
-    if (typeof firebase !== 'undefined' && firebase.auth) {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      const result = await firebase.auth().signInWithPopup(provider);
-      const idToken = await result.user.getIdToken();
-      return verifyWithBackend(idToken, {
-        email: result.user.email,
-        displayName: result.user.displayName,
-        photoURL: result.user.photoURL
-      });
-    }
-
-    // Fallback prompt for environments without active Firebase SDK credentials
-    const email = prompt('Enter your Google Account email for simulation:');
-    if (!email) throw new Error('Sign-in cancelled.');
-    const mockToken = `mock_token_${btoa(email).replace(/=/g, '')}:${email}:${email.split('@')[0]}`;
-    return verifyWithBackend(mockToken, { email, displayName: email.split('@')[0] });
+    const redirectUrl = encodeURIComponent(window.location.origin + '/vendor.html');
+    window.location.href = `${SUPABASE_AUTH_URL}/authorize?provider=google&redirect_to=${redirectUrl}`;
   }
 
   async function signInWithEmail(email, password) {
-    if (typeof firebase !== 'undefined' && firebase.auth && authConfig && authConfig.apiKey) {
-      const result = await firebase.auth().signInWithEmailAndPassword(email, password);
-      const idToken = await result.user.getIdToken();
-      return verifyWithBackend(idToken, {
-        email: result.user.email,
-        displayName: result.user.displayName || email.split('@')[0]
-      });
-    }
-
-    // Direct legacy / API fallback
     const res = await fetch('/api/vendor/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -128,18 +86,30 @@
   }
 
   async function signUpWithEmail(email, password, displayName = '') {
-    if (typeof firebase !== 'undefined' && firebase.auth && authConfig && authConfig.apiKey) {
-      const result = await firebase.auth().createUserWithEmailAndPassword(email, password);
-      if (displayName && result.user.updateProfile) {
-        await result.user.updateProfile({ displayName });
-      }
-      const idToken = await result.user.getIdToken();
-      return verifyWithBackend(idToken, { email, displayName });
-    }
-
-    // Direct registration fallback
-    const mockToken = `mock_token_${btoa(email).replace(/=/g, '')}:${email}:${displayName || email.split('@')[0]}`;
-    return verifyWithBackend(mockToken, { email, displayName });
+    const res = await fetch('/api/vendor/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        business_name: displayName || email.split('@')[0],
+        email: email,
+        password: password,
+        whatsapp: ''
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Registration failed.');
+    localStorage.setItem(STORAGE_KEY_SESSION, data.token);
+    const u = {
+      id: data.vendor.id,
+      email: data.vendor.email,
+      display_name: data.vendor.business_name,
+      has_vendor_profile: true,
+      vendor_profile: data.vendor
+    };
+    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(u));
+    currentUser = u;
+    notifyAuthListeners();
+    return { success: true, session_token: data.token, user: u };
   }
 
   async function saveVendorProfile({ business_name, cac_number, whatsapp }) {
@@ -168,9 +138,6 @@
   }
 
   function signOut() {
-    if (typeof firebase !== 'undefined' && firebase.auth && firebase.apps.length) {
-      try { firebase.auth().signOut(); } catch (e) {}
-    }
     localStorage.removeItem(STORAGE_KEY_SESSION);
     localStorage.removeItem(STORAGE_KEY_USER);
     currentUser = null;
@@ -193,7 +160,6 @@
   }
 
   window.LagosAuth = {
-    initFirebase,
     signInWithGoogle,
     signInWithEmail,
     signUpWithEmail,
@@ -204,10 +170,6 @@
     onAuthStateChanged
   };
 
-  // Initialize on load
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initFirebase);
-  } else {
-    initFirebase();
-  }
+  // Run callback handler on load
+  handleOAuthCallback();
 })();
