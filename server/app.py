@@ -9,7 +9,10 @@ import json
 import os
 import uuid
 
-from .config import PORT, BASE_DIR, FLW_PUBLIC_KEY, FLW_SECRET_KEY, FLW_ENCRYPTION_KEY, ADMIN_PASSKEY, POSTHOG_API_KEY, POSTHOG_API_HOST
+from .config import (
+    PORT, BASE_DIR, FLW_PUBLIC_KEY, FLW_SECRET_KEY, FLW_ENCRYPTION_KEY, ADMIN_PASSKEY, POSTHOG_API_KEY, POSTHOG_API_HOST,
+    FIREBASE_PROJECT_ID, FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_APP_ID
+)
 from .db import (
     init_db, query_listings, get_listing_by_id, increment_listing_views,
     insert_submission, get_recent_submission, mark_submission_email_sent,
@@ -17,10 +20,13 @@ from .db import (
     get_all_admin_listings, toggle_listing_active, toggle_listing_promoted, delete_listing,
     register_vendor, authenticate_vendor, get_vendor_by_session, get_vendor_listings, get_vendor_submissions,
     create_vendor_request, get_admin_vendor_requests, resolve_vendor_request, apply_listing_boost,
-    save_review_subscriber, record_payment, get_payment_by_tx_ref, get_payment_by_ref_or_id
+    save_review_subscriber, record_payment, get_payment_by_tx_ref, get_payment_by_ref_or_id,
+    upsert_user, get_user_by_id, get_user_by_firebase_uid, get_user_by_session,
+    get_vendor_profile_by_user_id, save_vendor_profile, create_user_session
 )
 from .flutterwave import verify_flutterwave_transaction
-from .validators import validate_submission_payload, process_uploaded_photos
+from .validators import validate_submission_payload, process_uploaded_photos, is_valid_rc_number
+from .firebase_auth import verify_firebase_token
 from .email_service import (
     dispatch_submission_email,
     send_account_creation_email,
@@ -63,7 +69,57 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
             token = params.get("vendor_token", [""])[0].strip()
         if not token:
             return None
-        return get_vendor_by_session(token)
+        vendor = get_vendor_by_session(token)
+        if vendor:
+            return vendor
+        fb = verify_firebase_token(token)
+        if fb:
+            user = upsert_user(firebase_uid=fb["uid"], email=fb["email"], display_name=fb.get("name", ""), photo_url=fb.get("picture", ""))
+            vp = get_vendor_profile_by_user_id(user["id"])
+            if vp:
+                return {
+                    "id": user["id"],
+                    "user_id": user["id"],
+                    "email": user["email"],
+                    "business_name": vp.get("business_name", ""),
+                    "whatsapp": vp.get("whatsapp", ""),
+                    "rc_number": vp.get("cac_number", ""),
+                    "cac_number": vp.get("cac_number", "")
+                }
+        return None
+
+    def get_authenticated_user(self):
+        """Extracts Bearer token or X-Vendor-Token header and returns user or vendor."""
+        auth = self.headers.get("Authorization", "")
+        token = ""
+        if auth.startswith("Bearer "):
+            token = auth.replace("Bearer ", "").strip()
+        elif self.headers.get("X-Vendor-Token"):
+            token = self.headers.get("X-Vendor-Token", "").strip()
+        else:
+            parsed = self.get_request_path()
+            params = urllib.parse.parse_qs(parsed.query)
+            token = params.get("vendor_token", [""])[0].strip()
+        if not token:
+            return None
+
+        user = get_user_by_session(token)
+        if user:
+            return user
+
+        firebase_user = verify_firebase_token(token)
+        if firebase_user:
+            return upsert_user(
+                firebase_uid=firebase_user["uid"],
+                email=firebase_user["email"],
+                display_name=firebase_user.get("name", ""),
+                photo_url=firebase_user.get("picture", "")
+            )
+
+        vendor = get_vendor_by_session(token)
+        if vendor:
+            return vendor
+        return None
 
     def get_request_path(self):
         raw = self.headers.get("x-forwarded-uri") or self.headers.get("x-matched-path") or self.path
@@ -119,6 +175,37 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
                 "success": True,
                 "api_key": POSTHOG_API_KEY,
                 "api_host": POSTHOG_API_HOST
+            })
+
+        if path == "/api/auth/config":
+            return self.send_json(200, {
+                "success": True,
+                "apiKey": FIREBASE_API_KEY,
+                "authDomain": FIREBASE_AUTH_DOMAIN,
+                "projectId": FIREBASE_PROJECT_ID,
+                "appId": FIREBASE_APP_ID
+            })
+
+        if path == "/api/auth/me":
+            user = self.get_authenticated_user()
+            if not user:
+                return self.send_json(401, {"error": "Not authenticated."})
+            user_id = user.get("id") or user.get("user_id")
+            vendor_profile = get_vendor_profile_by_user_id(user_id) if user_id else None
+            return self.send_json(200, {
+                "success": True,
+                "user": {
+                    "id": user_id,
+                    "email": user.get("email"),
+                    "display_name": user.get("display_name") or user.get("business_name", ""),
+                    "photo_url": user.get("photo_url", ""),
+                    "has_vendor_profile": bool(vendor_profile or user.get("business_name")),
+                    "vendor_profile": vendor_profile or ({
+                        "business_name": user.get("business_name", ""),
+                        "cac_number": user.get("rc_number", ""),
+                        "whatsapp": user.get("whatsapp", "")
+                    } if user.get("business_name") else None)
+                }
             })
 
         if path == "/api/listings":
@@ -354,6 +441,80 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
                             "metadata": data.get("meta", {})
                         })
             return self.send_json(200, {"status": "ok"})
+
+        # Unified User Authentication & Progressive Profiling
+        if path == "/api/auth/verify":
+            body = self.parse_json_body() or {}
+            id_token = body.get("id_token")
+            if not id_token:
+                auth = self.headers.get("Authorization", "")
+                if auth.startswith("Bearer "):
+                    id_token = auth.replace("Bearer ", "").strip()
+            if not id_token:
+                return self.send_json(400, {"error": "Missing id_token."})
+
+            decoded = verify_firebase_token(id_token)
+            if not decoded:
+                return self.send_json(401, {"error": "Invalid or expired Firebase token."})
+
+            email = decoded.get("email") or body.get("email", "")
+            name = decoded.get("name") or body.get("display_name", "")
+            picture = decoded.get("picture") or body.get("photo_url", "")
+            user = upsert_user(
+                firebase_uid=decoded["uid"],
+                email=email,
+                display_name=name,
+                photo_url=picture
+            )
+
+            vendor_profile = get_vendor_profile_by_user_id(user["id"])
+            session_token = create_user_session(user["id"])
+
+            return self.send_json(200, {
+                "success": True,
+                "session_token": session_token,
+                "user": {
+                    "id": user["id"],
+                    "firebase_uid": user["firebase_uid"],
+                    "email": user["email"],
+                    "display_name": user["display_name"],
+                    "photo_url": user["photo_url"],
+                    "has_vendor_profile": bool(vendor_profile),
+                    "vendor_profile": vendor_profile
+                }
+            })
+
+        if path == "/api/vendor/profile":
+            user = self.get_authenticated_user()
+            if not user:
+                return self.send_json(401, {"error": "Authentication required to create a vendor profile."})
+            body = self.parse_json_body()
+            if not body:
+                return self.send_json(400, {"error": "Missing vendor profile payload."})
+
+            business_name = (body.get("business_name") or "").strip()
+            cac_number = (body.get("cac_number") or body.get("rc_number") or "").strip()
+            whatsapp = (body.get("whatsapp") or "").strip()
+
+            if len(business_name) < 2:
+                return self.send_json(422, {"error": "Business name is required (minimum 2 characters)."})
+            if not is_valid_rc_number(cac_number):
+                return self.send_json(422, {"error": "Valid CAC RC or BN number is required (e.g. RC 1849201 or BN 3829104)."})
+            if not whatsapp:
+                return self.send_json(422, {"error": "Valid WhatsApp contact number is required."})
+
+            user_id = user.get("id") or user.get("user_id")
+            profile = save_vendor_profile(
+                user_id=user_id,
+                business_name=business_name,
+                cac_number=cac_number,
+                whatsapp=whatsapp
+            )
+
+            return self.send_json(200, {
+                "success": True,
+                "vendor_profile": profile
+            })
 
         # Vendor Auth Routes
         if path == "/api/vendor/register":

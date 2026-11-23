@@ -79,6 +79,13 @@ def is_valid_email(email: str) -> bool:
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     return bool(re.match(pattern, email.strip()))
 
+def is_valid_rc_number(rc_number: str) -> bool:
+    """Validates CAC registration number (RC/BN)."""
+    if not rc_number or not isinstance(rc_number, str):
+        return False
+    rc = rc_number.strip().upper()
+    return len(rc) >= 3
+
 def process_uploaded_photos(photos_raw: list, submission_id: str) -> list[str]:
     """
     Decodes up to 3 base64 image strings, validates magic bytes (JPEG/PNG/WebP),

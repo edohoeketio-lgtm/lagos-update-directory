@@ -580,6 +580,7 @@ function initBusinessModal() {
   const step2        = document.getElementById('modal-step-2');
   const step3        = document.getElementById('modal-step-3');
   const stepAuth     = document.getElementById('modal-step-auth');
+  const stepVendorProfile = document.getElementById('modal-step-vendor-profile');
   const stepSuccess  = document.getElementById('modal-step-success');
   const stepBar      = document.getElementById('modal-step-bar');
 
@@ -605,33 +606,43 @@ function initBusinessModal() {
   let uploadedPhotos = []; // stores base64 strings
 
   function getVendorAuth() {
-    const token = localStorage.getItem('lagos_vendor_token') || '';
+    let token = '';
     let user = null;
-    try {
-      user = JSON.parse(localStorage.getItem('lagos_vendor_user') || '{}');
-    } catch (_) {}
+    if (window.LagosAuth) {
+      token = window.LagosAuth.getToken();
+      user = window.LagosAuth.getUser();
+    }
+    if (!token) {
+      token = localStorage.getItem('lagos_session_token') || localStorage.getItem('lagos_vendor_token') || '';
+    }
+    if (!user) {
+      try {
+        user = JSON.parse(localStorage.getItem('lagos_auth_user') || localStorage.getItem('lagos_vendor_user') || '{}');
+      } catch (_) {}
+    }
     return { token, user };
   }
 
   function applyVendorToForm(user) {
     if (!user) return;
+    const vp = user.vendor_profile || user;
     if (chipVendor) {
       chipVendor.style.display = 'flex';
       if (badgeEmail) {
-        badgeEmail.textContent = user.business_name ? `${user.business_name} (${user.email})` : user.email;
+        badgeEmail.textContent = vp.business_name ? `${vp.business_name} (${user.email || vp.email || ''})` : (user.email || 'Vendor');
       }
     }
     const nameEl = document.getElementById('form-name');
-    if (nameEl && !nameEl.value && user.business_name) nameEl.value = user.business_name;
+    if (nameEl && !nameEl.value && vp.business_name) nameEl.value = vp.business_name;
 
     const rcEl = document.getElementById('form-rc-number');
-    if (rcEl && !rcEl.value && user.rc_number) rcEl.value = user.rc_number;
+    if (rcEl && !rcEl.value && (vp.cac_number || vp.rc_number)) rcEl.value = vp.cac_number || vp.rc_number;
 
     const waEl = document.getElementById('form-whatsapp');
-    if (waEl && !waEl.value && user.whatsapp) waEl.value = user.whatsapp;
+    if (waEl && !waEl.value && vp.whatsapp) waEl.value = vp.whatsapp;
 
     const emailEl = document.getElementById('form-contact-email');
-    if (emailEl && !emailEl.value && user.email) emailEl.value = user.email;
+    if (emailEl && !emailEl.value && (user.email || vp.email)) emailEl.value = user.email || vp.email;
   }
 
   const dropZone     = document.getElementById('photo-drop-zone');
@@ -729,6 +740,8 @@ function initBusinessModal() {
     const { token, user } = getVendorAuth();
     if (!token) {
       currentStep = 0;
+    } else if (user && !user.has_vendor_profile && !user.business_name) {
+      currentStep = 0.5;
     } else {
       currentStep = 1;
       applyVendorToForm(user);
@@ -752,6 +765,64 @@ function initBusinessModal() {
   if (btnOpen) btnOpen.addEventListener('click', openModal);
   if (btnClose) btnClose.addEventListener('click', closeModal);
   if (btnDone) btnDone.addEventListener('click', closeModal);
+
+  // Wire Google Sign-In & Progressive Profiling
+  const btnGoogle = document.getElementById('btn-google-signin');
+  if (btnGoogle && window.LagosAuth) {
+    btnGoogle.addEventListener('click', async () => {
+      try {
+        hideError();
+        btnGoogle.disabled = true;
+        btnGoogle.textContent = 'Connecting…';
+        const res = await window.LagosAuth.signInWithGoogle();
+        if (res.user && (res.user.has_vendor_profile || res.user.business_name)) {
+          applyVendorToForm(res.user);
+          currentStep = 1;
+        } else {
+          currentStep = 0.5;
+        }
+        updateStepUI();
+      } catch (err) {
+        showError(err.message || 'Google Sign-In failed.');
+      } finally {
+        btnGoogle.disabled = false;
+        btnGoogle.innerHTML = `<svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/></svg> Continue with Google`;
+      }
+    });
+  }
+
+  const btnSaveProfile = document.getElementById('btn-save-vendor-profile');
+  if (btnSaveProfile && window.LagosAuth) {
+    btnSaveProfile.addEventListener('click', async () => {
+      hideError();
+      const bName = (document.getElementById('profile-business-name')?.value || '').trim();
+      const rcNum = (document.getElementById('profile-cac-number')?.value || '').trim().toUpperCase();
+      const phone = (document.getElementById('profile-whatsapp')?.value || '').trim();
+
+      if (!bName) return showError('Business name is required.');
+      if (!rcNum || rcNum.length < 3) return showError('CAC Registration Number (RC/BN) is required.');
+      if (!phone) return showError('WhatsApp contact number is required.');
+
+      btnSaveProfile.disabled = true;
+      btnSaveProfile.textContent = 'Saving Profile…';
+
+      try {
+        const res = await window.LagosAuth.saveVendorProfile({
+          business_name: bName,
+          cac_number: rcNum,
+          whatsapp: phone
+        });
+        applyVendorToForm(res.vendor_profile);
+        currentStep = 1;
+        updateStepUI();
+      } catch (err) {
+        showError(err.message || 'Failed to save vendor profile.');
+      } finally {
+        btnSaveProfile.disabled = false;
+        btnSaveProfile.textContent = 'Save Profile & Continue to Listing →';
+      }
+    });
+  }
 
   // Wire Auth Gate inside Listing Modal
   const btnAuthReg = document.getElementById('btn-auth-register');
@@ -911,9 +982,11 @@ function initBusinessModal() {
 
   function updateStepUI() {
     hideError();
+    const isGate = currentStep === 0 || currentStep === 0.5;
     if (stepAuth) stepAuth.style.display = currentStep === 0 ? 'block' : 'none';
-    if (stepBar) stepBar.style.display = currentStep === 0 ? 'none' : 'flex';
-    if (footerCtrl) footerCtrl.style.display = currentStep === 0 ? 'none' : 'flex';
+    if (stepVendorProfile) stepVendorProfile.style.display = currentStep === 0.5 ? 'block' : 'none';
+    if (stepBar) stepBar.style.display = isGate ? 'none' : 'flex';
+    if (footerCtrl) footerCtrl.style.display = isGate ? 'none' : 'flex';
 
     step1.style.display = currentStep === 1 ? 'block' : 'none';
     step2.style.display = currentStep === 2 ? 'block' : 'none';
@@ -1629,15 +1702,20 @@ async function initListing() {
    ROUTER & INITIALIZATION
    ======================================== */
 function syncVendorNavState() {
-  const token = localStorage.getItem('lagos_vendor_token');
+  const token = (window.LagosAuth && window.LagosAuth.getToken()) || localStorage.getItem('lagos_session_token') || localStorage.getItem('lagos_vendor_token');
+  let user = null;
+  try {
+    user = (window.LagosAuth && window.LagosAuth.getUser()) || JSON.parse(localStorage.getItem('lagos_auth_user') || '{}');
+  } catch (_) {}
   const vendorLinks = document.querySelectorAll('a[href*="vendor.html"], a[href="/vendor"], a[href="vendor"], .nav-vendor-link');
   vendorLinks.forEach(link => {
     if (token) {
-      link.innerHTML = '👤 Vendor Dashboard';
+      const label = user && user.display_name ? `👤 ${user.display_name.split(' ')[0]}` : '👤 Dashboard';
+      link.textContent = label;
       link.href = 'vendor.html';
       link.classList.add('nav-vendor-active');
     } else {
-      link.textContent = 'Vendor Login';
+      link.textContent = 'Sign In';
       link.href = 'vendor.html';
       link.classList.remove('nav-vendor-active');
     }

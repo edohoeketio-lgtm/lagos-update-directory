@@ -34,6 +34,12 @@ MAILGUN_API_KEY = os.environ.get("MAILGUN_API_KEY", "")
 MAILGUN_DOMAIN = os.environ.get("MAILGUN_DOMAIN", "")
 MAILGUN_FROM_EMAIL = os.environ.get("MAILGUN_FROM_EMAIL", "Lagos Updates Directory <noreply@lagosupdates.com>")
 
+# Firebase Auth Configuration
+FIREBASE_PROJECT_ID = os.environ.get("FIREBASE_PROJECT_ID", "lagos-updates")
+FIREBASE_API_KEY = os.environ.get("FIREBASE_API_KEY", "")
+FIREBASE_AUTH_DOMAIN = os.environ.get("FIREBASE_AUTH_DOMAIN", "lagos-updates.firebaseapp.com")
+FIREBASE_APP_ID = os.environ.get("FIREBASE_APP_ID", "")
+
 RATE_LIMIT_SUBMISSIONS_PER_HOUR = int(os.environ.get("RATE_LIMIT_SUBMISSIONS_PER_HOUR", 10))
 
 # Editorial Admin Passkey

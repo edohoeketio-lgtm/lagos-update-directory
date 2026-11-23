@@ -87,6 +87,31 @@ def init_db():
     """)
 
     cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        firebase_uid TEXT UNIQUE NOT NULL,
+        email TEXT NOT NULL,
+        display_name TEXT,
+        photo_url TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS vendor_profiles (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        business_name TEXT NOT NULL,
+        cac_number TEXT NOT NULL,
+        whatsapp TEXT NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+    """)
+
+    cursor.execute("""
     CREATE TABLE IF NOT EXISTS vendors (
         id TEXT PRIMARY KEY,
         email TEXT UNIQUE NOT NULL,
@@ -701,7 +726,7 @@ def authenticate_vendor(email: str, password: str):
     }, None
 
 def get_vendor_by_session(token: str):
-    """Retrieves authenticated vendor by valid session token."""
+    """Retrieves authenticated vendor by valid session token (supports legacy vendor or unified user profile)."""
     if not token:
         return None
     conn = get_connection()
@@ -715,7 +740,37 @@ def get_vendor_by_session(token: str):
     conn.close()
 
     if not row:
-        return None
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT u.id as user_id, u.email, vp.business_name, vp.whatsapp, vp.cac_number, s.expires_at
+        FROM sessions s
+        JOIN users u ON s.vendor_id = u.id
+        LEFT JOIN vendor_profiles vp ON vp.user_id = u.id
+        WHERE s.token = ?
+        """, (token,))
+        row = cursor.fetchone()
+        conn.close()
+
+        if not row:
+            return None
+        try:
+            exp = datetime.fromisoformat(row["expires_at"])
+            if datetime.now() > exp:
+                return None
+        except Exception:
+            pass
+
+        return {
+            "id": row["user_id"],
+            "user_id": row["user_id"],
+            "email": row["email"],
+            "business_name": row["business_name"] or "",
+            "whatsapp": row["whatsapp"] or "",
+            "rc_number": row["cac_number"] or "",
+            "cac_number": row["cac_number"] or ""
+        }
+
     try:
         exp = datetime.fromisoformat(row["expires_at"])
         if datetime.now() > exp:
@@ -730,6 +785,121 @@ def get_vendor_by_session(token: str):
         "whatsapp": row["whatsapp"],
         "rc_number": row["rc_number"] if "rc_number" in row.keys() else ""
     }
+
+def upsert_user(firebase_uid: str, email: str, display_name: str = "", photo_url: str = "") -> dict:
+    """Inserts or updates a user from Firebase Auth credentials."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE firebase_uid = ?", (firebase_uid,))
+    row = cursor.fetchone()
+    if row:
+        user_id = row["id"]
+        cursor.execute("""
+            UPDATE users
+            SET email = ?, display_name = ?, photo_url = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """, (email, display_name or row["display_name"], photo_url or row["photo_url"], user_id))
+    else:
+        user_id = str(uuid.uuid4())
+        cursor.execute("""
+            INSERT INTO users (id, firebase_uid, email, display_name, photo_url)
+            VALUES (?, ?, ?, ?, ?)
+        """, (user_id, firebase_uid, email, display_name or "", photo_url or ""))
+    conn.commit()
+
+    cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+    res = dict(cursor.fetchone())
+    conn.close()
+    return res
+
+def get_user_by_id(user_id: str) -> dict | None:
+    """Retrieves user by primary ID."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def get_user_by_firebase_uid(firebase_uid: str) -> dict | None:
+    """Retrieves user by Firebase UID."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE firebase_uid = ?", (firebase_uid,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def get_user_by_session(token: str) -> dict | None:
+    """Retrieves authenticated user by valid session token."""
+    if not token:
+        return None
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+    SELECT u.*, s.expires_at FROM sessions s
+    JOIN users u ON s.vendor_id = u.id
+    WHERE s.token = ?
+    """, (token,))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        return None
+    try:
+        exp = datetime.fromisoformat(row["expires_at"])
+        if datetime.now() > exp:
+            return None
+    except Exception:
+        pass
+    return dict(row)
+
+def get_vendor_profile_by_user_id(user_id: str) -> dict | None:
+    """Retrieves progressive vendor profile for a user."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM vendor_profiles WHERE user_id = ?", (user_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def save_vendor_profile(user_id: str, business_name: str, cac_number: str, whatsapp: str) -> dict:
+    """Creates or updates a progressive vendor profile for an authenticated user."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM vendor_profiles WHERE user_id = ?", (user_id,))
+    row = cursor.fetchone()
+    if row:
+        profile_id = row["id"]
+        cursor.execute("""
+            UPDATE vendor_profiles
+            SET business_name = ?, cac_number = ?, whatsapp = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """, (business_name, cac_number, whatsapp, profile_id))
+    else:
+        profile_id = str(uuid.uuid4())
+        cursor.execute("""
+            INSERT INTO vendor_profiles (id, user_id, business_name, cac_number, whatsapp)
+            VALUES (?, ?, ?, ?, ?)
+        """, (profile_id, user_id, business_name, cac_number, whatsapp))
+    conn.commit()
+    cursor.execute("SELECT * FROM vendor_profiles WHERE id = ?", (profile_id,))
+    res = dict(cursor.fetchone())
+    conn.close()
+    return res
+
+def create_user_session(user_id: str) -> str:
+    """Creates a 30-day session token for an authenticated user."""
+    token = secrets.token_hex(32)
+    expires_at = (datetime.now() + timedelta(days=30)).isoformat()
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+    INSERT INTO sessions (token, vendor_id, expires_at)
+    VALUES (?, ?, ?)
+    """, (token, user_id, expires_at))
+    conn.commit()
+    conn.close()
+    return token
 
 def get_vendor_listings(email: str, business_name: str = ""):
     """Gets listings owned by vendor, plus any pending requests on them."""
