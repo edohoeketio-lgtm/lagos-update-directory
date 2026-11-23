@@ -81,3 +81,35 @@ def supabase_get_listings(category: str = None, area: str = None) -> list[dict] 
         params.append(f"area=eq.{urllib.parse.quote(area)}")
     
     return _supabase_request("listings", method="GET", params="&".join(params))
+
+
+def verify_supabase_token(access_token: str) -> dict | None:
+    """Verifies a Supabase Auth JWT access token via Supabase /auth/v1/user."""
+    if not access_token or not is_supabase_enabled():
+        return None
+    if os.environ.get("LAGOS_TEST_MODE") == "1":
+        return None
+    try:
+        url = f"{SUPABASE_URL}/auth/v1/user"
+        req = urllib.request.Request(url, headers={
+            "apikey": SUPABASE_KEY,
+            "Authorization": f"Bearer {access_token}",
+            "User-Agent": "LagosUpdatesDirectory/1.0"
+        })
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            if resp.status == 200:
+                user = json.loads(resp.read().decode("utf-8"))
+                uid = user.get("id")
+                email = user.get("email", "")
+                if not uid or not email:
+                    return None
+                meta = user.get("user_metadata") or {}
+                return {
+                    "uid": uid,
+                    "email": email,
+                    "name": meta.get("full_name") or meta.get("name") or email.split("@")[0],
+                    "picture": meta.get("avatar_url") or meta.get("picture") or ""
+                }
+    except Exception as e:
+        print("[Supabase Auth Verify Error]:", e)
+    return None

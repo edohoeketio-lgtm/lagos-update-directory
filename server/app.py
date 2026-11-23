@@ -28,6 +28,7 @@ from .db import (
 from .flutterwave import verify_flutterwave_transaction
 from .validators import validate_submission_payload, process_uploaded_photos, is_valid_rc_number
 from .firebase_auth import verify_firebase_token
+from .supabase_db import verify_supabase_token
 from .email_service import (
     dispatch_submission_email,
     send_account_creation_email,
@@ -74,20 +75,49 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
         vendor = get_vendor_by_session(token)
         if vendor:
             return vendor
+
+        # Check Supabase Auth JWT (Google OAuth / Supabase Email)
+        sb = verify_supabase_token(token)
+        if sb:
+            user = upsert_user(firebase_uid=sb["uid"], email=sb["email"], display_name=sb.get("name", ""), photo_url=sb.get("picture", ""))
+            vp = get_vendor_profile_by_user_id(user["id"]) or {}
+            return {
+                "id": user["id"],
+                "user_id": user["id"],
+                "email": user["email"],
+                "business_name": vp.get("business_name") or user.get("display_name") or user["email"].split("@")[0],
+                "whatsapp": vp.get("whatsapp", ""),
+                "rc_number": vp.get("cac_number", ""),
+                "cac_number": vp.get("cac_number", "")
+            }
+
+        # Check unified user session
+        session_user = get_user_by_session(token)
+        if session_user:
+            vp = get_vendor_profile_by_user_id(session_user["id"]) or {}
+            return {
+                "id": session_user["id"],
+                "user_id": session_user["id"],
+                "email": session_user["email"],
+                "business_name": vp.get("business_name") or session_user.get("display_name") or session_user["email"].split("@")[0],
+                "whatsapp": vp.get("whatsapp", ""),
+                "rc_number": vp.get("cac_number", ""),
+                "cac_number": vp.get("cac_number", "")
+            }
+
         fb = verify_firebase_token(token)
         if fb:
             user = upsert_user(firebase_uid=fb["uid"], email=fb["email"], display_name=fb.get("name", ""), photo_url=fb.get("picture", ""))
-            vp = get_vendor_profile_by_user_id(user["id"])
-            if vp:
-                return {
-                    "id": user["id"],
-                    "user_id": user["id"],
-                    "email": user["email"],
-                    "business_name": vp.get("business_name", ""),
-                    "whatsapp": vp.get("whatsapp", ""),
-                    "rc_number": vp.get("cac_number", ""),
-                    "cac_number": vp.get("cac_number", "")
-                }
+            vp = get_vendor_profile_by_user_id(user["id"]) or {}
+            return {
+                "id": user["id"],
+                "user_id": user["id"],
+                "email": user["email"],
+                "business_name": vp.get("business_name") or user.get("display_name") or "",
+                "whatsapp": vp.get("whatsapp", ""),
+                "rc_number": vp.get("cac_number", ""),
+                "cac_number": vp.get("cac_number", "")
+            }
         return None
 
     def get_authenticated_user(self):
@@ -108,6 +138,15 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
         user = get_user_by_session(token)
         if user:
             return user
+
+        sb = verify_supabase_token(token)
+        if sb:
+            return upsert_user(
+                firebase_uid=sb["uid"],
+                email=sb["email"],
+                display_name=sb.get("name", ""),
+                photo_url=sb.get("picture", "")
+            )
 
         firebase_user = verify_firebase_token(token)
         if firebase_user:
