@@ -6,7 +6,8 @@ import re
 import html
 import base64
 import os
-from .config import BASE_DIR
+import urllib.request
+from .config import BASE_DIR, SUPABASE_URL, SUPABASE_KEY, SUPABASE_STORAGE_BUCKET
 
 UPLOAD_DIR = os.environ.get("UPLOAD_DIR", os.path.join("/tmp", "uploads") if os.environ.get("VERCEL") else os.path.join(BASE_DIR, "data", "uploads"))
 
@@ -94,10 +95,33 @@ def is_valid_rc_number(rc_number: str) -> bool:
     pattern = r'^(RC|BN|IT|LLP|LP)?[\s\-_]?[0-9]{5,8}$'
     return bool(re.match(pattern, rc))
 
+def upload_to_supabase_storage(raw_bytes: bytes, filename: str, content_type: str = "image/jpeg") -> str:
+    """
+    Uploads photo bytes to Supabase Storage and returns the permanent public URL.
+    Returns None on failure or if Supabase is unconfigured/in test mode.
+    """
+    if os.environ.get("LAGOS_TEST_MODE") == "1" or not SUPABASE_URL or not SUPABASE_KEY:
+        return None
+    try:
+        url = f"{SUPABASE_URL}/storage/v1/object/{SUPABASE_STORAGE_BUCKET}/{filename}"
+        headers = {
+            "apikey": SUPABASE_KEY,
+            "Authorization": f"Bearer {SUPABASE_KEY}",
+            "Content-Type": content_type
+        }
+        req = urllib.request.Request(url, data=raw_bytes, headers=headers, method="POST")
+        with urllib.request.urlopen(req, timeout=12.0) as resp:
+            if resp.status in (200, 201):
+                return f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_STORAGE_BUCKET}/{filename}"
+    except Exception as e:
+        print("[Supabase Storage] Upload error, falling back to local file:", e)
+    return None
+
 def process_uploaded_photos(photos_raw: list, submission_id: str) -> list[str]:
     """
     Decodes up to 3 base64 image strings, validates magic bytes (JPEG/PNG/WebP),
-    saves them to data/uploads/, and returns the list of relative web paths.
+    uploads to Supabase Storage (permanent cloud CDN) or saves locally to data/uploads/,
+    and returns the list of accessible photo URLs.
     """
     if not isinstance(photos_raw, list):
         return []
@@ -119,19 +143,31 @@ def process_uploaded_photos(photos_raw: list, submission_id: str) -> list[str]:
             if len(raw_bytes) > 6 * 1024 * 1024:
                 continue
 
-            # Check magic bytes
+            # Check magic bytes and determine content type
             ext = ".jpg"
+            content_type = "image/jpeg"
             if raw_bytes.startswith(b'\x89PNG\r\n\x1a\n'):
                 ext = ".png"
+                content_type = "image/png"
             elif raw_bytes.startswith(b'RIFF') and b'WEBP' in raw_bytes[:16]:
                 ext = ".webp"
+                content_type = "image/webp"
             elif raw_bytes.startswith(b'\xff\xd8\xff'):
                 ext = ".jpg"
+                content_type = "image/jpeg"
             else:
                 continue
 
             clean_id = submission_id.replace('-', '')[:8]
             filename = f"vendor_{clean_id}_{idx + 1}{ext}"
+
+            # 1. First attempt upload to Supabase Cloud Storage
+            cloud_url = upload_to_supabase_storage(raw_bytes, filename, content_type)
+            if cloud_url:
+                saved_paths.append(cloud_url)
+                continue
+
+            # 2. Local fallback if offline or in test mode
             file_path = os.path.join(UPLOAD_DIR, filename)
             with open(file_path, "wb") as f:
                 f.write(raw_bytes)

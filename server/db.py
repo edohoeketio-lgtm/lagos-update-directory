@@ -11,6 +11,13 @@ import secrets
 import hmac
 from datetime import datetime, timedelta
 from .config import DB_PATH, DATA_JSON_PATH
+from .supabase_db import (
+    is_supabase_enabled,
+    supabase_sync_submission,
+    supabase_sync_listing,
+    supabase_sync_review,
+    supabase_update_review_status
+)
 
 def get_connection():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
@@ -479,6 +486,26 @@ def insert_submission(cleaned_data: dict, saved_photos: list = None, vendor_id: 
 
     conn.commit()
     conn.close()
+
+    if is_supabase_enabled():
+        try:
+            supabase_sync_submission({
+                "id": submission_id,
+                "name": cleaned_data.get("business_name", ""),
+                "category": cleaned_data.get("category", ""),
+                "area": cleaned_data.get("area", ""),
+                "description": cleaned_data.get("description", ""),
+                "price_range": cleaned_data.get("price_range", ""),
+                "whatsapp": cleaned_data.get("whatsapp", ""),
+                "instagram": cleaned_data.get("instagram", ""),
+                "submitter_name": cleaned_data.get("contact_name", ""),
+                "submitter_email": cleaned_data.get("contact_email", ""),
+                "images": saved_photos or [],
+                "status": "pending"
+            })
+        except Exception as e:
+            print("[Supabase Sync Error] submission:", e)
+
     return submission_id
 
 def mark_submission_email_sent(submission_id: str):
@@ -562,6 +589,25 @@ def approve_submission(submission_id: str, make_featured: bool = False):
     cursor.execute("UPDATE submissions SET status = 'approved' WHERE id = ?", (submission_id,))
     conn.commit()
     conn.close()
+
+    if is_supabase_enabled():
+        try:
+            supabase_sync_listing({
+                "id": listing_id,
+                "name": sub["business_name"],
+                "category": sub["category"],
+                "area": sub["area"],
+                "description": sub["description"],
+                "price_range": sub["price_range"],
+                "whatsapp": sub["whatsapp"],
+                "phone": sub["whatsapp"],
+                "instagram": sub["instagram"],
+                "images": sub_photos_list,
+                "is_verified": True,
+                "status": "active"
+            })
+        except Exception as e:
+            print("[Supabase Sync Error] listing:", e)
 
     return {
         "success": True,
@@ -1268,6 +1314,21 @@ def create_review(user_id: str, listing_id: str, star_rating: int, comment: str)
     cursor.execute("SELECT * FROM reviews WHERE id = ?", (review_id,))
     row = dict(cursor.fetchone())
     conn.close()
+
+    if is_supabase_enabled():
+        try:
+            supabase_sync_review({
+                "id": review_id,
+                "listing_id": listing_id,
+                "author_name": user_id,
+                "author_email": f"{user_id}@user.local",
+                "rating": int(star_rating),
+                "comment": comment.strip(),
+                "status": "pending"
+            })
+        except Exception as e:
+            print("[Supabase Sync Error] review:", e)
+
     return row
 
 def get_public_reviews(listing_id: str) -> dict:
@@ -1344,6 +1405,13 @@ def approve_review(review_id: str, admin_notes: str = "") -> bool:
 
     conn.commit()
     conn.close()
+
+    if is_supabase_enabled():
+        try:
+            supabase_update_review_status(review_id, "approved")
+        except Exception as e:
+            print("[Supabase Sync Error] approve review:", e)
+
     return True
 
 def reject_review(review_id: str, admin_notes: str = "") -> bool:
@@ -1358,5 +1426,12 @@ def reject_review(review_id: str, admin_notes: str = "") -> bool:
     success = cursor.rowcount > 0
     conn.commit()
     conn.close()
+
+    if is_supabase_enabled() and success:
+        try:
+            supabase_update_review_status(review_id, "rejected")
+        except Exception as e:
+            print("[Supabase Sync Error] reject review:", e)
+
     return success
 

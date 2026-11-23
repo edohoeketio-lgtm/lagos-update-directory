@@ -55,3 +55,8 @@ FLW_BASE_URL = os.environ.get("FLW_BASE_URL", "https://api.flutterwave.com/v3")
 # PostHog Telemetry Configuration
 POSTHOG_API_KEY = os.environ.get("POSTHOG_API_KEY", "")
 POSTHOG_API_HOST = os.environ.get("POSTHOG_API_HOST", "https://us.i.posthog.com")
+
+# Supabase Cloud Database & Storage Configuration
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://wpfyfommvhopjvwdzjsf.supabase.co")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
+SUPABASE_STORAGE_BUCKET = os.environ.get("SUPABASE_STORAGE_BUCKET", "listing-photos")
