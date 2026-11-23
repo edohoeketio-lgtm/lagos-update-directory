@@ -344,6 +344,7 @@
         <div class="stat-pill">Featured Spots: <strong id="stat-featured" style="color:#B78103;">0</strong></div>
         <div class="stat-pill" style="border-color:#FCD34D; background:#FFFBEB;">Total Pending: <strong id="stat-pending" style="color:#B45309;">0</strong></div>
         <div class="stat-pill">Applications Today: <strong id="stat-apps-today" style="color:#008A05;">0</strong></div>
+        <div class="stat-pill" style="border-color:#FECACA; background:#FEF2F2;">Pending Reviews: <strong id="stat-pending-reviews" style="color:#DC2626;">0</strong></div>
       </div>
     </div>
 
@@ -357,6 +358,9 @@
       </button>
       <button type="button" id="tab-btn-listings" class="filter-tab" onclick="switchAdminTab('listings')">
         📂 Manage Live Listings (<span id="tab-count-listings">0</span>)
+      </button>
+      <button type="button" id="tab-btn-reviews" class="filter-tab" onclick="switchAdminTab('reviews')">
+        📝 Public Reviews (<span id="tab-count-reviews">0</span>)
       </button>
     </div>
 
@@ -378,6 +382,13 @@
     <div id="section-listings" style="display:none;">
       <div class="submissions-list" id="live-listings-list">
         <div class="empty-state">Loading live listings…</div>
+      </div>
+    </div>
+
+    <!-- PUBLIC REVIEWS MODERATION DESK -->
+    <div id="section-reviews" style="display:none;">
+      <div class="submissions-list" id="reviews-list">
+        <div class="empty-state">Loading pending reviews…</div>
       </div>
     </div>
 
@@ -455,6 +466,7 @@
         document.getElementById('admin-gate-modal').style.display = 'none';
         loadSubmissions();
         loadRequests();
+        loadReviews();
         loadMetrics();
       } catch (err) {
         errEl.textContent = 'Connection error checking passkey.';
@@ -490,6 +502,11 @@
           document.getElementById('stat-featured').textContent = data.featured_spots;
           document.getElementById('stat-pending').textContent = data.total_pending;
           document.getElementById('stat-apps-today').textContent = data.submissions_today;
+          const pendingRevs = data.pending_reviews || 0;
+          const statRevEl = document.getElementById('stat-pending-reviews');
+          if (statRevEl) statRevEl.textContent = pendingRevs;
+          const tabRevEl = document.getElementById('tab-count-reviews');
+          if (tabRevEl) tabRevEl.textContent = pendingRevs;
         }
       } catch (err) {
         console.error('Could not load real-time metrics:', err);
@@ -613,13 +630,114 @@
       document.getElementById('section-pending').style.display = tab === 'pending' ? 'block' : 'none';
       document.getElementById('section-requests').style.display = tab === 'requests' ? 'block' : 'none';
       document.getElementById('section-listings').style.display = tab === 'listings' ? 'block' : 'none';
+      document.getElementById('section-reviews').style.display = tab === 'reviews' ? 'block' : 'none';
       
       document.getElementById('tab-btn-pending').classList.toggle('active', tab === 'pending');
       document.getElementById('tab-btn-requests').classList.toggle('active', tab === 'requests');
       document.getElementById('tab-btn-listings').classList.toggle('active', tab === 'listings');
+      document.getElementById('tab-btn-reviews').classList.toggle('active', tab === 'reviews');
 
       if (tab === 'listings') loadLiveListings();
       if (tab === 'requests') loadRequests();
+      if (tab === 'reviews') loadReviews();
+    }
+
+    async function loadReviews() {
+      if (!adminKey) return;
+      const listEl = document.getElementById('reviews-list');
+      try {
+        const res = await adminFetch('/api/admin/reviews');
+        const data = await res.json();
+        const reviews = data.reviews || [];
+        const countEl = document.getElementById('tab-count-reviews');
+        if (countEl) countEl.textContent = reviews.length;
+        const statEl = document.getElementById('stat-pending-reviews');
+        if (statEl) statEl.textContent = reviews.length;
+
+        if (reviews.length === 0) {
+          listEl.innerHTML = '<div class="empty-state"><h3>No pending reviews.</h3><p>Community reviews submitted by visitors will appear here for editorial screening.</p></div>';
+          return;
+        }
+
+        listEl.innerHTML = '';
+        reviews.forEach(rev => {
+          const card = document.createElement('div');
+          card.className = 'sub-card';
+          card.style.borderLeft = '4px solid #FFD400';
+
+          const stars = '★'.repeat(rev.star_rating) + '☆'.repeat(5 - rev.star_rating);
+          const listingName = rev.listing_name || 'Listing #' + rev.listing_id;
+          const listingArea = rev.listing_area ? ` (${rev.listing_area})` : '';
+
+          card.innerHTML = `
+            <div class="sub-top">
+              <div>
+                <div class="sub-title" style="font-size:18px;">
+                  Review for: <a href="listing.html?id=${encodeURIComponent(rev.listing_id)}" target="_blank" style="color:var(--text-primary); text-decoration:underline;">${listingName}${listingArea}</a>
+                </div>
+                <div style="font-size:13px; color:var(--text-muted); margin-top:4px;">
+                  Submitted by: <strong>${escapeHtml(rev.user_name || rev.user_email || 'User')}</strong> (${escapeHtml(rev.user_email || '')}) • ${new Date(rev.created_at).toLocaleDateString()}
+                </div>
+              </div>
+              <span class="sub-badge" style="background:#FFFBEB; color:#B45309; font-size:12px;">PENDING REVIEW</span>
+            </div>
+
+            <div style="background:#F9FAFB; padding:14px; border-radius:10px; border:1px solid #E5E7EB;">
+              <div style="color:#B78103; font-size:16px; margin-bottom:6px; letter-spacing:2px;">${stars} <span style="font-size:13px; color:#4B5563; font-weight:700;">(${rev.star_rating} / 5)</span></div>
+              <p style="font-size:14px; color:#1F2937; line-height:1.6; margin:0; font-style:italic;">"${escapeHtml(rev.comment)}"</p>
+            </div>
+
+            <div class="sub-actions">
+              <button class="btn-approve" onclick="handleApproveReview('${rev.id}')">✓ Approve & Publish</button>
+              <button class="btn-reject" onclick="handleRejectReview('${rev.id}')">✕ Reject Review</button>
+            </div>
+          `;
+          listEl.appendChild(card);
+        });
+      } catch (err) {
+        listEl.innerHTML = '<div class="empty-state">Failed to load pending reviews.</div>';
+      }
+    }
+
+    async function handleApproveReview(revId) {
+      if (!confirm('Approve this review and publish it live to the directory listing?')) return;
+      try {
+        const res = await adminFetch(`/api/admin/reviews/${revId}/approve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ admin_notes: 'Approved by editor' })
+        });
+        const data = await res.json();
+        if (data.success) {
+          loadReviews();
+          loadMetrics();
+        } else {
+          alert('Error: ' + (data.error || 'Could not approve review'));
+        }
+      } catch (err) {
+        alert('Connection error approving review.');
+      }
+    }
+
+    async function handleRejectReview(revId) {
+      const reason = prompt('Reason for rejecting review (e.g. spam, vulgarity, unverified visit):', 'Content violates review standards.');
+      if (reason === null) return;
+      try {
+        const res = await adminFetch(`/api/admin/reviews/${revId}/reject`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ admin_notes: reason.trim() })
+        });
+        const data = await res.json();
+        if (data.success) {
+          loadReviews();
+          loadMetrics();
+        } else {
+          alert('Error: ' + (data.error || 'Could not reject review'));
+        }
+      } catch (err) {
+        alert('Connection error rejecting review.');
+      }
     }
 
     async function loadRequests() {
@@ -866,6 +984,7 @@
       if (!checkAdminAuth()) return;
       loadSubmissions();
       loadRequests();
+      loadReviews();
       loadMetrics();
       setInterval(() => {
         if (adminKey) loadMetrics();

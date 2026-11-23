@@ -143,6 +143,22 @@ def init_db():
     """)
 
     cursor.execute("""
+    CREATE TABLE IF NOT EXISTS reviews (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        listing_id TEXT NOT NULL,
+        star_rating INTEGER NOT NULL,
+        comment TEXT NOT NULL,
+        status TEXT DEFAULT 'pending',
+        admin_notes TEXT DEFAULT '',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        resolved_at TEXT,
+        FOREIGN KEY(user_id) REFERENCES users(id),
+        FOREIGN KEY(listing_id) REFERENCES listings(id)
+    );
+    """)
+
+    cursor.execute("""
     CREATE TABLE IF NOT EXISTS payments (
         id TEXT PRIMARY KEY,
         tx_ref TEXT UNIQUE NOT NULL,
@@ -1237,4 +1253,109 @@ def get_payment_by_ref_or_id(tx_ref: str = None, transaction_id: str = None):
             return dict(row)
     conn.close()
     return None
+
+def create_review(user_id: str, listing_id: str, star_rating: int, comment: str) -> dict:
+    """Inserts a new user review with status pending."""
+    review_id = "rev-" + str(uuid.uuid4())[:8]
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+    INSERT INTO reviews (id, user_id, listing_id, star_rating, comment, status)
+    VALUES (?, ?, ?, ?, ?, 'pending')
+    """, (review_id, user_id, listing_id, int(star_rating), comment.strip()))
+    conn.commit()
+    cursor.execute("SELECT * FROM reviews WHERE id = ?", (review_id,))
+    row = dict(cursor.fetchone())
+    conn.close()
+    return row
+
+def get_public_reviews(listing_id: str) -> dict:
+    """Fetches approved reviews for a listing with aggregate rating."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+    SELECT r.id, r.star_rating, r.comment, r.created_at,
+           u.display_name, u.photo_url, u.email
+    FROM reviews r
+    JOIN users u ON r.user_id = u.id
+    WHERE r.listing_id = ? AND r.status = 'approved'
+    ORDER BY r.created_at DESC
+    """, (listing_id,))
+    rows = [dict(r) for r in cursor.fetchall()]
+
+    for r in rows:
+        name = r.get("display_name") or ""
+        if not name and r.get("email"):
+            name = r["email"].split("@")[0].capitalize()
+        r["author_name"] = name or "Verified Visitor"
+
+    avg_rating = 0.0
+    if rows:
+        avg_rating = round(sum(r["star_rating"] for r in rows) / len(rows), 1)
+
+    conn.close()
+    return {
+        "count": len(rows),
+        "average_rating": avg_rating,
+        "reviews": rows
+    }
+
+def get_admin_pending_reviews() -> list[dict]:
+    """Fetches all pending reviews for the editorial moderation desk."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+    SELECT r.id, r.listing_id, r.star_rating, r.comment, r.status, r.created_at,
+           u.email AS user_email, u.display_name AS user_name,
+           l.name AS listing_name, l.area AS listing_area, l.category AS listing_category
+    FROM reviews r
+    JOIN users u ON r.user_id = u.id
+    LEFT JOIN listings l ON r.listing_id = l.id
+    WHERE r.status = 'pending'
+    ORDER BY r.created_at ASC
+    """)
+    rows = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+    return rows
+
+def approve_review(review_id: str, admin_notes: str = "") -> bool:
+    """Approves a review and updates the listing's average rating in listings table."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+    UPDATE reviews
+    SET status = 'approved', admin_notes = ?, resolved_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+    """, (admin_notes, review_id))
+    if cursor.rowcount == 0:
+        conn.close()
+        return False
+
+    cursor.execute("SELECT listing_id FROM reviews WHERE id = ?", (review_id,))
+    row = cursor.fetchone()
+    if row and row["listing_id"]:
+        lid = row["listing_id"]
+        cursor.execute("SELECT AVG(star_rating) AS avg_stars FROM reviews WHERE listing_id = ? AND status = 'approved'", (lid,))
+        avg_row = cursor.fetchone()
+        if avg_row and avg_row["avg_stars"]:
+            new_rating = f"{round(avg_row['avg_stars'], 1)}"
+            cursor.execute("UPDATE listings SET rating = ? WHERE id = ?", (new_rating, lid))
+
+    conn.commit()
+    conn.close()
+    return True
+
+def reject_review(review_id: str, admin_notes: str = "") -> bool:
+    """Rejects a review."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+    UPDATE reviews
+    SET status = 'rejected', admin_notes = ?, resolved_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+    """, (admin_notes, review_id))
+    success = cursor.rowcount > 0
+    conn.commit()
+    conn.close()
+    return success
 

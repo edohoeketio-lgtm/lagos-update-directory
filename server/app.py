@@ -22,7 +22,8 @@ from .db import (
     create_vendor_request, get_admin_vendor_requests, resolve_vendor_request, apply_listing_boost,
     save_review_subscriber, record_payment, get_payment_by_tx_ref, get_payment_by_ref_or_id,
     upsert_user, get_user_by_id, get_user_by_firebase_uid, get_user_by_session,
-    get_vendor_profile_by_user_id, save_vendor_profile, create_user_session
+    get_vendor_profile_by_user_id, save_vendor_profile, create_user_session,
+    create_review, get_public_reviews, get_admin_pending_reviews, approve_review, reject_review
 )
 from .flutterwave import verify_flutterwave_transaction
 from .validators import validate_submission_payload, process_uploaded_photos, is_valid_rc_number
@@ -234,6 +235,15 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
                 "listings": items
             })
 
+        if path.startswith("/api/listings/") and path.endswith("/reviews"):
+            listing_id = path.replace("/api/listings/", "").replace("/reviews", "").strip()
+            data = get_public_reviews(listing_id)
+            return self.send_json(200, {
+                "success": True,
+                "listing_id": listing_id,
+                **data
+            })
+
         if path.startswith("/api/listings/"):
             listing_id = path.replace("/api/listings/", "").strip()
             item = get_listing_by_id(listing_id)
@@ -262,6 +272,9 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
             cursor.execute("SELECT COUNT(*) AS apps_today FROM submissions WHERE (date(created_at) = date('now', 'localtime') OR date(created_at) = ?) AND payment_status = 'paid';", (today_str,))
             submissions_today = cursor.fetchone()["apps_today"]
 
+            cursor.execute("SELECT COUNT(*) AS pending_revs FROM reviews WHERE status = 'pending';")
+            pending_reviews = cursor.fetchone()["pending_revs"]
+
             conn.close()
 
             return self.send_json(200, {
@@ -270,7 +283,8 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
                 "total_listings": total_listings,
                 "featured_spots": total_featured,
                 "total_pending": total_pending,
-                "submissions_today": submissions_today
+                "submissions_today": submissions_today,
+                "pending_reviews": pending_reviews
             })
 
         if path == "/api/admin/submissions":
@@ -312,6 +326,16 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
         if path == "/api/admin/requests":
             reqs = get_admin_vendor_requests()
             return self.send_json(200, {"success": True, "requests": reqs})
+
+        if path == "/api/admin/reviews":
+            if not self.is_admin_authorized():
+                return self.send_json(401, {"error": "Unauthorized. Invalid admin passkey."})
+            reviews = get_admin_pending_reviews()
+            return self.send_json(200, {
+                "success": True,
+                "count": len(reviews),
+                "reviews": reviews
+            })
 
         # -----------------------------
         # Static Frontend Route Mapping
@@ -516,6 +540,37 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
                 "vendor_profile": profile
             })
 
+        if path == "/api/reviews":
+            body = self.parse_json_body()
+            user = self.get_authenticated_user()
+            if not user:
+                return self.send_json(401, {"error": "Authentication required. Please sign in to leave a review."})
+            if not body:
+                return self.send_json(400, {"error": "Missing review payload."})
+
+            listing_id = (body.get("listing_id") or "").strip()
+            comment = (body.get("comment") or "").strip()
+            try:
+                star_rating = int(body.get("star_rating", 0))
+            except (ValueError, TypeError):
+                star_rating = 0
+
+            if not listing_id:
+                return self.send_json(422, {"error": "Listing ID is required."})
+            if star_rating < 1 or star_rating > 5:
+                return self.send_json(422, {"error": "Star rating must be between 1 and 5."})
+            if len(comment) < 5:
+                return self.send_json(422, {"error": "Review comment must be at least 5 characters."})
+
+            user_id = user.get("id") or user.get("user_id")
+            review = create_review(user_id=user_id, listing_id=listing_id, star_rating=star_rating, comment=comment)
+
+            return self.send_json(201, {
+                "success": True,
+                "message": "Thank you! Your review has been submitted for editorial moderation.",
+                "review": review
+            })
+
         # Vendor Auth Routes
         if path == "/api/vendor/register":
             body = self.parse_json_body()
@@ -651,6 +706,26 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
             if not ok:
                 return self.send_json(404, {"error": err})
             return self.send_json(200, {"success": True, "message": "Request rejected."})
+
+        if path.startswith("/api/admin/reviews/") and path.endswith("/approve"):
+            parts = path.split("/")
+            rev_id = parts[4]
+            body = self.parse_json_body() or {}
+            admin_notes = body.get("admin_notes", "")
+            ok = approve_review(rev_id, admin_notes)
+            if not ok:
+                return self.send_json(404, {"error": "Review not found or could not be approved."})
+            return self.send_json(200, {"success": True, "message": "Review approved and published."})
+
+        if path.startswith("/api/admin/reviews/") and path.endswith("/reject"):
+            parts = path.split("/")
+            rev_id = parts[4]
+            body = self.parse_json_body() or {}
+            admin_notes = body.get("admin_notes", "")
+            ok = reject_review(rev_id, admin_notes)
+            if not ok:
+                return self.send_json(404, {"error": "Review not found or could not be rejected."})
+            return self.send_json(200, {"success": True, "message": "Review rejected."})
 
         if path.startswith("/api/admin/listings/") and path.endswith("/boost"):
             parts = path.split("/")

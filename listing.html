@@ -591,6 +591,161 @@
       color: var(--text-muted);
     }
 
+    /* Verified Reviews Listing Cards */
+    .reviews-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 20px;
+    }
+    .review-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-hairline);
+      border-radius: 12px;
+      padding: 18px 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .review-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .review-user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .review-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #FFD400;
+      color: #111827;
+      font-weight: 800;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .review-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .review-user-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #111827;
+    }
+    .review-date {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .review-pill-verified {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #E8F5E9;
+      color: #008A05;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 9999px;
+    }
+    .review-stars {
+      color: #F59E0B;
+      font-size: 15px;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+    .review-content {
+      font-size: 14px;
+      color: #374151;
+      line-height: 1.6;
+      margin: 0;
+    }
+    /* Interactive Star Picker */
+    .star-picker {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin: 12px 0 16px;
+    }
+    .star-btn {
+      background: none;
+      border: none;
+      font-size: 34px;
+      color: #D1D5DB;
+      cursor: pointer;
+      transition: transform 0.1s ease, color 0.15s ease;
+      padding: 0 4px;
+      line-height: 1;
+    }
+    .star-btn:hover, .star-btn.active {
+      color: #F59E0B;
+      transform: scale(1.15);
+    }
+    .review-form-textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1.5px solid #E5E7EB;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-family: inherit;
+      font-size: 14px !important;
+      resize: vertical;
+      min-height: 90px;
+      margin-bottom: 14px;
+      outline: none;
+    }
+    .review-form-textarea:focus {
+      border-color: #FFD400;
+      background: #FFFFFF;
+    }
+    .btn-submit-review {
+      width: 100%;
+      background: #111827;
+      color: #FFFFFF;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      font-family: inherit;
+    }
+    .btn-submit-review:hover {
+      background: #000000;
+    }
+    .btn-google-review {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: #FFFFFF;
+      border: 1.5px solid #E5E7EB;
+      color: #1F2937;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      transition: background 0.15s ease;
+    }
+    .btn-google-review:hover {
+      background: #F9FAFB;
+      border-color: #D1D5DB;
+    }
+
     /* Mobile Leave-A-Review Drawer / Modal */
     .review-drawer-backdrop {
       display: none;
@@ -1013,10 +1168,10 @@
 
         <div class="reviews-header">
           <div>
-            <div class="reviews-title">Reviews</div>
-            <div class="reviews-count" id="reviews-count">No reviews yet. Be the first.</div>
+            <div class="reviews-title">Customer Reviews</div>
+            <div class="reviews-count" id="reviews-count">Loading verified reviews…</div>
           </div>
-          <button class="btn-review" id="btn-leave-review" onclick="openReviewPanel()" aria-expanded="false" aria-controls="review-panel" aria-haspopup="dialog">★ Leave a Review</button>
+          <button class="btn-review" id="btn-leave-review" onclick="openReviewPanel()" aria-expanded="false" aria-controls="review-panel" aria-haspopup="dialog">★ Write a Review</button>
         </div>
 
         <!-- Star summary -->
@@ -1027,41 +1182,53 @@
           <span class="star filled">★</span>
           <span class="star filled">★</span>
         </div>
-        <div class="review-avg">Vetted Operator • Lagos Updates Directory</div>
+        <div class="review-avg" id="review-avg-desc">Vetted Operator • Lagos Updates Directory</div>
+
+        <!-- LIST OF APPROVED REVIEWS -->
+        <div id="reviews-list-container" class="reviews-list">
+          <!-- Injected dynamically by reviews script -->
+        </div>
 
         <!-- MOBILE LEAVE-A-REVIEW DRAWER BACKDROP & CONTAINER -->
         <div class="review-drawer-backdrop" id="review-drawer-backdrop" onclick="openReviewPanel()" aria-hidden="true"></div>
 
-        <div class="review-coming-soon review-drawer" id="review-panel" role="dialog" aria-modal="true" aria-labelledby="review-drawer-heading" style="display:none; margin-top:24px;">
+        <div class="review-coming-soon review-drawer" id="review-panel" role="dialog" aria-modal="true" aria-labelledby="review-drawer-heading" style="display:none; margin-top:24px; text-align:left;">
           <div class="drawer-handle-bar" aria-hidden="true">
             <div class="drawer-handle"></div>
           </div>
           <div class="drawer-header">
             <div class="drawer-title-wrap">
-              <span class="drawer-emoji" aria-hidden="true">📝</span>
-              <h3 id="review-drawer-heading">Reviews Coming Soon</h3>
+              <span class="drawer-emoji" aria-hidden="true">★</span>
+              <h3 id="review-drawer-heading">Write a Verified Review</h3>
             </div>
             <button type="button" class="drawer-close-btn" onclick="openReviewPanel()" aria-label="Close review drawer">✕</button>
           </div>
           <div class="drawer-body">
-            <div class="review-coming-soon-icon" aria-hidden="true">📝</div>
-            <h3 class="desktop-only-title">Reviews are coming soon</h3>
-            <p>We're building an authentic, verified review system. Every review will be checked by the Lagos Updates team before it goes live. No spam, no fake ratings.</p>
-            <div class="review-notify-row">
-              <input
-                type="tel"
-                id="review-notify-input"
-                class="review-notify-input"
-                placeholder="Your WhatsApp number (e.g. 0803…)"
-                aria-label="WhatsApp number for review notifications"
-                style="font-size: 16px;"
-              >
-              <button class="review-notify-btn" onclick="submitNotify()" aria-label="Notify me when reviews open">Notify me</button>
+            <p style="font-size:14px; color:#4B5563; margin-bottom:14px;">Share your real experience with this business. Every review is checked by Lagos Updates editors before publishing.</p>
+            
+            <label style="font-size:13px; font-weight:700; color:#111827; display:block; text-align:center;">Select Rating</label>
+            <div class="star-picker" id="star-picker" role="radiogroup" aria-label="Rating out of 5 stars">
+              <button type="button" class="star-btn" data-rating="1" aria-label="1 star">★</button>
+              <button type="button" class="star-btn" data-rating="2" aria-label="2 stars">★</button>
+              <button type="button" class="star-btn" data-rating="3" aria-label="3 stars">★</button>
+              <button type="button" class="star-btn" data-rating="4" aria-label="4 stars">★</button>
+              <button type="button" class="star-btn active" data-rating="5" aria-label="5 stars">★</button>
             </div>
-            <div class="review-notify-sent" id="review-notify-sent" role="status">Got it. We'll let you know when reviews go live. ✓</div>
-            <div class="review-moderation-note">
+            <input type="hidden" id="review-selected-stars" value="5">
+
+            <label for="review-comment-input" style="font-size:13px; font-weight:700; color:#111827; display:block; margin-bottom:6px;">Your Review</label>
+            <textarea id="review-comment-input" class="review-form-textarea" placeholder="Describe the ambiance, customer service, pricing, and quality of your visit..." rows="3"></textarea>
+
+            <!-- Reviewer Auth Status -->
+            <div id="review-auth-container" style="margin-bottom:14px;"></div>
+
+            <div id="review-submit-status" style="display:none; font-size:13px; font-weight:600; padding:10px 14px; border-radius:8px; margin-bottom:12px;"></div>
+
+            <button type="button" id="btn-submit-review" class="btn-submit-review" onclick="submitReview()">Submit Review for Moderation</button>
+
+            <div class="review-moderation-note" style="margin-top:16px;">
               <span aria-hidden="true">🔒</span>
-              <span><strong>How it works:</strong> When reviews launch, you'll submit your experience and our team verifies it before publishing. Your phone number is only used to confirm authentic visits.</span>
+              <span><strong>Community Protection:</strong> Every review is checked by editorial staff before publishing. False ratings, bot submissions, or abuse are systematically discarded.</span>
             </div>
           </div>
         </div>
@@ -1122,6 +1289,13 @@
     });
   </script>
   <script>
+    let currentListingId = null;
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
     function openReviewPanel() {
       const panel = document.getElementById('review-panel');
       const btn   = document.getElementById('btn-leave-review');
@@ -1131,17 +1305,240 @@
       if (isOpen) {
         panel.style.display = 'none';
         if (backdrop) backdrop.classList.remove('active');
-        btn.textContent = '★ Leave a Review';
+        btn.textContent = '★ Write a Review';
         btn.setAttribute('aria-expanded', 'false');
       } else {
         panel.style.display = 'block';
         if (backdrop) backdrop.classList.add('active');
         btn.textContent = '✕ Close';
         btn.setAttribute('aria-expanded', 'true');
+        updateReviewAuthUI();
         if (typeof window.trackEvent === 'function') {
-          const params = new URLSearchParams(window.location.search);
-          window.trackEvent('review_panel_opened', { listing_id: params.get('id') || 'unknown' });
+          window.trackEvent('review_panel_opened', { listing_id: currentListingId || 'unknown' });
         }
+      }
+    }
+
+    function initStarPicker() {
+      const picker = document.getElementById('star-picker');
+      const hiddenInput = document.getElementById('review-selected-stars');
+      if (!picker) return;
+
+      const stars = picker.querySelectorAll('.star-btn');
+      stars.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const rating = parseInt(btn.dataset.rating, 10);
+          hiddenInput.value = rating;
+          stars.forEach(s => {
+            const r = parseInt(s.dataset.rating, 10);
+            s.classList.toggle('active', r <= rating);
+          });
+        });
+      });
+    }
+
+    function updateReviewAuthUI() {
+      const authBox = document.getElementById('review-auth-container');
+      const submitBtn = document.getElementById('btn-submit-review');
+      if (!authBox) return;
+
+      let user = null;
+      if (window.LagosAuth && typeof window.LagosAuth.getUser === 'function') {
+        user = window.LagosAuth.getUser();
+      }
+      if (!user) {
+        try {
+          user = JSON.parse(localStorage.getItem('lagos_auth_user') || 'null');
+        } catch (_) {}
+      }
+
+      if (user && (user.email || user.display_name)) {
+        const name = user.display_name || user.email.split('@')[0];
+        authBox.innerHTML = `
+          <div style="display:flex; align-items:center; gap:10px; background:#F9FAFB; padding:10px 14px; border-radius:10px; border:1px solid #E5E7EB;">
+            <div class="review-avatar" style="width:30px; height:30px; font-size:12px;">${name.charAt(0).toUpperCase()}</div>
+            <div style="font-size:13px; color:#374151;">
+              Posting as <strong>${escapeHtml(name)}</strong>
+              <span style="font-size:11px; color:#6B7280; display:block;">(${escapeHtml(user.email)})</span>
+            </div>
+          </div>
+        `;
+        if (submitBtn) {
+          submitBtn.style.display = 'block';
+          submitBtn.textContent = 'Submit Review for Moderation';
+        }
+      } else {
+        authBox.innerHTML = `
+          <div style="background:#F9FAFB; padding:14px; border-radius:10px; border:1px solid #E5E7EB; text-align:center;">
+            <p style="font-size:13px; color:#4B5563; margin-bottom:10px; line-height:1.4;">Sign in to link your authentic profile and submit your verified review.</p>
+            <button type="button" class="btn-google-review" onclick="handleReviewSignIn()">
+              <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+              Sign in with Google to Review
+            </button>
+          </div>
+        `;
+        if (submitBtn) {
+          submitBtn.style.display = 'none';
+        }
+      }
+    }
+
+    async function handleReviewSignIn() {
+      try {
+        if (window.LagosAuth && typeof window.LagosAuth.signInWithGoogle === 'function') {
+          await window.LagosAuth.signInWithGoogle();
+          updateReviewAuthUI();
+        }
+      } catch (err) {
+        console.error('Sign-in error:', err);
+      }
+    }
+
+    async function submitReview() {
+      const commentEl = document.getElementById('review-comment-input');
+      const starsEl = document.getElementById('review-selected-stars');
+      const statusEl = document.getElementById('review-submit-status');
+      const submitBtn = document.getElementById('btn-submit-review');
+
+      const comment = (commentEl ? commentEl.value : '').trim();
+      const stars = parseInt(starsEl ? starsEl.value : 5, 10);
+
+      if (comment.length < 5) {
+        statusEl.style.display = 'block';
+        statusEl.style.background = '#FEE2E2';
+        statusEl.style.color = '#DC2626';
+        statusEl.textContent = 'Please write at least a few words describing your experience (min 5 characters).';
+        return;
+      }
+
+      let token = (window.LagosAuth && window.LagosAuth.getToken()) || localStorage.getItem('lagos_session_token') || '';
+      if (!token) {
+        statusEl.style.display = 'block';
+        statusEl.style.background = '#FEE2E2';
+        statusEl.style.color = '#DC2626';
+        statusEl.textContent = 'Please sign in first to submit your verified review.';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting…';
+
+      try {
+        const res = await fetch('/api/reviews', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            listing_id: currentListingId,
+            star_rating: stars,
+            comment: comment
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          statusEl.style.display = 'block';
+          statusEl.style.background = '#ECFDF5';
+          statusEl.style.color = '#065F46';
+          statusEl.textContent = '✓ ' + data.message;
+          commentEl.value = '';
+          submitBtn.style.display = 'none';
+
+          if (typeof window.trackEvent === 'function') {
+            window.trackEvent('review_submitted', { listing_id: currentListingId, star_rating: stars });
+          }
+        } else {
+          statusEl.style.display = 'block';
+          statusEl.style.background = '#FEE2E2';
+          statusEl.style.color = '#DC2626';
+          statusEl.textContent = data.error || 'Failed to submit review. Please try again.';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit Review for Moderation';
+        }
+      } catch (err) {
+        statusEl.style.display = 'block';
+        statusEl.style.background = '#FEE2E2';
+        statusEl.style.color = '#DC2626';
+        statusEl.textContent = 'Network error submitting review.';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Review for Moderation';
+      }
+    }
+
+    async function loadReviews(listingId) {
+      currentListingId = listingId;
+      const countEl = document.getElementById('reviews-count');
+      const starSummaryEl = document.getElementById('star-summary');
+      const descEl = document.getElementById('review-avg-desc');
+      const listEl = document.getElementById('reviews-list-container');
+
+      try {
+        const res = await fetch(`/api/listings/${encodeURIComponent(listingId)}/reviews`);
+        if (!res.ok) throw new Error('Could not fetch reviews');
+        const data = await res.json();
+        const reviews = data.reviews || [];
+        const avg = data.average_rating || 0;
+        const total = data.count || 0;
+
+        if (total > 0) {
+          if (countEl) countEl.textContent = `${avg} ★ based on ${total} verified customer review${total === 1 ? '' : 's'}`;
+          if (descEl) descEl.textContent = `Verified Reviews • ${avg} / 5.0 Rating`;
+
+          // Fill stars based on avg rating
+          if (starSummaryEl) {
+            starSummaryEl.innerHTML = '';
+            for (let i = 1; i <= 5; i++) {
+              const starSpan = document.createElement('span');
+              starSpan.className = `star ${i <= Math.round(avg) ? 'filled' : ''}`;
+              starSpan.textContent = '★';
+              starSummaryEl.appendChild(starSpan);
+            }
+          }
+
+          if (listEl) {
+            listEl.innerHTML = '';
+            reviews.forEach(r => {
+              const card = document.createElement('div');
+              card.className = 'review-card';
+              const initial = (r.author_name || 'V').charAt(0).toUpperCase();
+              const starsHtml = '★'.repeat(r.star_rating) + '☆'.repeat(5 - r.star_rating);
+              const dateStr = r.created_at ? new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+
+              card.innerHTML = `
+                <div class="review-card-top">
+                  <div class="review-user-info">
+                    <div class="review-avatar">
+                      ${r.photo_url ? `<img src="${escapeHtml(r.photo_url)}" alt="${escapeHtml(r.author_name)}">` : initial}
+                    </div>
+                    <div>
+                      <div class="review-user-name">${escapeHtml(r.author_name)}</div>
+                      <div class="review-date">${dateStr}</div>
+                    </div>
+                  </div>
+                  <span class="review-pill-verified">✓ Verified Experience</span>
+                </div>
+                <div class="review-stars">${starsHtml}</div>
+                <p class="review-content">${escapeHtml(r.comment)}</p>
+              `;
+              listEl.appendChild(card);
+            });
+          }
+        } else {
+          if (countEl) countEl.textContent = 'No reviews yet. Be the first to share your experience!';
+          if (listEl) {
+            listEl.innerHTML = `
+              <div style="background:#F9FAFB; border:1px dashed #E5E7EB; border-radius:12px; padding:24px; text-align:center; color:#6B7280; font-size:14px;">
+                <span style="font-size:24px; display:block; margin-bottom:8px;">✍️</span>
+                Have you visited this spot? Click <strong>★ Write a Review</strong> above to let others know!
+              </div>
+            `;
+          }
+        }
+      } catch (err) {
+        console.warn('Reviews loading fallback:', err);
+        if (countEl) countEl.textContent = 'Verified operator on Lagos Updates Directory.';
       }
     }
 
@@ -1154,32 +1551,17 @@
       }
     });
 
-    async function submitNotify() {
-      const input = document.getElementById('review-notify-input');
-      const sent  = document.getElementById('review-notify-sent');
-      const val   = input.value.trim();
-      if (!val) { input.focus(); return; }
-      
+    document.addEventListener('DOMContentLoaded', () => {
+      initStarPicker();
       const params = new URLSearchParams(window.location.search);
-      const listingId = params.get('id') || 'unknown';
-
-      if (typeof window.trackEvent === 'function') {
-        window.trackEvent('review_notify_subscribed', { listing_id: listingId });
+      const listingId = params.get('id');
+      if (listingId) {
+        loadReviews(listingId);
       }
-
-      try {
-        await fetch(`/api/listings/${listingId}/notify-reviews`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone: val })
-        });
-      } catch (_) {}
-
-      input.style.display   = 'none';
-      const notifyBtn = document.querySelector('.review-notify-btn');
-      if (notifyBtn) notifyBtn.style.display = 'none';
-      sent.style.display    = 'block';
-    }
+      if (window.LagosAuth && typeof window.LagosAuth.onAuthStateChanged === 'function') {
+        window.LagosAuth.onAuthStateChanged(() => updateReviewAuthUI());
+      }
+    });
   </script>
 </body>
 </html>
