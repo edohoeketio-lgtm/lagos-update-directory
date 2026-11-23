@@ -32,6 +32,7 @@ from .email_service import (
     dispatch_submission_email,
     send_account_creation_email,
     send_submission_rejection_email,
+    send_submission_accepted_email,
     send_submission_approved_email,
     send_vendor_offer_email
 )
@@ -266,10 +267,10 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
             cursor.execute("SELECT COUNT(*) AS featured FROM listings WHERE promoted = 1;")
             total_featured = cursor.fetchone()["featured"]
 
-            cursor.execute("SELECT COUNT(*) AS pending FROM submissions WHERE status = 'pending' AND payment_status = 'paid';")
+            cursor.execute("SELECT COUNT(*) AS pending FROM submissions WHERE status IN ('pending', 'accepted');")
             total_pending = cursor.fetchone()["pending"]
 
-            cursor.execute("SELECT COUNT(*) AS apps_today FROM submissions WHERE (date(created_at) = date('now', 'localtime') OR date(created_at) = ?) AND payment_status = 'paid';", (today_str,))
+            cursor.execute("SELECT COUNT(*) AS apps_today FROM submissions WHERE (date(created_at) = date('now', 'localtime') OR date(created_at) = ?);", (today_str,))
             submissions_today = cursor.fetchone()["apps_today"]
 
             cursor.execute("SELECT COUNT(*) AS pending_revs FROM reviews WHERE status = 'pending';")
@@ -290,7 +291,7 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
         if path == "/api/admin/submissions":
             conn = get_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM submissions WHERE payment_status = 'paid' ORDER BY created_at DESC LIMIT 50;")
+            cursor.execute("SELECT * FROM submissions ORDER BY created_at DESC LIMIT 50;")
             rows = cursor.fetchall()
             conn.close()
             submissions = []
@@ -302,6 +303,22 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
                     item["photos"] = []
                 submissions.append(item)
             return self.send_json(200, {"success": True, "count": len(submissions), "submissions": submissions})
+
+        if path.startswith("/api/submissions/") and path.endswith("/public"):
+            parts = path.split("/")
+            sub_id = parts[3]
+            conn = get_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, business_name, plan_tier, status, payment_status, contact_email, rc_number, whatsapp FROM submissions WHERE id = ?", (sub_id,))
+            sub = cursor.fetchone()
+            conn.close()
+            if not sub:
+                return self.send_json(404, {"error": "Application not found"})
+            sub_dict = dict(sub)
+            tier = sub_dict.get("plan_tier") or "verified"
+            amount = 60000 if tier in ["featured", "featured_1w"] else 30000
+            sub_dict["amount"] = amount
+            return self.send_json(200, {"success": True, "submission": sub_dict})
 
         if path == "/api/vendor/me":
             vendor = self.get_authenticated_vendor()
@@ -426,14 +443,31 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
 
             pay_id = record_payment(payment_record)
 
-            # If this is a paid business listing application, dispatch admin email notification now
+            # If this is a paid business listing application, update payment and publish live if accepted
             if payment_type == "submission" and target_id:
                 try:
                     conn = get_connection()
                     cursor = conn.cursor()
+                    cursor.execute("UPDATE submissions SET payment_status = 'paid', payment_tx_ref = ?, payment_amount = ? WHERE id = ?", (final_tx_ref, payment_record["amount"], target_id))
+                    conn.commit()
                     cursor.execute("SELECT * FROM submissions WHERE id = ?", (target_id,))
                     sub_row = cursor.fetchone()
                     conn.close()
+
+                    # If accepted by editorial team, auto-publish live to directory upon payment confirmation
+                    if sub_row and sub_row["status"] in ("accepted", "approved"):
+                        live_res = approve_submission(target_id)
+                        if live_res and live_res.get("contact_email"):
+                            try:
+                                send_submission_approved_email(
+                                    live_res["contact_email"],
+                                    live_res["business_name"],
+                                    live_res["listing_id"],
+                                    live_res["plan_tier"]
+                                )
+                            except Exception as ex_mail:
+                                print("[Live Email Error]:", ex_mail)
+
                     if sub_row and not sub_row["email_sent"]:
                         photos_list = []
                         try:
@@ -778,6 +812,46 @@ class DirectoryAppHandler(http.server.SimpleHTTPRequestHandler):
                 return self.send_json(400, {"error": "Phone number required."})
             sub_id = save_review_subscriber(listing_id, phone)
             return self.send_json(200, {"success": True, "message": "Notification saved! We will notify you via WhatsApp."})
+
+        if path.startswith("/api/admin/submissions/") and path.endswith("/accept"):
+            parts = path.split("/")
+            sub_id = parts[4]
+            params = urllib.parse.parse_qs(parsed.query)
+            featured = params.get("featured", ["0"])[0] in ["1", "true"]
+            plan_tier = "featured" if featured else "verified"
+            amount_ngn = 60000 if featured else 30000
+
+            conn = get_connection()
+            cursor = conn.cursor()
+            cursor.execute("UPDATE submissions SET status = 'accepted', plan_tier = ?, payment_status = 'unpaid' WHERE id = ?", (plan_tier, sub_id))
+            conn.commit()
+            cursor.execute("SELECT * FROM submissions WHERE id = ?", (sub_id,))
+            sub = cursor.fetchone()
+            conn.close()
+
+            if not sub:
+                return self.send_json(404, {"error": "Submission not found"})
+
+            # Dispatch acceptance email with payment activation link
+            if sub["contact_email"]:
+                try:
+                    send_submission_accepted_email(
+                        sub["contact_email"],
+                        sub["business_name"],
+                        sub_id,
+                        plan_tier=plan_tier,
+                        amount_ngn=amount_ngn
+                    )
+                except Exception as ex:
+                    print("[Email Error - Acceptance]:", ex)
+
+            return self.send_json(200, {
+                "success": True,
+                "message": f"Application accepted! Invoice and payment link dispatched to {sub['contact_email']}.",
+                "submission_id": sub_id,
+                "status": "accepted",
+                "amount": amount_ngn
+            })
 
         if path.startswith("/api/admin/submissions/") and path.endswith("/approve"):
             parts = path.split("/")

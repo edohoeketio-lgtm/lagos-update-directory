@@ -823,6 +823,42 @@
         });
       }
 
+      // Check for accepted submissions awaiting payment
+      const acceptedSubmissions = currentSubmissions.filter(s => s.status === 'accepted' && s.payment_status !== 'paid');
+      if (acceptedSubmissions.length > 0) {
+        acceptedSubmissions.forEach(sub => {
+          const isFeatured = sub.plan_tier === 'featured' || sub.plan_tier === 'featured_1w';
+          const feeNgn = isFeatured ? '₦60,000' : '₦30,000';
+          const tierTitle = isFeatured ? '⭐ Featured Placement (Top of Feed)' : '✓ Standard Verified Business Listing';
+
+          const banner = document.createElement('div');
+          banner.id = `sub-pay-banner-${sub.id}`;
+          banner.style.cssText = 'background: linear-gradient(135deg, #FFFDF0 0%, #FEF9C3 100%); border: 2px solid #F59E0B; border-radius: 16px; padding: 22px 24px; margin-bottom: 22px; box-shadow: 0 4px 14px rgba(245,158,11,0.12); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;';
+          banner.innerHTML = `
+            <div style="flex: 1; min-width: 280px;">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <span style="font-size: 1.3rem;">🎉</span>
+                <span style="font-weight: 800; font-size: 1.15rem; color: #92400E;">Application Approved: <strong>${escapeHtml(sub.business_name)}</strong></span>
+              </div>
+              <div style="font-size: 0.88rem; color: #78350F; line-height: 1.5; margin-bottom: 8px;">
+                Congratulations! Your CAC registration and business credentials have been officially approved. Complete your one-time activation fee to publish your listing live across Lagos immediately.
+              </div>
+              <div style="font-size: 0.82rem; color: #B45309; display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+                <span>Ref: <code style="background: #FEF3C7; padding: 2px 6px; border-radius: 4px; font-weight: 700;">${(sub.ref_id || sub.id).slice(0, 8).toUpperCase()}</code></span>
+                <span>Tier: <strong>${tierTitle}</strong></span>
+                <span>Activation Fee: <strong style="color: #047857; font-size: 0.95rem;">${feeNgn}</strong></span>
+              </div>
+            </div>
+            <div>
+              <button type="button" onclick="triggerSubmissionPayment('${sub.id}')" style="background: #FFD400; color: #111827; font-weight: 800; font-size: 0.95rem; border: none; padding: 14px 26px; border-radius: 9999px; cursor: pointer; box-shadow: 0 4px 12px rgba(255,212,0,0.4); display: inline-flex; align-items: center; gap: 8px;">
+                💳 Pay ${feeNgn} & Go Live &rarr;
+              </button>
+            </div>
+          `;
+          listEl.appendChild(banner);
+        });
+      }
+
       // Check for pending submissions
       const pendingSubmissions = currentSubmissions.filter(s => s.status === 'pending');
       if (pendingSubmissions.length > 0) {
@@ -832,21 +868,21 @@
           banner.innerHTML = `
             <div>
               <div style="font-weight:800; font-size:1.05rem; color:#166534; display:flex; align-items:center; gap:8px;">
-                <span>🌿</span> Application Received: <strong>${sub.business_name}</strong>
+                <span>🌿</span> Application Received: <strong>${escapeHtml(sub.business_name)}</strong>
               </div>
               <div style="font-size:0.85rem; color:#15803D; margin-top:5px; line-height:1.5;">
-                Reference: <code style="background:#DCFCE7; padding:2px 6px; border-radius:4px; font-weight:700;">${sub.ref_id || sub.id}</code> &middot; 
-                Area: <b>${sub.area}</b> &middot; 
-                Category: <b>${sub.category}</b> &middot; 
-                Payment: <b>${sub.payment_status === 'paid' ? '💳 Confirmed via Flutterwave' : 'Pending Confirmation'}</b>
+                Reference: <code style="background:#DCFCE7; padding:2px 6px; border-radius:4px; font-weight:700;">${(sub.ref_id || sub.id).slice(0, 8).toUpperCase()}</code> &middot; 
+                Area: <b>${escapeHtml(sub.area)}</b> &middot; 
+                Category: <b>${escapeHtml(sub.category)}</b> &middot; 
+                Status: <b>Under Editorial Review</b>
               </div>
               <div style="font-size:0.82rem; color:#4B5563; margin-top:4px;">
-                Your application is in the admin review queue. Our team is doing a quick editorial check and it will go live shortly!
+                Our editorial team is reviewing your CAC credentials and business details. Once approved, you will receive an invoice email with a link to activate your listing!
               </div>
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
               <span style="font-size:0.8rem; font-weight:700; background:#DCFCE7; color:#166534; padding:6px 14px; border-radius:9999px; border:1px solid #86EFAC;">
-                In Editorial Review &bull; Going Live Soon
+                In Editorial Review (Free)
               </span>
             </div>
           `;
@@ -854,7 +890,7 @@
         });
       }
 
-      if (currentListings.length === 0 && pendingSubmissions.length === 0) {
+      if (currentListings.length === 0 && pendingSubmissions.length === 0 && acceptedSubmissions.length === 0) {
         listEl.innerHTML = `
           <div class="listing-box" style="text-align:center;padding:48px;">
             <div style="font-size:2.5rem;margin-bottom:12px;">🏢</div>
@@ -865,7 +901,7 @@
             <a href="/index.html?action=list_business" class="btn-vendor-primary" style="display:inline-block;width:auto;padding:12px 24px;text-decoration:none;">+ List Your Business</a>
           </div>`;
         return;
-      } else if (currentListings.length === 0 && pendingSubmissions.length > 0) {
+      } else if (currentListings.length === 0 && pendingSubmissions.length > 0 && acceptedSubmissions.length === 0) {
         const infoBox = document.createElement('div');
         infoBox.className = 'listing-box';
         infoBox.style.cssText = 'text-align:center; padding:36px 24px; background:#F9FAFB; border:1px solid #E5E7EB;';
@@ -873,7 +909,7 @@
           <div style="font-size:2rem; margin-bottom:8px;">✨</div>
           <h3 style="font-size:1.15rem; font-weight:800; margin-bottom:6px; color:#111;">Your Spot is in the Lagos Review Queue</h3>
           <p style="color:#4B5563; font-size:0.9rem; max-width:480px; margin:0 auto 16px; line-height:1.6;">
-            We've received your submission and payment! Our editorial desk is giving your photos and details a quick look. Once approved, your live listing controls, views analytics, and booking links will appear right here.
+            We've received your business submission! Our editorial desk is verifying your CAC credentials. Once approved, you'll receive your activation invoice to go live.
           </p>
           <a href="/index.html" style="font-size:0.88rem; font-weight:700; color:#111; text-decoration:underline;">← Browse Lagos Updates Directory while waiting</a>
         `;
@@ -1193,9 +1229,116 @@
       }
     }
 
+    function triggerSubmissionPayment(subId) {
+      const sub = currentSubmissions.find(s => s.id === subId);
+      if (!sub) return;
+      const isFeatured = sub.plan_tier === 'featured' || sub.plan_tier === 'featured_1w';
+      const amount = isFeatured ? 60000 : 30000;
+
+      if (typeof window.payWithFlutterwave === 'function') {
+        window.payWithFlutterwave({
+          amount: amount,
+          title: 'Lagos Updates Directory',
+          description: `${isFeatured ? 'Featured Listing' : 'Verified Business Listing'} Activation: ${sub.business_name}`,
+          paymentType: 'submission',
+          targetId: sub.id,
+          customer: {
+            email: sub.contact_email || (currentVendor ? currentVendor.email : ''),
+            name: sub.contact_name || sub.business_name,
+            phone: sub.whatsapp || ''
+          },
+          metadata: {
+            submission_id: sub.id,
+            business_name: sub.business_name,
+            plan_tier: sub.plan_tier
+          },
+          onSuccess: async function(res) {
+            alert(`🎉 Payment confirmed! ${sub.business_name} is now LIVE on Lagos Updates.`);
+            await loadDashboard();
+          },
+          onError: function(err) {
+            alert('Payment verification issue: ' + (err.message || 'Please contact support.'));
+          }
+        });
+      } else {
+        alert('Flutterwave payment gateway is loading. Please check your internet connection and try again.');
+      }
+    }
+
+    function triggerPublicSubmissionPayment(sub) {
+      const isFeatured = sub.plan_tier === 'featured' || sub.plan_tier === 'featured_1w';
+      const amount = isFeatured ? 60000 : 30000;
+
+      if (typeof window.payWithFlutterwave === 'function') {
+        window.payWithFlutterwave({
+          amount: amount,
+          title: 'Lagos Updates Directory',
+          description: `${isFeatured ? 'Featured Listing' : 'Verified Business Listing'} Activation: ${sub.business_name}`,
+          paymentType: 'submission',
+          targetId: sub.id,
+          customer: {
+            email: sub.contact_email || '',
+            name: sub.business_name,
+            phone: sub.whatsapp || ''
+          },
+          metadata: {
+            submission_id: sub.id,
+            business_name: sub.business_name,
+            plan_tier: sub.plan_tier
+          },
+          onSuccess: function(res) {
+            alert(`🎉 Payment confirmed! ${sub.business_name} is now published LIVE on Lagos Updates. You may log in to manage your listing.`);
+            window.location.href = '/vendor.html';
+          },
+          onError: function(err) {
+            alert('Payment issue: ' + (err.message || 'Please contact support.'));
+          }
+        });
+      } else {
+        alert('Flutterwave payment gateway is loading. Please check your internet connection and try again.');
+      }
+    }
+
+    async function checkUrlPaymentIntent() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const action = urlParams.get('action');
+      const subId = urlParams.get('sub_id');
+
+      if (action === 'pay' && subId) {
+        if (currentSubmissions && currentSubmissions.length > 0) {
+          const existing = currentSubmissions.find(s => s.id === subId);
+          if (existing && existing.status === 'accepted' && existing.payment_status !== 'paid') {
+            triggerSubmissionPayment(subId);
+            return;
+          }
+        }
+
+        try {
+          const res = await fetch(`/api/submissions/${subId}/public`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.submission) {
+              const sub = data.submission;
+              if (sub.status === 'accepted' && sub.payment_status !== 'paid') {
+                triggerPublicSubmissionPayment(sub);
+              } else if (sub.payment_status === 'paid' || sub.status === 'approved') {
+                alert(`The listing for "${sub.business_name}" is already activated and published live!`);
+              } else {
+                alert(`Application status is currently "${sub.status}". Payment is only required after editorial approval.`);
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('Payment check error:', e);
+        }
+      }
+    }
+
     // Auto-load if token exists
     if (activeToken) {
-      loadDashboard();
+      loadDashboard().then(() => checkUrlPaymentIntent());
+    } else {
+      checkUrlPaymentIntent();
     }
   </script>
 </body>

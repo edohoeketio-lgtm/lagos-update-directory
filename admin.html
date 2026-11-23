@@ -668,9 +668,17 @@
                 Chat on WhatsApp &rarr;
               </a>
               ${s.status === 'pending' ? `
-                <button type="button" class="btn-approve" onclick="handleApprove('${s.id}', false)">✓ Approve & Publish</button>
-                <button type="button" class="btn-approve-featured" onclick="handleApprove('${s.id}', true)">⭐ Approve as Featured Spot</button>
+                <button type="button" class="btn-approve" onclick="handleAccept('${s.id}', false)">✓ Accept & Send Invoice (₦30k)</button>
+                <button type="button" class="btn-approve-featured" onclick="handleAccept('${s.id}', true)">⭐ Accept as Featured (₦60k)</button>
                 <button type="button" class="btn-reject" onclick="openRejectModal('${s.id}', '${escapeHtml(s.business_name).replace(/'/g, "\\'")}')">✕ Reject</button>
+                <button type="button" style="background:transparent; border:1px dashed #9CA3AF; color:#4B5563; font-size:12px; font-weight:600; padding:6px 10px; border-radius:6px; cursor:pointer;" onclick="handleApprove('${s.id}', false)">⚡ Direct Publish</button>
+              ` : s.status === 'accepted' ? `
+                <span style="font-size: 12px; font-weight: 700; color: #1D4ED8; align-self: center; background: #EFF6FF; padding: 6px 12px; border-radius: 9999px; border: 1px solid #BFDBFE;">⏳ Accepted &bull; Awaiting Vendor Payment</span>
+                <button type="button" class="btn-approve" style="background:#4B5563;" onclick="handleAccept('${s.id}', ${s.plan_tier === 'featured'})">✉ Resend Invoice</button>
+                <button type="button" class="btn-approve" onclick="handleApprove('${s.id}', ${s.plan_tier === 'featured'})">⚡ Force Publish Now</button>
+                <button type="button" class="btn-reject" onclick="openRejectModal('${s.id}', '${escapeHtml(s.business_name).replace(/'/g, "\\'")}')">✕ Reject</button>
+              ` : s.status === 'rejected' ? `
+                <span style="font-size: 12px; font-weight: 700; color: #991B1B; align-self: center; background:#FEE2E2; padding:5px 12px; border-radius:9999px;">✕ Application Rejected</span>
               ` : `
                 <span style="font-size: 13px; font-weight: 700; color: #008A05; align-self: center;">✓ Active in Live Directory</span>
               `}
@@ -681,6 +689,26 @@
 
       } catch (err) {
         listEl.innerHTML = '<div class="empty-state">Failed to load submissions. Please ensure backend is running.</div>';
+      }
+    }
+
+    async function handleAccept(subId, featured) {
+      const planName = featured ? 'FEATURED SPOT (₦60,000)' : 'STANDARD VERIFIED (₦30,000)';
+      if (!confirm(`Accept this business application under ${planName} and dispatch the official invoice & payment link email to the vendor?`)) return;
+
+      try {
+        const res = await adminFetch(`/api/admin/submissions/${subId}/accept?featured=${featured ? '1' : '0'}`, {
+          method: 'POST'
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('✓ ' + data.message);
+          loadSubmissions();
+        } else {
+          alert('Error: ' + (data.error || 'Failed to accept application'));
+        }
+      } catch (err) {
+        alert('Connection error');
       }
     }
 

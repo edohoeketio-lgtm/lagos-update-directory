@@ -507,7 +507,11 @@
         <!-- STEP 3: CONTACT & PLAN SELECTION -->
         <div class="modal-body modal-step" id="modal-step-3" style="display: none;">
           <div class="modal-step-title">Contact & Placement Plan</div>
-          <div class="modal-step-sub">Step 3 of 3 &middot; Finalize your application</div>
+          <div class="modal-step-sub">Step 3 of 3 &middot; Free Application &bull; Pay Only After Approval</div>
+
+          <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:13px; color:#1E40AF; line-height:1.5;">
+            🔒 <strong>Zero Upfront Payment:</strong> Applications are reviewed for free. You will only receive an invoice link once your CAC credentials and photos are officially accepted.
+          </div>
 
           <!-- HONEYPOT BOT TRAP -->
           <input type="text" id="form-hp" style="display:none;" tabindex="-1" autocomplete="off">
@@ -525,12 +529,12 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Select Placement Tier</label>
+            <label class="form-label">Desired Placement Tier (Billed upon Acceptance)</label>
             <div class="plan-selection-grid" style="grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));">
               
               <div class="plan-card active" data-plan="verified" id="card-plan-verified">
                 <span class="plan-card-tag verified">Standard Verified</span>
-                <div class="plan-card-name" style="font-size:1.15rem;font-weight:800;margin:6px 0 2px;">₦30,000 <span style="font-size:0.78rem;font-weight:normal;color:#717171;">/ month</span></div>
+                <div class="plan-card-name" style="font-size:1.15rem;font-weight:800;margin:6px 0 2px;">₦30,000 <span style="font-size:0.78rem;font-weight:normal;color:#717171;">one-time</span></div>
                 <div class="plan-card-desc">Editorial vetting by Lagos Updates team, verified badge, listed in category directory with direct WhatsApp leads.</div>
               </div>
 
@@ -554,10 +558,10 @@
         <div class="modal-body" id="modal-step-success" style="display: none;">
           <div class="modal-success-box">
             <div class="modal-success-icon" style="background:#ECFDF5; color:#059669; border-radius:50%; width:64px; height:64px; display:flex; align-items:center; justify-content:center; font-size:28px; margin:0 auto 16px;">✓</div>
-            <h3 style="font-size:20px; font-weight:800; margin-bottom:8px;">You're All Set! Application Received</h3>
-            <p style="font-size:14px; line-height:1.6; color:#4B5563; max-width:440px; margin:0 auto 12px;">Thank you for submitting your business to Lagos Updates! Your application and payment have been confirmed. Our editorial team is doing a quick review of your details, and your listing will be published live shortly.</p>
+            <h3 style="font-size:20px; font-weight:800; margin-bottom:8px;">Application Submitted for Review! 🎉</h3>
+            <p style="font-size:14px; line-height:1.6; color:#4B5563; max-width:440px; margin:0 auto 12px;">Thank you for submitting your business to Lagos Updates! Our editorial team will review your CAC registration and business details. Once accepted, you'll receive an official approval email with a secure payment link to activate your listing and publish it live.</p>
             <div class="modal-success-ref" style="margin:12px 0;">Ref: <span id="success-ref-id">LU-XXXX</span></div>
-            <div id="success-payment-status" style="margin: 10px 0 16px; font-weight: 700; font-size: 14px;"></div>
+            <div id="success-payment-status" style="margin: 10px 0 16px; font-weight: 700; font-size: 14px;"><span style="color:#166534; background:#DCFCE7; padding:6px 14px; border-radius:9999px; border:1px solid #86EFAC;">✓ Editorial Review Pending &bull; Pay Only After Approval</span></div>
             <p style="font-size:13px; color:#9CA3AF; margin: 0 0 16px;">Redirecting you to home in <strong id="success-redirect-countdown">5</strong>s…</p>
             <div style="margin-top:20px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
               <a href="vendor.html" class="btn-modal-submit" style="display:inline-flex; align-items:center; justify-content:center; text-decoration:none; padding:12px 24px; font-size:14px;">Open Vendor Dashboard &rarr;</a>

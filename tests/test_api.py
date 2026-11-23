@@ -497,48 +497,87 @@ class TestAPIInMemory(unittest.TestCase):
         my_ids = [item["id"] for item in my_data["listings"]]
         self.assertIn(listing_id, my_ids)
 
-    def test_unpaid_submission_hidden_from_admin(self):
+    def test_post_acceptance_payment_and_live_activation_flow(self):
+        """Tests the end-to-end post-acceptance flow: Submit -> Admin Accepts & Sends Invoice -> Vendor Pays -> Auto-Published Live."""
         token, email, rc = self.create_test_vendor(rc="RC 444555")
         sub_payload = {
-            "business_name": "Unpaid Hidden Restaurant",
+            "business_name": "Lekki Post-Acceptance Bistro",
             "rc_number": rc,
             "category": "restaurant",
-            "area": "Victoria Island",
-            "description": "A quiet dining venue in VI.",
-            "price_range": "₦8,000",
+            "area": "Lekki Phase 1",
+            "description": "An upscale contemporary dining spot in Lekki.",
+            "price_range": "₦15,000",
             "whatsapp": "08011223399",
-            "contact_name": "Manager",
+            "contact_name": "Head Chef",
             "contact_email": email
         }
         h_sub = InMemHandler("POST", "/api/submissions", body=json.dumps(sub_payload).encode('utf-8'), headers={"Authorization": f"Bearer {token}"})
         h_sub.handle_request()
-        _, sub_data = h_sub.get_response()
+        status, sub_data = h_sub.get_response()
+        self.assertEqual(status, 201)
         sub_id = sub_data["submission_id"]
 
-        # Admin queue should NOT list unpaid submission
+        # 1. Admin queue lists pending application
         h_admin = InMemHandler("GET", "/api/admin/submissions")
         h_admin.handle_request()
-        _, admin_data = h_admin.get_response()
+        status, admin_data = h_admin.get_response()
+        self.assertEqual(status, 200)
         admin_sub_ids = [s["id"] for s in admin_data.get("submissions", [])]
-        self.assertNotIn(sub_id, admin_sub_ids)
+        self.assertIn(sub_id, admin_sub_ids)
 
-        # Record payment for this submission
-        from server.db import record_payment
-        record_payment({
-            "tx_ref": f"ref_{uuid.uuid4().hex[:6]}",
-            "transaction_id": f"tx_{uuid.uuid4().hex[:6]}",
-            "payment_type": "submission",
-            "target_id": sub_id,
-            "amount": 30000.0,
-            "status": "successful"
-        })
+        # 2. Admin accepts the application (Standard Verified ₦30,000)
+        h_accept = InMemHandler("POST", f"/api/admin/submissions/{sub_id}/accept?featured=0")
+        h_accept.handle_request()
+        status, accept_data = h_accept.get_response()
+        self.assertEqual(status, 200)
+        self.assertTrue(accept_data["success"])
+        self.assertEqual(accept_data["status"], "accepted")
+        self.assertEqual(accept_data["amount"], 30000)
 
-        # Now it MUST appear in admin review queue
-        h_admin2 = InMemHandler("GET", "/api/admin/submissions")
-        h_admin2.handle_request()
-        _, admin_data2 = h_admin2.get_response()
-        admin_sub_ids2 = [s["id"] for s in admin_data2.get("submissions", [])]
-        self.assertIn(sub_id, admin_sub_ids2)
+        # 3. Public checkout info endpoint allows payment lookup
+        h_pub = InMemHandler("GET", f"/api/submissions/{sub_id}/public")
+        h_pub.handle_request()
+        status, pub_data = h_pub.get_response()
+        self.assertEqual(status, 200)
+        self.assertEqual(pub_data["submission"]["status"], "accepted")
+        self.assertEqual(pub_data["submission"]["amount"], 30000)
+
+        # 4. Vendor completes Flutterwave checkout
+        mock_flw_response = {
+            "status": "success",
+            "message": "Payment verified",
+            "data": {
+                "id": 998877,
+                "tx_ref": f"LU-SUBMISSION-{uuid.uuid4().hex[:6]}",
+                "flw_ref": "FLW-MOCK-ACCEPT-1",
+                "amount": 30000.0,
+                "currency": "NGN",
+                "status": "successful",
+                "customer": {"email": email, "name": "Head Chef"}
+            }
+        }
+
+        with unittest.mock.patch('urllib.request.urlopen') as mock_url:
+            mock_url.return_value.__enter__.return_value.read.return_value = json.dumps(mock_flw_response).encode('utf-8')
+            h_verify = InMemHandler("POST", "/api/payments/verify", body=json.dumps({
+                "transaction_id": "998877",
+                "tx_ref": mock_flw_response["data"]["tx_ref"],
+                "payment_type": "submission",
+                "target_id": sub_id,
+                "expected_amount": 30000
+            }).encode('utf-8'))
+            h_verify.handle_request()
+            status, v_res = h_verify.get_response()
+            self.assertEqual(status, 200)
+            self.assertTrue(v_res["success"])
+
+        # 5. Listing is now automatically LIVE on the public directory
+        h_dir = InMemHandler("GET", "/api/listings?category=restaurant")
+        h_dir.handle_request()
+        status, dir_data = h_dir.get_response()
+        self.assertEqual(status, 200)
+        live_names = [item["name"] for item in dir_data.get("listings", [])]
+        self.assertIn("Lekki Post-Acceptance Bistro", live_names)
 
     def test_rejection_surfaces_on_vendor_dashboard(self):
         token, email, rc = self.create_test_vendor(rc="RC 777888")

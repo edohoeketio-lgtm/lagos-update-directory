@@ -469,6 +469,121 @@ Lagos Updates Directory
 """
     return send_email(to_email, subject, text_body, html_body)
 
+def send_submission_accepted_email(to_email: str, business_name: str, sub_id: str, plan_tier: str = "verified", amount_ngn: int = 30000, payment_url: str = "") -> bool:
+    """Notifies a vendor that their application was approved and provides the activation payment link."""
+    if not to_email:
+        return False
+
+    short_ref = (sub_id or "LU-REF")[:8].upper()
+    tier_label = "⭐ Featured Placement (Top of Directory)" if plan_tier in ["featured", "featured_1w"] else "✓ Verified Business Listing"
+    fee_formatted = f"₦{amount_ngn:,}"
+    checkout_url = payment_url or f"https://lagos-update-directory.vercel.app/vendor.html?action=pay&sub_id={sub_id}"
+    subject = f"🎉 Application Approved: {business_name} [Ref: {short_ref}] — Complete Activation to Go Live"
+
+    text_body = f"""
+=============================================================
+CONGRATULATIONS! APPLICATION APPROVED — LAGOS UPDATES
+=============================================================
+Hello {business_name},
+
+Great news! Your business application (Ref: {short_ref}) has been officially APPROVED by our Lagos editorial review team.
+
+Your CAC registration and business details meet our directory standards.
+
+ACTIVATION DETAILS:
+- Registered Business: {business_name}
+- Selected Tier: {tier_label}
+- Activation Fee: {fee_formatted} (One-Time Verification & Placement)
+- Reference ID: {short_ref}
+
+NEXT STEP — ACTIVATE & GO LIVE:
+To complete your listing activation and publish your spot live to thousands of Lagos customers and visitors, click the secure link below to complete your payment:
+
+{checkout_url}
+
+Payment Options via Flutterwave:
+Card, Bank Transfer, USSD, or Barter.
+
+As soon as payment is confirmed, your listing goes live immediately, and you will receive a direct link to your live page.
+
+Editorial Review Desk,
+Lagos Updates Directory
+Èkó ò ní bàjẹ́!
+=============================================================
+"""
+
+    html_body = f"""
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f7f7f7; color: #111827; margin: 0; padding: 24px; }}
+  .container {{ max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 16px; border: 1px solid #e5e7eb; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }}
+  .header {{ background: #0B0F19; color: #ffffff; padding: 32px 24px; text-align: center; border-bottom: 3px solid #FFD400; }}
+  .header h1 {{ margin: 0; font-size: 20px; letter-spacing: 0.5px; text-transform: uppercase; color: #FFD400; }}
+  .content {{ padding: 32px 28px; line-height: 1.6; font-size: 15px; color: #374151; }}
+  .badge {{ display: inline-block; background: #DCFCE7; color: #166534; font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 9999px; text-transform: uppercase; margin-bottom: 16px; border: 1px solid #86EFAC; }}
+  .invoice-box {{ background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 12px; padding: 20px; margin: 22px 0; }}
+  .invoice-row {{ display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #F3F4F6; font-size: 14px; }}
+  .invoice-row:last-child {{ border-bottom: none; padding-top: 12px; font-size: 16px; font-weight: 800; color: #111827; }}
+  .btn-pay {{ display: inline-block; background: #FFD400; color: #111827 !important; font-weight: 800; text-decoration: none; padding: 15px 32px; border-radius: 9999px; font-size: 15px; box-shadow: 0 4px 14px rgba(255, 212, 0, 0.4); }}
+  .footer {{ background: #F9FAFB; padding: 20px 24px; font-size: 12px; color: #9CA3AF; text-align: center; border-top: 1px solid #E5E7EB; }}
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Lagos Updates Directory</h1>
+      <p style="margin: 6px 0 0; color: #9CA3AF; font-size: 13px;">Official Application Acceptance &bull; Ref: {short_ref}</p>
+    </div>
+    <div class="content">
+      <span class="badge">✓ Application Approved</span>
+      <h2 style="font-size: 22px; color: #111827; margin: 0 0 12px;">Congratulations, {business_name}! 🎉</h2>
+      <p>We are delighted to inform you that your business application has officially passed our editorial vetting and CAC compliance review.</p>
+      
+      <p>To activate your listing and publish your spot live to thousands of Lagos consumers and visitors, please complete your one-time placement fee:</p>
+
+      <div class="invoice-box">
+        <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #6B7280; margin-bottom: 10px;">Activation Summary</div>
+        <div class="invoice-row">
+          <span>Business Name:</span>
+          <strong>{business_name}</strong>
+        </div>
+        <div class="invoice-row">
+          <span>Selected Placement:</span>
+          <strong>{tier_label}</strong>
+        </div>
+        <div class="invoice-row">
+          <span>Reference Number:</span>
+          <code>{short_ref}</code>
+        </div>
+        <div class="invoice-row">
+          <span>Total Activation Fee:</span>
+          <span style="color: #008A05;">{fee_formatted}</span>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="{checkout_url}" class="btn-pay">Pay Fee & Go Live Now &rarr;</a>
+      </div>
+
+      <p style="font-size: 13px; color: #6B7280; text-align: center; line-height: 1.5;">
+        Secure payments powered by <strong>Flutterwave</strong> (Bank Transfer, Card, USSD).<br>
+        Your listing will be published automatically the moment payment is confirmed.
+      </p>
+    </div>
+    <div class="footer">
+      Lagos Updates Directory &bull; Curating Lagos's most trusted businesses.<br>
+      Notice sent to {to_email}
+    </div>
+  </div>
+</body>
+</html>
+"""
+    return send_email(to_email, subject, text_body, html_body)
+
 def send_submission_approved_email(to_email: str, business_name: str, listing_id: str, plan_tier: str) -> bool:
     """Notifies a vendor that their listing is now live on the directory."""
     if not to_email:

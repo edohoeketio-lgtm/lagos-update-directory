@@ -1013,10 +1013,7 @@ function initBusinessModal() {
     } else if (currentStep === 3) {
       btnNext.style.display = 'none';
       btnSubmit.style.display = 'inline-flex';
-      let planPrice = '₦30,000';
-      if (selectedPlan === 'featured_1w') planPrice = '₦35,000';
-      if (selectedPlan === 'featured') planPrice = '₦100,000';
-      btnSubmit.textContent = `💳 Pay ${planPrice} with Flutterwave ✓`;
+      btnSubmit.textContent = 'Submit Application for Review (Free) ✓';
     }
   }
 
@@ -1157,7 +1154,7 @@ function initBusinessModal() {
     }
 
     btnSubmit.disabled = true;
-    btnSubmit.textContent = 'Preparing checkout…';
+    btnSubmit.textContent = 'Submitting application…';
     hideError();
 
     const driveLinkEl = document.getElementById('form-drive-link');
@@ -1205,14 +1202,11 @@ function initBusinessModal() {
       if (!res.ok) {
         showError(data.error || 'Submission failed. Please check your information and try again.');
         btnSubmit.disabled = false;
-        let planPrice = '₦30,000';
-        if (selectedPlan === 'featured_1w') planPrice = '₦35,000';
-        if (selectedPlan === 'featured') planPrice = '₦100,000';
-        btnSubmit.textContent = `💳 Pay ${planPrice} with Flutterwave ✓`;
+        btnSubmit.textContent = 'Submit Application for Review (Free) ✓';
         return;
       }
 
-      // Success! Track and clear draft
+      // Success! Track telemetry
       if (typeof window.trackEvent === 'function') {
         window.trackEvent('onboarding_submitted', {
           submission_id: data.submission_id,
@@ -1224,106 +1218,50 @@ function initBusinessModal() {
         });
       }
 
-      function transitionToSuccess(isPaid, flwTxRef) {
-        localStorage.removeItem('lagos_listing_draft');
-        form.reset();
-        uploadedPhotos = [];
-        if (previewGrid) previewGrid.innerHTML = '';
+      // Clear draft & form
+      localStorage.removeItem('lagos_listing_draft');
+      form.reset();
+      uploadedPhotos = [];
+      if (previewGrid) previewGrid.innerHTML = '';
 
-        step1.style.display = 'none';
-        step2.style.display = 'none';
-        step3.style.display = 'none';
-        if (stepBar) stepBar.style.display = 'none';
-        footerCtrl.style.display = 'none';
-        stepSuccess.style.display = 'block';
+      // Transition to success screen
+      step1.style.display = 'none';
+      step2.style.display = 'none';
+      step3.style.display = 'none';
+      if (stepBar) stepBar.style.display = 'none';
+      footerCtrl.style.display = 'none';
+      stepSuccess.style.display = 'block';
 
-        const refEl = document.getElementById('success-ref-id');
-        if (refEl) refEl.textContent = 'Ref: ' + (data.submission_id ? data.submission_id.slice(0, 8).toUpperCase() : 'LU-REC');
+      const refEl = document.getElementById('success-ref-id');
+      if (refEl) refEl.textContent = 'Ref: ' + (data.submission_id ? data.submission_id.slice(0, 8).toUpperCase() : 'LU-REC');
 
-        const payStatusEl = document.getElementById('success-payment-status');
-        if (payStatusEl) {
-          payStatusEl.innerHTML = `<span style="color:#008A05; font-weight:700;">✓ Payment Confirmed (${flwTxRef || 'Success'}) &mdash; Submitted to Lagos Updates editorial review</span>`;
-        }
+      const payStatusEl = document.getElementById('success-payment-status');
+      if (payStatusEl) {
+        payStatusEl.innerHTML = `<span style="color:#166534; background:#DCFCE7; padding:6px 14px; border-radius:9999px; border:1px solid #86EFAC; font-weight:700;">✓ Application Received &bull; Under Free Editorial Review</span>`;
+      }
 
-        // Auto-redirect to home after 5 seconds
-        let countdown = 5;
-        const countdownEl = document.getElementById('success-redirect-countdown');
-        if (countdownEl) {
+      // Auto-redirect to vendor portal or home after 6 seconds
+      let countdown = 6;
+      const countdownEl = document.getElementById('success-redirect-countdown');
+      if (countdownEl) {
+        countdownEl.textContent = countdown;
+        const countdownTimer = setInterval(() => {
+          countdown--;
           countdownEl.textContent = countdown;
-          const countdownTimer = setInterval(() => {
-            countdown--;
-            countdownEl.textContent = countdown;
-            if (countdown <= 0) {
-              clearInterval(countdownTimer);
-              window.location.href = '/';
-            }
-          }, 1000);
-        } else {
-          setTimeout(() => { window.location.href = '/'; }, 5000);
-        }
-      }
-
-      function handlePaymentIncomplete(msg) {
-        btnSubmit.disabled = false;
-        let planPrice = '₦30,000';
-        if (selectedPlan === 'featured_1w') planPrice = '₦35,000';
-        if (selectedPlan === 'featured') planPrice = '₦100,000';
-        btnSubmit.textContent = `💳 Pay ${planPrice} with Flutterwave ✓`;
-        showError(msg || 'Payment could not be completed. Your application is saved; complete payment whenever you’re ready to submit for review.');
-      }
-
-      // Calculate amount for Flutterwave checkout
-      let planAmount = 30000;
-      let planDesc = 'Standard Verified Placement (₦30,000)';
-      if (selectedPlan === 'featured_1w') {
-        planAmount = 35000;
-        planDesc = '1-Week Boost Placement (₦35,000)';
-      } else if (selectedPlan === 'featured') {
-        planAmount = 100000;
-        planDesc = '1-Month Featured Placement (₦100,000)';
-      }
-
-      // Launch Flutterwave popup
-      if (typeof window.payWithFlutterwave === 'function') {
-        window.payWithFlutterwave({
-          amount: planAmount,
-          title: 'Lagos Updates Directory',
-          description: planDesc,
-          paymentType: 'submission',
-          targetId: data.submission_id,
-          customer: {
-            email: payload.contact_email,
-            name: payload.contact_name,
-            phone: payload.whatsapp
-          },
-          metadata: {
-            business_name: payload.business_name,
-            category: payload.category,
-            plan_tier: payload.plan_tier,
-            rc_number: payload.rc_number
-          },
-          onSuccess: function (verifyData) {
-            transitionToSuccess(true, verifyData.tx_ref);
-          },
-          onClose: function () {
-            handlePaymentIncomplete('Payment cancelled. Applications are only submitted to admin review after successful payment.');
-          },
-          onError: function () {
-            handlePaymentIncomplete('Payment could not be processed. Please try again or use another payment method.');
+          if (countdown <= 0) {
+            clearInterval(countdownTimer);
+            window.location.href = '/vendor.html';
           }
-        });
+        }, 1000);
       } else {
-        handlePaymentIncomplete('Payment gateway could not be loaded. Please ensure you have internet access.');
+        setTimeout(() => { window.location.href = '/vendor.html'; }, 6000);
       }
 
     } catch (err) {
       console.error(err);
       showError('Connection error. Please check your internet connection and try again.');
       btnSubmit.disabled = false;
-      let planPrice = '₦30,000';
-      if (selectedPlan === 'featured_1w') planPrice = '₦35,000';
-      if (selectedPlan === 'featured') planPrice = '₦100,000';
-      btnSubmit.textContent = `💳 Pay ${planPrice} with Flutterwave ✓`;
+      btnSubmit.textContent = 'Submit Application for Review (Free) ✓';
     }
   });
 
