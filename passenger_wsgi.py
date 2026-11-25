@@ -124,6 +124,10 @@ def application(environ, start_response):
     for key, val in environ.items():
         if key.startswith("HTTP_"):
             h_name = key[5:].replace("_", "-").title()
+            # Skip conditional cache headers so SimpleHTTPRequestHandler never emits
+            # headerless 304 Not Modified responses (which crash LiteSpeed/Passenger WSGI with 500)
+            if h_name.lower() in ("if-modified-since", "if-none-match"):
+                continue
             headers[h_name] = val
 
     # Read request body
