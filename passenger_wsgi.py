@@ -103,8 +103,8 @@ def application(environ, start_response):
     script_name = (environ.get("SCRIPT_NAME") or "").rstrip("/")
     path_info = environ.get("PATH_INFO") or "/"
 
-    # Normalize subpath if Passenger passes full path in PATH_INFO
-    if script_name and path_info.startswith(script_name):
+    # Normalize subpath ONLY if Passenger passes full path in PATH_INFO (avoid stripping /directory.html!)
+    if script_name and (path_info == script_name or path_info.startswith(script_name + "/")):
         path_info = path_info[len(script_name):] or "/"
 
     # Ensure root directory redirects cleanly to trailing slash when mounted at /directory
