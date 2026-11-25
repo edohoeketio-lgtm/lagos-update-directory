@@ -137,23 +137,33 @@ def application(environ, start_response):
     handler = _WSGIHandler(method, full_path, headers, body, client_ip=client_ip)
     status_code, status_msg, resp_headers, resp_body = handler.execute()
 
-    # If mounted at a subpath (e.g. /directory), inject subpath shim into HTML documents
+    # If mounted at a subpath (e.g. /directory), rewrite root-relative assets & inject shim
     if script_name and resp_body:
         ctype = ""
         for k, v in resp_headers:
             if k.lower() == "content-type":
                 ctype = v.lower()
                 break
+        prefix_bytes = script_name.encode("utf-8")
         if "text/html" in ctype:
+            # Rewrite static root-relative /img/ and /uploads/ attributes in HTML
+            resp_body = resp_body.replace(b'src="/img/', b'src="' + prefix_bytes + b'/img/')
+            resp_body = resp_body.replace(b'href="/img/', b'href="' + prefix_bytes + b'/img/')
+            resp_body = resp_body.replace(b'src="/uploads/', b'src="' + prefix_bytes + b'/uploads/')
             shim_bytes = _build_subpath_shim(script_name)
             lower_body = resp_body.lower()
             head_idx = lower_body.find(b"<head>")
             if head_idx != -1:
                 insert_pos = head_idx + len(b"<head>")
                 resp_body = resp_body[:insert_pos] + b"\n" + shim_bytes + resp_body[insert_pos:]
-                # Update Content-Length header to match modified HTML size
-                resp_headers = [(k, v) for k, v in resp_headers if k.lower() != "content-length"]
-                resp_headers.append(("Content-Length", str(len(resp_body))))
+            resp_headers = [(k, v) for k, v in resp_headers if k.lower() != "content-length"]
+            resp_headers.append(("Content-Length", str(len(resp_body))))
+        elif "application/json" in ctype:
+            # Rewrite root-relative image paths inside JSON API payloads (/img/... -> /directory/img/...)
+            resp_body = resp_body.replace(b'"/img/', b'"' + prefix_bytes + b'/img/')
+            resp_body = resp_body.replace(b'"/uploads/', b'"' + prefix_bytes + b'/uploads/')
+            resp_headers = [(k, v) for k, v in resp_headers if k.lower() != "content-length"]
+            resp_headers.append(("Content-Length", str(len(resp_body))))
 
     start_response(f"{status_code} {status_msg}", resp_headers)
     return [resp_body]
